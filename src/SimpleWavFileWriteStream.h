@@ -4,14 +4,14 @@
 #ifndef _TURBOT_SIMPLE_WAV_FILE_WRITE_STREAM_H_
 #define _TURBOT_SIMPLE_WAV_FILE_WRITE_STREAM_H_
 
-#include "AudioFileWriteStream.h"
+#include "AudioWriteStream.h"
 
 #include <fstream>
 
 namespace Turbot
 {
     
-class SimpleWavFileWriteStream : public AudioFileWriteStream
+class SimpleWavFileWriteStream : public AudioWriteStream
 {
 public:
     SimpleWavFileWriteStream(std::string path, size_t channelCount, size_t sampleRate);

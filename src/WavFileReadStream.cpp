@@ -10,7 +10,7 @@
 namespace Turbot
 {
 
-static AudioFileReadStreamBuilder<WavFileReadStream>
+static AudioReadStreamBuilder<WavFileReadStream>
 builder(WavFileReadStream::getUri());
 
 QUrl

@@ -7,24 +7,19 @@
 #include <string>
 #include <vector>
 
-#include "base/ThingFactory.h"
-
 namespace Turbot {
 
-class AudioFileReadStream;
+class AudioReadStream;
 
 class AudioReadStreamFactory
 {
 public:
-    // May throw FileOpenFailed or AudioFileReadStream::FileDRMProtected,
+    // May throw FileOpenFailed or AudioReadStream::FileDRMProtected,
     // or simply return NULL, for failure
-    static AudioFileReadStream *createReadStream(std::string fileName);
+    static AudioReadStream *createReadStream(std::string fileName);
 
     static std::vector<std::string> getSupportedFileExtensions();
 };
-
-typedef ThingFactory<AudioFileReadStream, std::string>
-AudioFileReadStreamFactory;
 
 }
 

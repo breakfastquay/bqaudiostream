@@ -4,14 +4,14 @@
 #ifndef _TURBOT_DIRECTSHOW_READ_STREAM_H_
 #define _TURBOT_DIRECTSHOW_READ_STREAM_H_
 
-#include "AudioFileReadStream.h"
+#include "AudioReadStream.h"
 
 #ifdef HAVE_DIRECTSHOW
  
 namespace Turbot
 {
     
-class DirectShowReadStream : public AudioFileReadStream
+class DirectShowReadStream : public AudioReadStream
 {
 public:
     DirectShowReadStream(std::string path);

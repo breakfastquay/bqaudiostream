@@ -12,10 +12,10 @@ namespace Turbot {
 
 /* Not thread-safe -- one per thread please. */
 
-class AudioFileWriteStream
+class AudioWriteStream
 {
 public:
-    virtual ~AudioFileWriteStream() { }
+    virtual ~AudioWriteStream() { }
 
     bool isOK() const { return (m_channelCount > 0); }
 
@@ -27,7 +27,7 @@ public:
     virtual bool putInterleavedFrames(size_t count, float *frames) = 0;
     
 protected:
-    AudioFileWriteStream(size_t channelCount, size_t sampleRate) :
+    AudioWriteStream(size_t channelCount, size_t sampleRate) :
         m_channelCount(channelCount), m_sampleRate(sampleRate) { }
     size_t m_channelCount;
     size_t m_sampleRate;

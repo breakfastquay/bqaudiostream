@@ -4,14 +4,14 @@
 #ifndef _TURBOT_QUICK_TIME_READ_STREAM_H_
 #define _TURBOT_QUICK_TIME_READ_STREAM_H_
 
-#include "AudioFileReadStream.h"
+#include "AudioReadStream.h"
 
 #ifdef HAVE_QUICKTIME
 
 namespace Turbot
 {
     
-class QuickTimeReadStream : public AudioFileReadStream
+class QuickTimeReadStream : public AudioReadStream
 {
 public:
     QuickTimeReadStream(std::string path);

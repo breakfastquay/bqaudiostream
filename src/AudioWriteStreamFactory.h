@@ -8,14 +8,14 @@
 
 namespace Turbot {
 
-class AudioFileWriteStream;
+class AudioWriteStream;
 
 class AudioWriteStreamFactory
 {
 public:
-    static AudioFileWriteStream *createWriteStream(std::string fileName,
-                                                   size_t channelCount,
-                                                   size_t sampleRate);
+    static AudioWriteStream *createWriteStream(std::string fileName,
+                                               size_t channelCount,
+                                               size_t sampleRate);
 };
 
 }

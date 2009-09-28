@@ -15,12 +15,12 @@ using std::endl;
 
 namespace Turbot {
 
-AudioFileWriteStream *
+AudioWriteStream *
 AudioWriteStreamFactory::createWriteStream(std::string audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {
-    AudioFileWriteStream *s = 0;
+    AudioWriteStream *s = 0;
 
     //!!! At the moment all we handle is WAV files, but we'll have to
     //!!! have some way to determine whether a write stream can

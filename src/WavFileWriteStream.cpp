@@ -15,7 +15,7 @@ namespace Turbot
 WavFileWriteStream::WavFileWriteStream(std::string path,
 				       size_t channelCount,
 				       size_t sampleRate) :
-    AudioFileWriteStream(channelCount, sampleRate),
+    AudioWriteStream(channelCount, sampleRate),
     m_file(0),
     m_path(path)
 {

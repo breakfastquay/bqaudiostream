@@ -10,24 +10,29 @@
 using std::cerr;
 using std::endl;
 
+#include "base/ThingFactory.h"
+
 namespace Turbot {
 
 // This is sort of half-way to being converted to a nice ThingFactory
 // implementation, but only half-way
 
-template <>
-AudioFileReadStreamFactory *
-AudioFileReadStreamFactory::m_instance = 0;
+typedef ThingFactory<AudioReadStream, std::string>
+AudioReadStreamFactoryImpl;
 
-AudioFileReadStream *
+template <>
+AudioReadStreamFactory *
+AudioReadStreamFactoryImpl::m_instance = 0;
+
+AudioReadStream *
 AudioReadStreamFactory::createReadStream(std::string audioFileName)
 {
-    AudioFileReadStream *s = 0;
+    AudioReadStream *s = 0;
 
-    AudioFileReadStreamFactory *f = AudioFileReadStreamFactory::getInstance();
-    AudioFileReadStreamFactory::URISet uris = f->getURIs();
+    AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
+    AudioReadStreamFactoryImpl::URISet uris = f->getURIs();
 
-    for (AudioFileReadStreamFactory::URISet::const_iterator i = uris.begin();
+    for (AudioReadStreamFactoryImpl::URISet::const_iterator i = uris.begin();
          i != uris.end(); ++i) {
 
         try {

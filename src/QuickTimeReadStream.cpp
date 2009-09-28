@@ -13,7 +13,7 @@
 namespace Turbot
 {
 
-static AudioFileReadStreamBuilder<QuickTimeReadStream>
+static AudioReadStreamBuilder<QuickTimeReadStream>
 builder(QuickTimeReadStream::getUri());
 
 QUrl

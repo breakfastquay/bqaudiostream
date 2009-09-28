@@ -1,8 +1,8 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_AUDIO_FILE_READ_STREAM_H_
-#define _TURBOT_AUDIO_FILE_READ_STREAM_H_
+#ifndef _TURBOT_AUDIO_READ_STREAM_H_
+#define _TURBOT_AUDIO_READ_STREAM_H_
 
 #include "base/TurbotTypes.h"
 #include "base/ThingFactory.h"
@@ -15,7 +15,7 @@ namespace Turbot {
 
 /* Not thread-safe -- one per thread please. */
 
-class AudioFileReadStream
+class AudioReadStream
 {
 public:
     class FileDRMProtected : virtual public std::exception
@@ -29,7 +29,7 @@ public:
         std::string m_file;
     };
 
-    virtual ~AudioFileReadStream() { }
+    virtual ~AudioReadStream() { }
 
     bool isOK() const { return (m_channelCount > 0); }
 
@@ -46,12 +46,12 @@ protected:
 };
 
 template <typename T>
-class AudioFileReadStreamBuilder :
-    public ConcreteThingBuilder<T, AudioFileReadStream, std::string>
+class AudioReadStreamBuilder :
+    public ConcreteThingBuilder<T, AudioReadStream, std::string>
 {
 public:
-    AudioFileReadStreamBuilder(QUrl uri) :
-        ConcreteThingBuilder<T, AudioFileReadStream, std::string>(uri) { }
+    AudioReadStreamBuilder(QUrl uri) :
+        ConcreteThingBuilder<T, AudioReadStream, std::string>(uri) { }
 };
 
 }

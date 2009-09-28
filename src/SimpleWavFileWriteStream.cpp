@@ -14,7 +14,7 @@ namespace Turbot
 SimpleWavFileWriteStream::SimpleWavFileWriteStream(std::string path,
                                                    size_t channelCount,
                                                    size_t sampleRate) :
-    AudioFileWriteStream(channelCount, sampleRate),
+    AudioWriteStream(channelCount, sampleRate),
     m_bitDepth(24),
     m_path(path),
     m_file(0)

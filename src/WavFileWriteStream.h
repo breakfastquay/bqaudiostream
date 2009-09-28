@@ -4,7 +4,7 @@
 #ifndef _TURBOT_WAV_FILE_WRITE_STREAM_H_
 #define _TURBOT_WAV_FILE_WRITE_STREAM_H_
 
-#include "AudioFileWriteStream.h"
+#include "AudioWriteStream.h"
 
 #ifdef HAVE_LIBSNDFILE
 
@@ -13,7 +13,7 @@
 namespace Turbot
 {
     
-class WavFileWriteStream : public AudioFileWriteStream
+class WavFileWriteStream : public AudioWriteStream
 {
 public:
     WavFileWriteStream(std::string path, size_t channelCount, size_t sampleRate);

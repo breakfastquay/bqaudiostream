@@ -4,7 +4,7 @@
 #ifndef _TURBOT_WAV_FILE_READ_STREAM_H_
 #define _TURBOT_WAV_FILE_READ_STREAM_H_
 
-#include "AudioFileReadStream.h"
+#include "AudioReadStream.h"
 
 #ifdef HAVE_LIBSNDFILE
 
@@ -13,7 +13,7 @@
 namespace Turbot
 {
     
-class WavFileReadStream : public AudioFileReadStream
+class WavFileReadStream : public AudioReadStream
 {
 public:
     WavFileReadStream(std::string path);

@@ -25,7 +25,7 @@ using std::vector;
 namespace Turbot
 {
 
-static AudioFileReadStreamBuilder<DirectShowReadStream>
+static AudioReadStreamBuilder<DirectShowReadStream>
 builder(DirectShowReadStream::getUri());
 
 QUrl
