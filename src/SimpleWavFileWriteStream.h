@@ -6,6 +6,9 @@
 
 #include "AudioWriteStream.h"
 
+// If we have libsndfile, we shouldn't be using this class
+#ifndef HAVE_LIBSNDFILE
+
 #include <fstream>
 #include <string>
 
@@ -15,7 +18,7 @@ namespace Turbot
 class SimpleWavFileWriteStream : public AudioWriteStream
 {
 public:
-    SimpleWavFileWriteStream(QString path, size_t channelCount, size_t sampleRate);
+    SimpleWavFileWriteStream(Target target);
     virtual ~SimpleWavFileWriteStream();
 
     virtual QString getError() const { return m_error; }
@@ -24,7 +27,6 @@ public:
     
 protected:
     int m_bitDepth;
-    QString m_path;
     QString m_error;
     std::ofstream *m_file;
 
@@ -35,5 +37,7 @@ protected:
 };
 
 }
+
+#endif
 
 #endif

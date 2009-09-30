@@ -3,6 +3,8 @@
 
 #include "SimpleWavFileWriteStream.h"
 
+#ifndef HAVE_LIBSNDFILE
+
 #include <iostream>
 
 using std::cerr;
@@ -11,15 +13,19 @@ using std::endl;
 namespace Turbot
 {
 
-SimpleWavFileWriteStream::SimpleWavFileWriteStream(QString path,
-                                                   size_t channelCount,
-                                                   size_t sampleRate) :
-    AudioWriteStream(channelCount, sampleRate),
+static 
+AudioWriteStreamBuilder<SimpleWavFileWriteStream>
+simplewavbuilder(
+    QUrl("http://breakfastquay.com/rdf/turbot/fileio/SimpleWavFileWriteStream"),
+    QStringList() << "wav";
+    );
+
+SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
+    AudioWriteStream(target),
     m_bitDepth(24),
-    m_path(path),
     m_file(0)
 {
-    m_file = new std::ofstream(m_path.toLocal8Bit().data(),
+    m_file = new std::ofstream(getPath().toLocal8Bit().data(),
                                std::ios::out | std::ios::binary);
 
     if (!*m_file) {
@@ -27,8 +33,8 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(QString path,
         m_file = 0;
         cerr << "SimpleWavFileWriteStream: Failed to open output file for writing" << endl;
         m_error = QString("Failed to open audio file '") +
-            m_path + "' for writing";
-        m_channelCount = 0;
+            getPath() + "' for writing";
+        m_target.invalidate();
         return;
     }
 
@@ -109,16 +115,16 @@ SimpleWavFileWriteStream::writeFormatChunk()
     outString += int2le(0x01, 2);
 
     // channels
-    outString += int2le(m_channelCount, 2);
+    outString += int2le(getChannelCount(), 2);
 
     // sample rate
-    outString += int2le(m_sampleRate, 4);
+    outString += int2le(getSampleRate(), 4);
 
     // bytes per second
-    outString += int2le((m_bitDepth / 8) * m_channelCount * m_sampleRate, 4);
+    outString += int2le((m_bitDepth / 8) * getChannelCount() * getSampleRate(), 4);
 
     // bytes per frame
-    outString += int2le((m_bitDepth / 8) * m_channelCount, 2);
+    outString += int2le((m_bitDepth / 8) * getChannelCount(), 2);
 
     // bits per sample
     outString += int2le(m_bitDepth, 2);
@@ -132,13 +138,13 @@ SimpleWavFileWriteStream::writeFormatChunk()
 bool
 SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
 {
-    if (!m_file || !m_channelCount) return false;
+    if (!m_file || !getChannelCount()) return false;
     if (count == 0) return false;
 
     for (size_t i = 0; i < count; ++i) {
-        for (size_t c = 0; c < m_channelCount; ++c) {
+        for (size_t c = 0; c < getChannelCount(); ++c) {
             
-            double f = frames[i * m_channelCount + c];
+            double f = frames[i * getChannelCount() + c];
             unsigned int u = 0;
             unsigned char ubuf[4];
             if (f < -1.0) f = -1.0;
@@ -171,3 +177,4 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
 
 }
 
+#endif

@@ -2,18 +2,17 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "AudioWriteStreamFactory.h"
-#include "WavFileWriteStream.h"
-#include "SimpleWavFileWriteStream.h"
-/*
-#include "QuickTimeWriteStream.h"
-#include "DirectShowWriteStream.h"
-*/
 
-#include <iostream>
-using std::cerr;
-using std::endl;
+#include <QFileInfo>
 
 namespace Turbot {
+
+typedef ThingFactory<AudioWriteStream, AudioWriteStream::Target>
+AudioWriteStreamFactoryImpl;
+
+template <>
+AudioWriteStreamFactory *
+AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *
 AudioWriteStreamFactory::createWriteStream(QString audioFileName,
@@ -22,56 +21,37 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
 {
     AudioWriteStream *s = 0;
 
-    //!!! At the moment all we handle is WAV files, but we'll have to
-    //!!! have some way to determine whether a write stream can
-    //!!! convert to a particular type!  The SimpleWavFileWriteStream
-    //!!! will always succeed, regardless of the file's extension --
-    //!!! it'll just always write WAV.
+    QString extension = QFileInfo(audioFileName).suffix().toLower();
 
-#ifdef HAVE_LIBSNDFILE
-    if (!s || !s->isOK()) {
-        delete s;
-        s = new WavFileWriteStream(audioFileName, channelCount, sampleRate);
-    }
-#endif
+    AudioWriteStream::Target target(audioFileName, channelCount, sampleRate);
 
-/*
-#ifdef HAVE_QUICKTIME
-    if (!s || !s->isOK()) {
-        delete s;
-        s = new QuickTimeWriteStream(audioFileName, channelCount, sampleRate);
-    }
-#endif
-*/
-/*
-#ifdef HAVE_DIRECTSHOW
-    if (!s || !s->isOK()) {
-        delete s;
-        s = new DirectShowWriteStream(audioFileName, channelCount, sampleRate);
-    }
-#endif
-*/
+    AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    if (!s || !s->isOK()) {
-        delete s;
-        s = new SimpleWavFileWriteStream(audioFileName, channelCount, sampleRate);
+    try {
+        s = f->createFor(extension, target);
+    } catch (...) {
     }
 
-    if (!s || !s->isOK()) {
-        delete s;
-        return 0;
+    if (s && s->isOK() && s->getError() == "") {
+        return s;
     }
 
-    return s;
+    delete s;
+    return 0;
 }
 
-#ifndef HAVE_LIBSNDFILE
-//#ifndef HAVE_QUICKTIME
-//#ifndef HAVE_DIRECTSHOW
-#pragma warning("No read stream implementation selected!")
-//#endif
-//#endif
-#endif
-
 }
+
+// We rather eccentrically include the C++ files here, not the
+// headers.  This file actually doesn't need any includes in order to
+// compile, but we are building it into a static archive, from which
+// only those object files that are referenced in the code that uses
+// the archive will be extracted for linkage.  Since no code refers
+// directly to the stream implementations (they are self-registering),
+// this means they will not be linked in.  So we include them directly
+// into this object file instead, and it's not necessary to build them
+// separately in the project.
+
+#include "WavFileWriteStream.cpp"
+#include "SimpleWavFileWriteStream.cpp"
 

@@ -31,8 +31,6 @@ protected:
     QString m_error;
 
     size_t m_offset;
-
-    static AudioReadStreamBuilder<WavFileReadStream> m_builder;
 };
 
 }

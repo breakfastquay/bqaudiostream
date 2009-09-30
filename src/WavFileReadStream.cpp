@@ -37,8 +37,9 @@ getSupportedExtensions()
     return extensions;
 }
 
+static
 AudioReadStreamBuilder<WavFileReadStream>
-WavFileReadStream::m_builder(
+wavbuilder(
     QUrl("http://breakfastquay.com/rdf/turbot/fileio/WavFileReadStream"),
     getSupportedExtensions()
     );

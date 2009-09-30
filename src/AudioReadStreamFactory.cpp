@@ -4,21 +4,6 @@
 #include "AudioReadStreamFactory.h"
 #include "AudioReadStream.h"
 
-// We rather eccentrically include the C++ files here, not the
-// headers.  This file actually doesn't need any includes in order to
-// compile, but we are building it into a static archive, from which
-// only those object files that are referenced in the code that uses
-// the archive will be extracted for linkage.  Since no code refers
-// directly to the stream implementations (they are self-registering),
-// this means they will not be linked in.  So we include them directly
-// into this object file instead, and it's not necessary to build them
-// separately in the project.
-
-#include "WavFileReadStream.cpp"
-#include "QuickTimeReadStream.cpp"
-#include "OggVorbisReadStream.cpp"
-#include "DirectShowReadStream.cpp"
-
 #include "base/ThingFactory.h"
 #include "system/Debug.h"
 
@@ -48,13 +33,8 @@ AudioReadStreamFactory::createReadStream(QString audioFileName)
     // this extension, first
 
     try {
-        QUrl uri = f->getURIFor(extension);
-        std::cerr << "URI for extension " << extension << " is " << uri << std::endl;
-        s = f->create(uri, audioFileName);
-    } catch (UnknownTagException) {
-        std::cerr << "Caught UnknownTagException" << std::endl;
-    } catch (UnknownThingException) {
-        std::cerr << "Caught UnknownThingException" << std::endl;
+        s = f->createFor(extension, audioFileName);
+    } catch (...) {
     }
 
     if (s && s->isOK() && s->getError() == "") {
@@ -97,4 +77,19 @@ AudioReadStreamFactory::getSupportedFileExtensions()
 }
 
 }
+
+// We rather eccentrically include the C++ files here, not the
+// headers.  This file actually doesn't need any includes in order to
+// compile, but we are building it into a static archive, from which
+// only those object files that are referenced in the code that uses
+// the archive will be extracted for linkage.  Since no code refers
+// directly to the stream implementations (they are self-registering),
+// this means they will not be linked in.  So we include them directly
+// into this object file instead, and it's not necessary to build them
+// separately in the project.
+
+#include "WavFileReadStream.cpp"
+#include "QuickTimeReadStream.cpp"
+#include "OggVorbisReadStream.cpp"
+#include "DirectShowReadStream.cpp"
 

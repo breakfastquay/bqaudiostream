@@ -16,7 +16,7 @@ namespace Turbot
 class WavFileWriteStream : public AudioWriteStream
 {
 public:
-    WavFileWriteStream(QString path, size_t channelCount, size_t sampleRate);
+    WavFileWriteStream(Target target);
     virtual ~WavFileWriteStream();
 
     virtual QString getError() const { return m_error; }
@@ -27,7 +27,6 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
-    QString m_path;
     QString m_error;
 };
 

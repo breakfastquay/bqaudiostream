@@ -27,8 +27,6 @@ protected:
 
     class D;
     D *m_d;
-
-    static AudioReadStreamBuilder<DirectShowReadStream> m_builder;
 };
 
 }

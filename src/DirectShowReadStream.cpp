@@ -20,8 +20,9 @@
 namespace Turbot
 {
 
+static
 AudioReadStreamBuilder<DirectShowReadStream>
-DirectShowReadStream::m_builder(
+directshowbuilder(
     QUrl("http://breakfastquay.com/rdf/turbot/fileio/DirectShowReadStream"),
     QStringList() << "wav" << "mp3" << "wma" << "ogg" //!!! how to do this properly?
     );

@@ -29,8 +29,6 @@ protected:
     D *m_d;
 
     size_t m_offset;
-
-    static AudioReadStreamBuilder<QuickTimeReadStream> m_builder;
 };
 
 
