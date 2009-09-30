@@ -14,26 +14,25 @@ namespace Turbot
 class QuickTimeReadStream : public AudioReadStream
 {
 public:
-    QuickTimeReadStream(std::string path);
+    QuickTimeReadStream(QString path);
     virtual ~QuickTimeReadStream();
 
-    virtual std::string getError() const { return m_error; }
+    virtual QString getError() const { return m_error; }
 
     virtual size_t getInterleavedFrames(size_t count, float *frames);
-
-    static std::vector<std::string> getSupportedFileExtensions();
-    
-    static QUrl getUri();
     
 protected:
-    std::string m_path;
-    std::string m_error;
+    QString m_path;
+    QString m_error;
 
     class D;
     D *m_d;
 
     size_t m_offset;
+
+    static AudioReadStreamBuilder<QuickTimeReadStream> m_builder;
 };
+
 
 }
 

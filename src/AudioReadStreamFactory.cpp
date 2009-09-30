@@ -2,22 +2,33 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "AudioReadStreamFactory.h"
-#include "WavFileReadStream.h"
-#include "QuickTimeReadStream.h"
-#include "DirectShowReadStream.h"
+#include "AudioReadStream.h"
 
-#include <iostream>
-using std::cerr;
-using std::endl;
+// We rather eccentrically include the C++ files here, not the
+// headers.  This file actually doesn't need any includes in order to
+// compile, but we are building it into a static archive, from which
+// only those object files that are referenced in the code that uses
+// the archive will be extracted for linkage.  Since no code refers
+// directly to the stream implementations (they are self-registering),
+// this means they will not be linked in.  So we include them directly
+// into this object file instead, and it's not necessary to build them
+// separately in the project.
+
+#include "WavFileReadStream.cpp"
+#include "QuickTimeReadStream.cpp"
+#include "OggVorbisReadStream.cpp"
+#include "DirectShowReadStream.cpp"
 
 #include "base/ThingFactory.h"
+#include "system/Debug.h"
+
+#include <QFileInfo>
+
+#define DEBUG_AUDIO_READ_STREAM_FACTORY 1
 
 namespace Turbot {
 
-// This is sort of half-way to being converted to a nice ThingFactory
-// implementation, but only half-way
-
-typedef ThingFactory<AudioReadStream, std::string>
+typedef ThingFactory<AudioReadStream, QString>
 AudioReadStreamFactoryImpl;
 
 template <>
@@ -25,11 +36,40 @@ AudioReadStreamFactory *
 AudioReadStreamFactoryImpl::m_instance = 0;
 
 AudioReadStream *
-AudioReadStreamFactory::createReadStream(std::string audioFileName)
+AudioReadStreamFactory::createReadStream(QString audioFileName)
 {
     AudioReadStream *s = 0;
 
+    QString extension = QFileInfo(audioFileName).suffix().toLower();
+
     AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
+
+    // Try to use a reader that has actually registered an interest in
+    // this extension, first
+
+    try {
+        QUrl uri = f->getURIFor(extension);
+        std::cerr << "URI for extension " << extension << " is " << uri << std::endl;
+        s = f->create(uri, audioFileName);
+    } catch (UnknownTagException) {
+        std::cerr << "Caught UnknownTagException" << std::endl;
+    } catch (UnknownThingException) {
+        std::cerr << "Caught UnknownThingException" << std::endl;
+    }
+
+    if (s && s->isOK() && s->getError() == "") {
+        return s;
+    } else if (s) {
+        std::cerr << "Error with recommended reader: \""
+                  << s->getError() << "\""
+                  << std::endl;
+    }
+
+    delete s;
+    s = 0;
+
+    // If that fails, try all readers in arbitrary order
+
     AudioReadStreamFactoryImpl::URISet uris = f->getURIs();
 
     for (AudioReadStreamFactoryImpl::URISet::const_iterator i = uris.begin();
@@ -44,42 +84,17 @@ AudioReadStreamFactory::createReadStream(std::string audioFileName)
         }
 
         delete s;
+        s = 0;
     }
 
     return 0;
 }
 
-std::vector<std::string>
+QStringList
 AudioReadStreamFactory::getSupportedFileExtensions()
 {
-    std::vector<std::string> extensions;
-    std::vector<std::string> e;
-
-#ifdef HAVE_LIBSNDFILE
-    e = WavFileReadStream::getSupportedFileExtensions();
-    for (int i = 0; i < e.size(); ++i) extensions.push_back(e[i]);
-#endif
-
-#ifdef HAVE_QUICKTIME
-    e = QuickTimeReadStream::getSupportedFileExtensions();
-    for (int i = 0; i < e.size(); ++i) extensions.push_back(e[i]);
-#endif
-
-#ifdef HAVE_DIRECTSHOW
-    e = DirectShowReadStream::getSupportedFileExtensions();
-    for (int i = 0; i < e.size(); ++i) extensions.push_back(e[i]);
-#endif
-
-    return extensions;
+    return AudioReadStreamFactoryImpl::getInstance()->getTags();
 }
-
-#ifndef HAVE_LIBSNDFILE
-#ifndef HAVE_QUICKTIME
-#ifndef HAVE_DIRECTSHOW
-#pragma warning("No read stream implementation selected!")
-#endif
-#endif
-#endif
 
 }
 

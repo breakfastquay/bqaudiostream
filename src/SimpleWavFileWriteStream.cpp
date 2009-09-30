@@ -11,7 +11,7 @@ using std::endl;
 namespace Turbot
 {
 
-SimpleWavFileWriteStream::SimpleWavFileWriteStream(std::string path,
+SimpleWavFileWriteStream::SimpleWavFileWriteStream(QString path,
                                                    size_t channelCount,
                                                    size_t sampleRate) :
     AudioWriteStream(channelCount, sampleRate),
@@ -19,14 +19,14 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(std::string path,
     m_path(path),
     m_file(0)
 {
-    m_file = new std::ofstream(m_path.c_str(),
+    m_file = new std::ofstream(m_path.toLocal8Bit().data(),
                                std::ios::out | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;
         m_file = 0;
         cerr << "SimpleWavFileWriteStream: Failed to open output file for writing" << endl;
-        m_error = std::string("Failed to open audio file '") +
+        m_error = QString("Failed to open audio file '") +
             m_path + "' for writing";
         m_channelCount = 0;
         return;

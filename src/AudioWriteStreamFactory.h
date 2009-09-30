@@ -4,7 +4,7 @@
 #ifndef _TURBOT_AUDIO_WRITE_STREAM_FACTORY_H_
 #define _TURBOT_AUDIO_WRITE_STREAM_FACTORY_H_
 
-#include <string>
+#include <QString>
 
 namespace Turbot {
 
@@ -13,7 +13,7 @@ class AudioWriteStream;
 class AudioWriteStreamFactory
 {
 public:
-    static AudioWriteStream *createWriteStream(std::string fileName,
+    static AudioWriteStream *createWriteStream(QString fileName,
                                                size_t channelCount,
                                                size_t sampleRate);
 };

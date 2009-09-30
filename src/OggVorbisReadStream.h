@@ -6,7 +6,8 @@
 
 #include "AudioReadStream.h"
 
-#ifdef HAVE_OGGZ_AND_FISHSOUND
+#ifdef HAVE_OGGZ
+#ifdef HAVE_FISHSOUND
 
 namespace Turbot
 {
@@ -14,20 +15,15 @@ namespace Turbot
 class OggVorbisReadStream : public AudioReadStream
 {
 public:
-    OggVorbisReadStream(std::string path);
+    OggVorbisReadStream(QString path);
     virtual ~OggVorbisReadStream();
 
-    virtual std::string getError() const { return m_error; }
-
+    virtual QString getError() const { return m_error; }
     virtual size_t getInterleavedFrames(size_t count, float *frames);
 
-    static std::vector<std::string> getSupportedFileExtensions();
-    
-    static QUrl getUri();
-    
 protected:
-    std::string m_path;
-    std::string m_error;
+    QString m_path;
+    QString m_error;
 
     class D;
     D *m_d;
@@ -37,6 +33,7 @@ protected:
 
 }
 
+#endif
 #endif
 
 #endif

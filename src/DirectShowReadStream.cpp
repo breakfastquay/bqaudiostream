@@ -17,22 +17,15 @@
 
 #include <iostream>
 
-using std::cerr;
-using std::endl;
-using std::string;
-using std::vector;
-
 namespace Turbot
 {
 
-static AudioReadStreamBuilder<DirectShowReadStream>
-builder(DirectShowReadStream::getUri());
+AudioReadStreamBuilder<DirectShowReadStream>
+DirectShowReadStream::m_builder(
+    QUrl("http://breakfastquay.com/rdf/turbot/fileio/DirectShowReadStream"),
+    QStringList() << "wav" << "mp3" << "wma" << "ogg" //!!! how to do this properly?
+    );
 
-QUrl
-DirectShowReadStream::getUri()
-{
-    return QUrl("http://breakfastquay.com/rdf/turbot/fileio/DirectShowReadStream");
-}
 
 static const int maxBufferSize = 1048575;
 
@@ -78,26 +71,26 @@ public:
         delete buffer;
     }
 
-	HRESULT APIENTRY QueryInterface(REFIID iid, void **obj) {
-		if (iid == IID_IUnknown) {
-			*obj = dynamic_cast<IUnknown*>(this);
-		} else if (iid == IID_ISampleGrabberCB) {
-			*obj = dynamic_cast<ISampleGrabberCB*>(this);
-		} else {
-			*obj = NULL;
-			return E_NOINTERFACE;
-		}
-		AddRef();
-		return S_OK;
-	}
-
-	ULONG APIENTRY AddRef() {
-		return ++refCount;
-	}
-
-	ULONG APIENTRY Release() {
-		return --refCount;
-	}
+    HRESULT APIENTRY QueryInterface(REFIID iid, void **obj) {
+        if (iid == IID_IUnknown) {
+            *obj = dynamic_cast<IUnknown*>(this);
+        } else if (iid == IID_ISampleGrabberCB) {
+            *obj = dynamic_cast<ISampleGrabberCB*>(this);
+        } else {
+            *obj = NULL;
+            return E_NOINTERFACE;
+        }
+        AddRef();
+        return S_OK;
+    }
+    
+    ULONG APIENTRY AddRef() {
+        return ++refCount;
+    }
+    
+    ULONG APIENTRY Release() {
+        return --refCount;
+    }
 
     HRESULT APIENTRY SampleCB(double, IMediaSample *) {
         return S_OK;
@@ -231,7 +224,7 @@ static HRESULT ConnectFilters(
     return hr;
 }
 
-DirectShowReadStream::DirectShowReadStream(string path) :
+DirectShowReadStream::DirectShowReadStream(QString path) :
     m_path(path),
     m_d(new D)
 {
@@ -310,7 +303,7 @@ DirectShowReadStream::DirectShowReadStream(string path) :
     }
 
     WCHAR wpath[MAX_PATH+1];
-    MultiByteToWideChar(CP_ACP, 0, path.c_str(), -1, wpath, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, path.toLocal8Bit().data(), -1, wpath, MAX_PATH);
 
     IBaseFilter *src;
     m_d->err = m_d->graphBuilder->AddSourceFilter(wpath, L"Source", &src);
@@ -346,12 +339,6 @@ DirectShowReadStream::DirectShowReadStream(string path) :
         m_error = "DirectShowReadStream: Failed to set grabber buffer mode";
         return;
     }
-
-//    m_d->err = m_d->grabber->SetOneShot(TRUE); //???
-  //  if (FAILED(m_d->err)) {
-    //    m_error = "DirectShowReadStream: Failed to set grabber read mode";
-      //  return;
-    //}
 
     static GUID guids[] = {
         // This is only here for debug purposes, so we can actually
@@ -612,14 +599,10 @@ DirectShowReadStream::D::BufferCB(double sampleTime, BYTE *, long)
         buffer->write((float *)rdbuf, samples);
     } else {
         unsigned char *c = (unsigned char *)rdbuf;
-        //cerr << "values: ";
         for (int i = 0; i < samples; ++i) {
             cvbuf[i] = convertSample(c);
-          //  cerr << cvbuf[i] << " ";
-           // if (i % 8 == 0) cerr << endl;
             c += (bitDepth / 8);
         }
-     //   cerr << endl;
         buffer->write(cvbuf, samples);
     }
 
@@ -648,20 +631,6 @@ DirectShowReadStream::~DirectShowReadStream()
     //!!! clean up properly!
 
     delete m_d;
-}
-
-vector<string>
-DirectShowReadStream::getSupportedFileExtensions()
-{
-    vector<string> extensions;
-    int count;
-    
-    //!!!
-    extensions.push_back("wav");
-    extensions.push_back("mp3");
-    extensions.push_back("wma");
-    extensions.push_back("ogg");
-    return extensions;
 }
 
 }

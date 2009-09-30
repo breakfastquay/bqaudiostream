@@ -7,20 +7,16 @@
 
 #include <QuickTime/QuickTime.h>
 
-#include <iostream>
-#include <string>
+#include "system/Debug.h"
 
 namespace Turbot
 {
 
-static AudioReadStreamBuilder<QuickTimeReadStream>
-builder(QuickTimeReadStream::getUri());
-
-QUrl
-QuickTimeReadStream::getUri()
-{
-    return QUrl("http://breakfastquay.com/rdf/turbot/fileio/QuickTimeReadStream");
-}
+AudioReadStreamBuilder<QuickTimeReadStream>
+QuickTimeReadStream::m_builder(
+    QUrl("http://breakfastquay.com/rdf/turbot/fileio/QuickTimeReadStream"),
+    QStringList() << "aiff" << "aif" << "au" << "avi" << "m4a" << "m4b" << "m4p" << "m4v" << "mov" << "mp3" << "mp4" << "wav"
+    );
 
 class QuickTimeReadStream::D
 {
@@ -34,15 +30,15 @@ public:
     Movie                        movie;
 };
 
-static std::string
+static QString
 codestr(OSErr err)
 {
     static char buffer[20];
     sprintf(buffer, "%ld", (long)err);
-    return std::string(buffer);
+    return QString(buffer);
 }
 
-QuickTimeReadStream::QuickTimeReadStream(std::string path) :
+QuickTimeReadStream::QuickTimeReadStream(QString path) :
     m_path(path),
     m_d(new D)
 {
@@ -64,7 +60,7 @@ QuickTimeReadStream::QuickTimeReadStream(std::string path) :
 
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
-         (const UInt8 *)m_path.c_str(),
+         (const UInt8 *)m_path.toLocal8Bit().data(),
          (CFIndex)m_path.length(),
          false);
 
@@ -213,20 +209,6 @@ QuickTimeReadStream::~QuickTimeReadStream()
     }
 
     delete m_d;
-}
-
-std::vector<std::string>
-QuickTimeReadStream::getSupportedFileExtensions()
-{
-    const char *exts[] = {
-	"aiff", "aif", "au", "avi", "m4a", "m4b", "m4p", "m4v",
-	"mov", "mp3", "mp4", "wav"
-    };
-    std::vector<std::string> rv;
-    for (int i = 0; i < sizeof(exts)/sizeof(exts[0]); ++i) {
-	rv.push_back(exts[i]);
-    }
-    return rv;
 }
 
 }

@@ -14,23 +14,21 @@ namespace Turbot
 class DirectShowReadStream : public AudioReadStream
 {
 public:
-    DirectShowReadStream(std::string path);
+    DirectShowReadStream(QString path);
     virtual ~DirectShowReadStream();
 
-    virtual std::string getError() const { return m_error; }
+    virtual QString getError() const { return m_error; }
 
     virtual size_t getInterleavedFrames(size_t count, float *frames);
-
-    static std::vector<std::string> getSupportedFileExtensions();
-    
-    static QUrl getUri();
     
 protected:
-    std::string m_path;
-    std::string m_error;
+    QString m_path;
+    QString m_error;
 
     class D;
     D *m_d;
+
+    static AudioReadStreamBuilder<DirectShowReadStream> m_builder;
 };
 
 }

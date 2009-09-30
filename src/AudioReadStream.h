@@ -7,9 +7,7 @@
 #include "base/TurbotTypes.h"
 #include "base/ThingFactory.h"
 
-#include <string>
-#include <vector>
-#include <QUrl>
+#include "system/Debug.h"
 
 namespace Turbot {
 
@@ -21,19 +19,19 @@ public:
     class FileDRMProtected : virtual public std::exception
     {
     public:
-        FileDRMProtected(std::string file) throw();
+        FileDRMProtected(QString file) throw();
         virtual ~FileDRMProtected() throw() { }
         virtual const char *what() const throw();
 
     protected:
-        std::string m_file;
+        QString m_file;
     };
 
     virtual ~AudioReadStream() { }
 
     bool isOK() const { return (m_channelCount > 0); }
 
-    virtual std::string getError() const { return ""; }
+    virtual QString getError() const { return ""; }
 
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
@@ -47,11 +45,13 @@ protected:
 
 template <typename T>
 class AudioReadStreamBuilder :
-    public ConcreteThingBuilder<T, AudioReadStream, std::string>
+    public ConcreteThingBuilder<T, AudioReadStream, QString>
 {
 public:
-    AudioReadStreamBuilder(QUrl uri) :
-        ConcreteThingBuilder<T, AudioReadStream, std::string>(uri) { }
+    AudioReadStreamBuilder(QUrl uri, QStringList extensions) :
+        ConcreteThingBuilder<T, AudioReadStream, QString>(uri, extensions) {
+        std::cerr << "Registering stream builder: " << uri << std::endl;
+    }
 };
 
 }

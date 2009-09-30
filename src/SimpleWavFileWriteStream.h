@@ -7,6 +7,7 @@
 #include "AudioWriteStream.h"
 
 #include <fstream>
+#include <string>
 
 namespace Turbot
 {
@@ -14,17 +15,17 @@ namespace Turbot
 class SimpleWavFileWriteStream : public AudioWriteStream
 {
 public:
-    SimpleWavFileWriteStream(std::string path, size_t channelCount, size_t sampleRate);
+    SimpleWavFileWriteStream(QString path, size_t channelCount, size_t sampleRate);
     virtual ~SimpleWavFileWriteStream();
 
-    virtual std::string getError() const { return m_error; }
+    virtual QString getError() const { return m_error; }
 
     virtual bool putInterleavedFrames(size_t count, float *frames);
     
 protected:
     int m_bitDepth;
-    std::string m_path;
-    std::string m_error;
+    QString m_path;
+    QString m_error;
     std::ofstream *m_file;
 
     void writeFormatChunk();

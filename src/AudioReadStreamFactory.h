@@ -4,8 +4,8 @@
 #ifndef _TURBOT_AUDIO_READ_STREAM_FACTORY_H_
 #define _TURBOT_AUDIO_READ_STREAM_FACTORY_H_
 
-#include <string>
-#include <vector>
+#include <QString>
+#include <QStringList>
 
 namespace Turbot {
 
@@ -16,9 +16,9 @@ class AudioReadStreamFactory
 public:
     // May throw FileOpenFailed or AudioReadStream::FileDRMProtected,
     // or simply return NULL, for failure
-    static AudioReadStream *createReadStream(std::string fileName);
+    static AudioReadStream *createReadStream(QString fileName);
 
-    static std::vector<std::string> getSupportedFileExtensions();
+    static QStringList getSupportedFileExtensions();
 };
 
 }

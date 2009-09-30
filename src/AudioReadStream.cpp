@@ -2,30 +2,22 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "AudioReadStream.h"
-
-#include <iostream>
-#include <sstream>
-
-using std::ostringstream;
-using std::string;
-using std::cerr;
-using std::endl;
+#include "system/Debug.h"
 
 namespace Turbot
 {
 	
-AudioReadStream::FileDRMProtected::FileDRMProtected(string file) throw() :
+AudioReadStream::FileDRMProtected::FileDRMProtected(QString file) throw() :
     m_file(file)
 {
-    cerr << "ERROR: File is DRM protected: " << file << endl;
+    std::cerr << "ERROR: File is DRM protected: " << file << std::endl;
 }
 
 const char *
 AudioReadStream::FileDRMProtected::what() const throw()
 {
-    ostringstream os;
-    os << "File \"" << m_file << "\" is protected by DRM";
-    return os.str().c_str();
+    return QString("File \"%1\" is protected by DRM")
+        .arg(m_file).toLocal8Bit().data();
 }
 
 }

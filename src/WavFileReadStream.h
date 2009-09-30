@@ -16,25 +16,23 @@ namespace Turbot
 class WavFileReadStream : public AudioReadStream
 {
 public:
-    WavFileReadStream(std::string path);
+    WavFileReadStream(QString path);
     virtual ~WavFileReadStream();
 
-    virtual std::string getError() const { return m_error; }
+    virtual QString getError() const { return m_error; }
 
     virtual size_t getInterleavedFrames(size_t count, float *frames);
-
-    static std::vector<std::string> getSupportedFileExtensions();
-    
-    static QUrl getUri();
     
 protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
-    std::string m_path;
-    std::string m_error;
+    QString m_path;
+    QString m_error;
 
     size_t m_offset;
+
+    static AudioReadStreamBuilder<WavFileReadStream> m_builder;
 };
 
 }

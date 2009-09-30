@@ -1,25 +1,49 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
+#ifdef HAVE_LIBSNDFILE
+
 #include "WavFileReadStream.h"
 
 #include <iostream>
 
-#ifdef HAVE_LIBSNDFILE
+#include "system/Debug.h"
 
 namespace Turbot
 {
 
-static AudioReadStreamBuilder<WavFileReadStream>
-builder(WavFileReadStream::getUri());
-
-QUrl
-WavFileReadStream::getUri()
+static QStringList
+getSupportedExtensions()
 {
-    return QUrl("http://breakfastquay.com/rdf/turbot/fileio/WavFileReadStream");
+    QStringList extensions;
+    int count;
+    
+    if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
+        extensions.push_back("wav");
+        extensions.push_back("aiff");
+        extensions.push_back("aifc");
+        extensions.push_back("aif");
+        return extensions;
+    }
+
+    SF_FORMAT_INFO info;
+    for (int i = 0; i < count; ++i) {
+        info.format = i;
+        if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
+            extensions.push_back(QString(info.extension).toLower());
+        }
+    }
+
+    return extensions;
 }
 
-WavFileReadStream::WavFileReadStream(std::string path) :
+AudioReadStreamBuilder<WavFileReadStream>
+WavFileReadStream::m_builder(
+    QUrl("http://breakfastquay.com/rdf/turbot/fileio/WavFileReadStream"),
+    getSupportedExtensions()
+    );
+
+WavFileReadStream::WavFileReadStream(QString path) :
     m_file(0),
     m_path(path),
     m_offset(0)
@@ -29,7 +53,7 @@ WavFileReadStream::WavFileReadStream(std::string path) :
 
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
-    m_file = sf_open(m_path.c_str(), SFM_READ, &m_fileInfo);
+    m_file = sf_open(m_path.toLocal8Bit().data(), SFM_READ, &m_fileInfo);
 
     if (!m_file || m_fileInfo.frames <= 0 || m_fileInfo.channels <= 0) {
 	std::cerr << "WavFileReadStream::initialize: Failed to open file \""
@@ -37,10 +61,10 @@ WavFileReadStream::WavFileReadStream(std::string path) :
 		  << sf_strerror(m_file) << ")" << std::endl;
 
 	if (m_file) {
-	    m_error = std::string("Couldn't load audio file '") +
+	    m_error = QString("Couldn't load audio file '") +
                 m_path + "':\n" + sf_strerror(m_file);
 	} else {
-	    m_error = std::string("Failed to open audio file '") +
+	    m_error = QString("Failed to open audio file '") +
 		m_path + "'";
 	}
 	return;
@@ -76,31 +100,6 @@ WavFileReadStream::getInterleavedFrames(size_t count, float *frames)
     m_offset = m_offset + readCount;
 
     return readCount;
-}
-
-std::vector<std::string>
-WavFileReadStream::getSupportedFileExtensions()
-{
-    std::vector<std::string> extensions;
-    int count;
-    
-    if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
-        extensions.push_back("wav");
-        extensions.push_back("aiff");
-        extensions.push_back("aifc");
-        extensions.push_back("aif");
-        return extensions;
-    }
-
-    SF_FORMAT_INFO info;
-    for (int i = 0; i < count; ++i) {
-        info.format = i;
-        if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.push_back(info.extension);
-        }
-    }
-
-    return extensions;
 }
 
 }

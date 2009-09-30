@@ -6,7 +6,7 @@
 
 #include "base/TurbotTypes.h"
 
-#include <string>
+#include <QString>
 
 namespace Turbot {
 
@@ -19,7 +19,7 @@ public:
 
     bool isOK() const { return (m_channelCount > 0); }
 
-    virtual std::string getError() const { return ""; }
+    virtual QString getError() const { return ""; }
 
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }

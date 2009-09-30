@@ -16,7 +16,7 @@ using std::endl;
 namespace Turbot {
 
 AudioWriteStream *
-AudioWriteStreamFactory::createWriteStream(std::string audioFileName,
+AudioWriteStreamFactory::createWriteStream(QString audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {

@@ -16,10 +16,10 @@ namespace Turbot
 class WavFileWriteStream : public AudioWriteStream
 {
 public:
-    WavFileWriteStream(std::string path, size_t channelCount, size_t sampleRate);
+    WavFileWriteStream(QString path, size_t channelCount, size_t sampleRate);
     virtual ~WavFileWriteStream();
 
-    virtual std::string getError() const { return m_error; }
+    virtual QString getError() const { return m_error; }
 
     virtual bool putInterleavedFrames(size_t count, float *frames);
     
@@ -27,8 +27,8 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
-    std::string m_path;
-    std::string m_error;
+    QString m_path;
+    QString m_error;
 };
 
 }
