@@ -1,6 +1,11 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
+#ifdef HAVE_QUICKTIME
+// Annoyingly, this doesn't like being included further down
+#include <QuickTime/QuickTime.h>
+#endif
+
 #include "AudioReadStreamFactory.h"
 #include "AudioReadStream.h"
 
@@ -17,7 +22,7 @@ typedef ThingFactory<AudioReadStream, QString>
 AudioReadStreamFactoryImpl;
 
 template <>
-AudioReadStreamFactory *
+AudioReadStreamFactoryImpl *
 AudioReadStreamFactoryImpl::m_instance = 0;
 
 AudioReadStream *

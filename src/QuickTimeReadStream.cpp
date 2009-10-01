@@ -3,9 +3,9 @@
 
 #ifdef HAVE_QUICKTIME
 
-#include "QuickTimeReadStream.h"
-
 #include <QuickTime/QuickTime.h>
+
+#include "QuickTimeReadStream.h"
 
 #include "system/Debug.h"
 

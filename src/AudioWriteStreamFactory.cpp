@@ -14,7 +14,7 @@ typedef ThingFactory<AudioWriteStream, AudioWriteStream::Target>
 AudioWriteStreamFactoryImpl;
 
 template <>
-AudioWriteStreamFactory *
+AudioWriteStreamFactoryImpl *
 AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *

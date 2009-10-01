@@ -6,6 +6,7 @@
 
 #include "base/TurbotTypes.h"
 #include "base/ThingFactory.h"
+#include "system/Debug.h"
 
 #include <QString>
 
