@@ -447,9 +447,9 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
 }
 
 size_t
-DirectShowReadStream::getInterleavedFrames(size_t count, float *frames)
+DirectShowReadStream::getFrames(size_t count, float *frames)
 {
-    cerr << "DirectShowReadStream::getInterleavedFrames(" << count << ")" << endl;
+    cerr << "DirectShowReadStream::getFrames(" << count << ")" << endl;
     m_d->mutex.lock();
 
     while (!m_d->buffer ||

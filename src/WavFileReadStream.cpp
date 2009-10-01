@@ -83,7 +83,7 @@ WavFileReadStream::~WavFileReadStream()
 }
 
 size_t
-WavFileReadStream::getInterleavedFrames(size_t count, float *frames)
+WavFileReadStream::getFrames(size_t count, float *frames)
 {
     if (!m_file || !m_channelCount) return 0;
     if (count == 0) return 0;

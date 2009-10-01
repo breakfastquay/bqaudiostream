@@ -178,7 +178,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
 }
 
 size_t
-QuickTimeReadStream::getInterleavedFrames(size_t count, float *frames)
+QuickTimeReadStream::getFrames(size_t count, float *frames)
 {
     if (!m_channelCount) return 0;
     if (count == 0) return 0;

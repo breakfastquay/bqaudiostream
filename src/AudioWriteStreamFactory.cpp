@@ -2,6 +2,9 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "AudioWriteStreamFactory.h"
+#include "AudioWriteStream.h"
+
+#include "base/ThingFactory.h"
 
 #include <QFileInfo>
 

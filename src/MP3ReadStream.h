@@ -1,22 +1,21 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_OGG_VORBIS_READ_STREAM_H_
-#define _TURBOT_OGG_VORBIS_READ_STREAM_H_
+#ifndef _TURBOT_MP3_READ_STREAM_H_
+#define _TURBOT_MP3_READ_STREAM_H_
 
 #include "AudioReadStream.h"
 
-#ifdef HAVE_OGGZ
-#ifdef HAVE_FISHSOUND
+#ifdef HAVE_MAD
 
 namespace Turbot
 {
     
-class OggVorbisReadStream : public AudioReadStream
+class MP3ReadStream : public AudioReadStream
 {
 public:
-    OggVorbisReadStream(QString path);
-    virtual ~OggVorbisReadStream();
+    MP3ReadStream(QString path);
+    virtual ~MP3ReadStream();
 
     virtual QString getError() const { return m_error; }
 
@@ -32,7 +31,6 @@ protected:
 
 }
 
-#endif
 #endif
 
 #endif

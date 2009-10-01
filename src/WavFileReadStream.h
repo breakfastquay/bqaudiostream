@@ -21,9 +21,9 @@ public:
 
     virtual QString getError() const { return m_error; }
 
-    virtual size_t getInterleavedFrames(size_t count, float *frames);
-    
 protected:
+    virtual size_t getFrames(size_t count, float *frames);
+    
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 

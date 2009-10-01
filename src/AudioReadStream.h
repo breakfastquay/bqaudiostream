@@ -6,10 +6,13 @@
 
 #include "base/TurbotTypes.h"
 #include "base/ThingFactory.h"
+#include "base/RingBuffer.h"
 
 #include "system/Debug.h"
 
 namespace Turbot {
+
+class Resampler;
 
 /* Not thread-safe -- one per thread please. */
 
@@ -27,7 +30,7 @@ public:
         QString m_file;
     };
 
-    virtual ~AudioReadStream() { }
+    virtual ~AudioReadStream();
 
     bool isOK() const { return (m_channelCount > 0); }
 
@@ -36,11 +39,29 @@ public:
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
     
-    virtual size_t getInterleavedFrames(size_t count, float *frames) = 0;
+    void setRetrievalSampleRate(size_t);
+
+    /**
+     * Retrieve \count frames of audio data (that is, \count *
+     * getChannelCount() samples) from the source and store in
+     * \frames.  Return the number of samples actually retrieved; this
+     * will differ from \count only when the end of stream is reached.
+     *
+     * If a retrieval sample rate has been set, the audio will be
+     * resampled to that rate (and \count refers to the number of
+     * frames at the retrieval rate rather than the file's original
+     * rate).
+     */
+    size_t getInterleavedFrames(size_t count, float *frames);
     
 protected:
+    AudioReadStream();
+    virtual size_t getFrames(size_t count, float *frames) = 0;
     size_t m_channelCount;
     size_t m_sampleRate;
+    size_t m_retrievalRate;
+    Resampler *m_resampler;
+    RingBuffer<float> *m_resampleBuffer;
 };
 
 template <typename T>

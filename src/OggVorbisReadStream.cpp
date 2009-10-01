@@ -144,7 +144,7 @@ OggVorbisReadStream::~OggVorbisReadStream()
 }
 
 size_t
-OggVorbisReadStream::getInterleavedFrames(size_t count, float *frames)
+OggVorbisReadStream::getFrames(size_t count, float *frames)
 {
     if (!m_channelCount) return 0;
     if (count == 0) return 0;
