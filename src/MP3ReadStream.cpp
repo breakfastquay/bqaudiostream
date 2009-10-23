@@ -7,11 +7,11 @@
 
 #include "base/RingBuffer.h"
 
-#include <mad.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-#ifndef __GNUC__
-#include <alloca.h>
-#endif
+#include <mad.h>
 
 namespace Turbot
 {
