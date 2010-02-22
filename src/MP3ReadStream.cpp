@@ -19,7 +19,7 @@ namespace Turbot
 static
 AudioReadStreamBuilder<MP3ReadStream>
 mp3builder(
-    QUrl("http://breakfastquay.com/rdf/turbot/fileio/MP3ReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/fileio/MP3ReadStream"),
     QStringList() << "mp3"
     );
 

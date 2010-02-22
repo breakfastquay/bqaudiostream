@@ -57,7 +57,7 @@ class AudioWriteStreamBuilder :
 public ConcreteThingBuilder<T, AudioWriteStream, AudioWriteStream::Target>
 {
 public:
-    AudioWriteStreamBuilder(QUrl uri, QStringList extensions) :
+    AudioWriteStreamBuilder(QString uri, QStringList extensions) :
         ConcreteThingBuilder<T, AudioWriteStream, AudioWriteStream::Target>
         (uri, extensions) {
         std::cerr << "Registering stream builder: " << uri << std::endl;

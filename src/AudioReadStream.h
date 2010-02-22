@@ -69,7 +69,7 @@ class AudioReadStreamBuilder :
     public ConcreteThingBuilder<T, AudioReadStream, QString>
 {
 public:
-    AudioReadStreamBuilder(QUrl uri, QStringList extensions) :
+    AudioReadStreamBuilder(QString uri, QStringList extensions) :
         ConcreteThingBuilder<T, AudioReadStream, QString>(uri, extensions) {
         std::cerr << "Registering stream builder: " << uri << std::endl;
     }

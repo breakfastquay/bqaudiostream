@@ -21,7 +21,7 @@ namespace Turbot
 static
 AudioReadStreamBuilder<OggVorbisReadStream>
 oggbuilder(
-    QUrl("http://breakfastquay.com/rdf/turbot/fileio/OggVorbisReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/fileio/OggVorbisReadStream"),
     QStringList() << "ogg" << "oga"
     );
 

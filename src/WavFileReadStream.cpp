@@ -40,7 +40,7 @@ getSupportedExtensions()
 static
 AudioReadStreamBuilder<WavFileReadStream>
 wavbuilder(
-    QUrl("http://breakfastquay.com/rdf/turbot/fileio/WavFileReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/fileio/WavFileReadStream"),
     getSupportedExtensions()
     );
 
