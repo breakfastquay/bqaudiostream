@@ -13,9 +13,9 @@ namespace Turbot {
 typedef ThingFactory<AudioWriteStream, AudioWriteStream::Target>
 AudioWriteStreamFactoryImpl;
 
-template <>
-AudioWriteStreamFactoryImpl *
-AudioWriteStreamFactoryImpl::m_instance = 0;
+//template <>
+//AudioWriteStreamFactoryImpl *
+//AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *
 AudioWriteStreamFactory::createWriteStream(QString audioFileName,

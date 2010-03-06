@@ -21,9 +21,9 @@ namespace Turbot {
 typedef ThingFactory<AudioReadStream, QString>
 AudioReadStreamFactoryImpl;
 
-template <>
-AudioReadStreamFactoryImpl *
-AudioReadStreamFactoryImpl::m_instance = 0;
+//template <>
+//AudioReadStreamFactoryImpl *
+//AudioReadStreamFactoryImpl::m_instance = 0;
 
 AudioReadStream *
 AudioReadStreamFactory::createReadStream(QString audioFileName)
