@@ -43,6 +43,19 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
     return 0;
 }
 
+QStringList
+AudioWriteStreamFactory::getSupportedFileExtensions()
+{
+    return AudioWriteStreamFactoryImpl::getInstance()->getTags();
+}
+
+bool
+AudioWriteStreamFactory::isExtensionSupportedFor(QString fileName)
+{
+    return getSupportedFileExtensions().contains
+        (QFileInfo(fileName).suffix().toLower());
+}
+
 }
 
 // We rather eccentrically include the C++ files here, not the

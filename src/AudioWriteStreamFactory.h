@@ -16,6 +16,10 @@ public:
     static AudioWriteStream *createWriteStream(QString fileName,
                                                size_t channelCount,
                                                size_t sampleRate);
+
+    static QStringList getSupportedFileExtensions();
+
+    static bool isExtensionSupportedFor(QString fileName);
 };
 
 }

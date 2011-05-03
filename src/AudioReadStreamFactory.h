@@ -19,6 +19,8 @@ public:
     static AudioReadStream *createReadStream(QString fileName);
 
     static QStringList getSupportedFileExtensions();
+
+    static bool isExtensionSupportedFor(QString fileName);
 };
 
 }

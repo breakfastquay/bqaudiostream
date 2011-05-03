@@ -81,6 +81,13 @@ AudioReadStreamFactory::getSupportedFileExtensions()
     return AudioReadStreamFactoryImpl::getInstance()->getTags();
 }
 
+bool
+AudioReadStreamFactory::isExtensionSupportedFor(QString fileName)
+{
+    return getSupportedFileExtensions().contains
+        (QFileInfo(fileName).suffix().toLower());
+}
+
 }
 
 // We rather eccentrically include the C++ files here, not the
