@@ -59,10 +59,12 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
     Handle dataRef; 
     OSType dataRefType;
 
+    QByteArray ba = m_path.toLocal8Bit();
+
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
-         (const UInt8 *)m_path.toLocal8Bit().data(),
-         (CFIndex)m_path.length(),
+         (const UInt8 *)ba.data(),
+         (CFIndex)ba.length(),
          false);
 
     m_d->err = QTNewDataReferenceFromCFURL
