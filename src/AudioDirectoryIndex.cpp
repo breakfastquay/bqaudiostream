@@ -105,7 +105,6 @@ public:
     }
 
     void indexEntry(QString filePath) {
-	QMutexLocker locker(&m_mutex);
 	AudioReadStream *stream = 0;
 	bool good = true;
 	try {
@@ -120,6 +119,7 @@ public:
 		good = false;
 	    }
 	} catch (AudioReadStream::FileDRMProtected &) {
+	    QMutexLocker locker(&m_mutex);
 	    m_protected.push_back(filePath);
 	    delete stream;
 	    return;
@@ -129,6 +129,7 @@ public:
 
 	delete stream;
 
+	QMutexLocker locker(&m_mutex);
 	if (good) {
 	    m_good.push_back(filePath);
 	} else {
