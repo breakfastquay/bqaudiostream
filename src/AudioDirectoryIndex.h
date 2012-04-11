@@ -24,8 +24,31 @@ public:
      * until complete() has been emitted (or wait() has been called
      * and returned) but incremental values may be retrieved at any
      * time.
+     *
+     * If you delete the AudioDirectoryIndex during indexing, the
+     * indexing operation will be cancelled. This may block for a
+     * short period of time because cancelling is synchronous and must
+     * wait for the current file to complete indexing.
      */
     AudioDirectoryIndex(QString directoryPath /*!!! not yet: , bool recursive */);
+    
+    virtual ~AudioDirectoryIndex();
+
+    /**
+     * Block and wait until indexing is complete.
+     */
+    void wait();
+    
+    /**
+     * Return true if indexing is complete (see also complete()).
+     */
+    bool isComplete() const;
+    
+    /**
+     * Return the approximate percentage of files indexed so far, for
+     * progress reporting purposes (see also progressUpdated()).
+     */
+    int getCompletion() const;
 
     /**
      * Return the number of files indexed that can be opened by
@@ -51,43 +74,27 @@ public:
     int getProtectedFileCount() const;
 
     /**
-     * Return a list of file paths for audio files indexed that can be
-     * opened by AudioReadStreamFactory. If indexing is not yet
-     * complete, this will return the files indexed so far.
+     * Return a list of absolute file paths for audio files indexed
+     * that can be opened by AudioReadStreamFactory. If indexing is
+     * not yet complete, this will return the files indexed so far.
      */
     QStringList getGoodFiles() const;
 
     /**
-     * Return a list of file paths for audio files indexed that cannot
-     * be opened by AudioReadStreamFactory because their file types
-     * are not supported. If indexing is not yet complete, this will
-     * return the files indexed so far.
+     * Return a list of absolute file paths for audio files indexed
+     * that cannot be opened by AudioReadStreamFactory because their
+     * file types are not supported. If indexing is not yet complete,
+     * this will return the files indexed so far.
      */
     QStringList getUnsupportedFiles() const;
 
     /**
-     * Return a list of file paths for audio files indexed that cannot
-     * be opened by AudioReadStreamFactory because they are
-     * DRM-protected. If indexing is not yet complete, this will
+     * Return a list of absolute file paths for audio files indexed
+     * that cannot be opened by AudioReadStreamFactory because they
+     * are DRM-protected. If indexing is not yet complete, this will
      * return the files indexed so far.
      */
     QStringList getProtectedFiles() const;
-
-    /**
-     * Block and wait until indexing is complete.
-     */
-    void wait();
-    
-    /**
-     * Return true if indexing is complete (see also complete()).
-     */
-    bool isComplete() const;
-    
-    /**
-     * Return the approximate percentage of files indexed so far, for
-     * progress reporting purposes (see also progressUpdated()).
-     */
-    int getCompletion() const;
 
 signals:
     /**
@@ -100,6 +107,15 @@ signals:
      * Emitted when indexing is complete.
      */
     void complete();
+
+private:
+    class D;
+    friend class D;
+    D *m_d;
+
+    void cancel(); // called from dtor, not a public function
+    void emitComplete();
+    void emitProgressUpdated(int);
 };
 
 }
