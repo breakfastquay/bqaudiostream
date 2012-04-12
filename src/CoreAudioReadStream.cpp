@@ -64,15 +64,16 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
 
 #if (MAC_OS_X_VERSION_MIN_REQUIRED == 1040)
     FSRef fsref;
-    m_d->err = CFURLGetFSRef(url, &fsref);
-    if (m_d->err) {
-        m_error = "CoreAudioReadStream: Error looking up FS ref: code " + codestr(m_d->err);
+    if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
+        m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
         return;
     }
     m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
 #else
     m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
 #endif
+
+    CFRelease(url);
 
     if (m_d->err) { 
         m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);

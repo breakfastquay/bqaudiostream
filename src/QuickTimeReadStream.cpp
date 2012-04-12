@@ -70,6 +70,8 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
     m_d->err = QTNewDataReferenceFromCFURL
         (url, 0, &dataRef, &dataRefType);
 
+    CFRelease(url);
+
     if (m_d->err) { 
         m_error = "QuickTimeReadStream: Error creating data reference: code " + codestr(m_d->err);
         return;
