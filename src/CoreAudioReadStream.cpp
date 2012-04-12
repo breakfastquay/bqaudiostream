@@ -82,7 +82,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
     m_d->err = ExtAudioFileGetProperty
-	(m_d->file, kAudioFilePropertyDataFormat, &propsize, &m_d->asbd);
+	(m_d->file, kExtAudioFileProperty_FileDataFormat, &propsize, &m_d->asbd);
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in getting basic description: code " + codestr(m_d->err);
@@ -129,12 +129,13 @@ CoreAudioReadStream::getFrames(size_t count, float *frames)
     m_d->buffer.mBuffers[0].mData = frames;
 
     UInt32 framesRead = count;
-    UInt32 extractionFlags = 0;
 
-    m_d->err = ExtAudioFileRead(m_d->file, &count, &m_d->buffer);
+    m_d->err = ExtAudioFileRead(m_d->file, &framesRead, &m_d->buffer);
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in decoder: code " + codestr(m_d->err);
     }
+
+ //   std::cerr << "CoreAudioReadStream::getFrames: " << count << " frames requested across " << m_channelCount << " channel(s), " << framesRead << " frames actually read" << std::endl;
 
     return framesRead;
 }
