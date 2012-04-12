@@ -3,19 +3,20 @@
 
 #ifdef HAVE_COREAUDIO
 
-#include "CoreAudioReadStream.h"
-
-#include "system/Debug.h"
+// OS/X system headers don't cope with DEBUG
+#ifdef DEBUG
+#undef DEBUG
+#endif
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 #include <AudioToolbox/AudioToolbox.h>
+#include <AudioToolbox/ExtendedAudioFile.h>
 #else
 #include "AudioToolbox.h"
 #include "ExtendedAudioFile.h"
 #endif
 
-#include "CAStreamBasicDescription.h"
-#include "CAXException.h"
+#include "CoreAudioReadStream.h"
 
 namespace Turbot
 {
@@ -30,7 +31,7 @@ coreaudiobuilder(
 class CoreAudioReadStream::D
 {
 public:
-    D() : data(0) { }
+    D() { }
 
     ExtAudioFileRef              file;
     AudioBufferList              buffer;
@@ -61,8 +62,17 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
          (CFIndex)ba.length(),
          false);
 
-    m_d->err = ExtAudioFileOpenURL
-	(url, &m_d->file);
+#if (MAC_OS_X_VERSION_MIN_REQUIRED == 1040)
+    FSRef fsref;
+    m_d->err = CFURLGetFSRef(url, &fsref);
+    if (m_d->err) {
+        m_error = "CoreAudioReadStream: Error looking up FS ref: code " + codestr(m_d->err);
+        return;
+    }
+    m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
+#else
+    m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
+#endif
 
     if (m_d->err) { 
         m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);
@@ -81,7 +91,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_sampleRate = m_d->asbd.mSampleRate;
 
-    DEBUG << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << endl;
+    std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
 
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
