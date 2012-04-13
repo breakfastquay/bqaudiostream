@@ -35,12 +35,12 @@ public:
 
     ExtAudioFileRef              file;
     AudioBufferList              buffer;
-    OSErr                        err; 
+    OSStatus                     err; 
     AudioStreamBasicDescription  asbd;
 };
 
 static QString
-codestr(OSErr err)
+codestr(OSStatus err)
 {
     static char buffer[20];
     sprintf(buffer, "%ld", (long)err);
@@ -100,8 +100,10 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
         kAudioFormatFlagIsPacked |
         kAudioFormatFlagsNativeEndian;
     m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
-    m_d->asbd.mBytesPerFrame = sizeof(float) * m_d->asbd.mChannelsPerFrame;
+    m_d->asbd.mBytesPerFrame = sizeof(float) * m_channelCount;
     m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
+    m_d->asbd.mChannelsPerFrame = m_channelCount;
+    m_d->asbd.mReserved = 0;
 	
     m_d->err = ExtAudioFileSetProperty
 	(m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);

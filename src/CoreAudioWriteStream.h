@@ -22,6 +22,8 @@ public:
     virtual bool putInterleavedFrames(size_t count, float *frames);
     
 protected:
+    QString m_error;
+
     class D;
     D *m_d;
 };

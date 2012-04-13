@@ -5,7 +5,22 @@
 
 #ifdef HAVE_COREAUDIO
 
+// OS/X system headers don't cope with DEBUG
+#ifdef DEBUG
+#undef DEBUG
+#endif
+
+#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+#include <AudioToolbox/AudioToolbox.h>
+#include <AudioToolbox/ExtendedAudioFile.h>
+#else
+#include "AudioToolbox.h"
+#include "ExtendedAudioFile.h"
+#endif
+
 #include <iostream>
+
+#include <QDir>
 
 using std::cerr;
 using std::endl;
@@ -15,7 +30,7 @@ namespace Turbot
 
 static 
 AudioWriteStreamBuilder<CoreAudioWriteStream>
-simplewavbuilder(
+coreaudiowritebuilder(
     QString("http://breakfastquay.com/rdf/turbot/fileio/CoreAudioWriteStream"),
     QStringList() << "mp3"
     );
@@ -27,12 +42,12 @@ public:
 
     ExtAudioFileRef              file;
     AudioBufferList              buffer;
-    OSErr                        err; 
+    OSStatus                     err; 
     AudioStreamBasicDescription  asbd;
 };
 
 static QString
-codestr(OSErr err)
+codestr(OSStatus err)
 {
     static char buffer[20];
     sprintf(buffer, "%ld", (long)err);
@@ -43,6 +58,8 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     AudioWriteStream(target),
     m_d(new D)
 {
+    cerr << "CoreAudioWriteStream: file is " << getPath() << endl;
+
     m_d->asbd.mSampleRate = getSampleRate();
     m_d->asbd.mFormatID = kAudioFormatMPEGLayer3;
     m_d->asbd.mFormatFlags = 0;
@@ -52,8 +69,6 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->asbd.mChannelsPerFrame = getChannelCount();
     m_d->asbd.mBitsPerChannel = 0;
     m_d->asbd.mReserved = 0;
-
-    UInt32 flags = kAudioFileFlags_EraseFile;
 
 #if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
 
@@ -69,6 +84,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     FSRef dref;
     if (!CFURLGetFSRef(durl, &dref)) { // returns Boolean, not error code
         m_error = "CoreAudioReadStream: Error looking up FS ref (directory not found?)";
+        cerr << m_error << endl;
         return;
     }
 
@@ -80,6 +96,9 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 	 kCFStringEncodingUTF8,
 	 false);
     
+    //!!! looks like this will refuse to overwrite an existing file,
+    //!!! unlike ExtAudioFileCreateWithURL
+
     m_d->err = ExtAudioFileCreateNew
 	(&dref,
 	 filename,
@@ -99,6 +118,8 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
          (CFIndex)ba.length(),
          false);
 
+    UInt32 flags = kAudioFileFlags_EraseFile;
+
     m_d->err = ExtAudioFileCreateWithURL
 	(url,
 	 kAudioFileMP3Type,
@@ -112,6 +133,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Failed to create file: code " + codestr(m_d->err);
+        cerr << m_error << endl;
         return;
     }
 
@@ -121,10 +143,10 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
         kAudioFormatFlagIsFloat |
         kAudioFormatFlagIsPacked |
         kAudioFormatFlagsNativeEndian;
-    m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
     m_d->asbd.mFramesPerPacket = 1;
     m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
     m_d->asbd.mBytesPerFrame = sizeof(float) * getChannelCount();
+    m_d->asbd.mBytesPerPacket = sizeof(float) * getChannelCount();
     m_d->asbd.mChannelsPerFrame = getChannelCount();
     m_d->asbd.mReserved = 0;
 	
@@ -134,6 +156,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in setting client format: code " + codestr(m_d->err);
+        cerr << m_error << endl;
         return;
     }
 
@@ -157,15 +180,16 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
     if (count == 0) return true;
 
     m_d->buffer.mBuffers[0].mDataByteSize =
-        sizeof(float) * m_channelCount * count;
+        sizeof(float) * getChannelCount() * count;
     
     m_d->buffer.mBuffers[0].mData = frames;
 
     UInt32 framesToWrite = count;
 
-    m_d->err = ExtAudioFileWrite(m_d->file, &framesToWrite, &m_d->buffer);
+    m_d->err = ExtAudioFileWrite(m_d->file, framesToWrite, &m_d->buffer);
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in encoder: code " + codestr(m_d->err);
+        cerr << m_error << endl;
 	return false;
     }
                 
