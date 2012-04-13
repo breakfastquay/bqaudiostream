@@ -27,8 +27,6 @@ protected:
 
     class D;
     D *m_d;
-
-    size_t m_offset;
 };
 
 }
