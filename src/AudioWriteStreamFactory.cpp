@@ -70,4 +70,5 @@ AudioWriteStreamFactory::isExtensionSupportedFor(QString fileName)
 
 #include "WavFileWriteStream.cpp"
 #include "SimpleWavFileWriteStream.cpp"
+#include "CoreAudioWriteStream.cpp"
 
