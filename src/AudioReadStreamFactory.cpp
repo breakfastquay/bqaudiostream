@@ -104,4 +104,5 @@ AudioReadStreamFactory::isExtensionSupportedFor(QString fileName)
 #include "QuickTimeReadStream.cpp"
 #include "OggVorbisReadStream.cpp"
 #include "DirectShowReadStream.cpp"
+#include "CoreAudioReadStream.cpp"
 

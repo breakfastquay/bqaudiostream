@@ -37,6 +37,10 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
 
     if (s && s->isOK() && s->getError() == "") {
         return s;
+    } else if (s) {
+        std::cerr << "Error with recommended writer: \""
+                  << s->getError() << "\""
+                  << std::endl;
     }
 
     delete s;
@@ -70,4 +74,5 @@ AudioWriteStreamFactory::isExtensionSupportedFor(QString fileName)
 
 #include "WavFileWriteStream.cpp"
 #include "SimpleWavFileWriteStream.cpp"
+#include "CoreAudioWriteStream.cpp"
 
