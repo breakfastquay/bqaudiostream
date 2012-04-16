@@ -32,7 +32,7 @@ static
 AudioWriteStreamBuilder<CoreAudioWriteStream>
 coreaudiowritebuilder(
     QString("http://breakfastquay.com/rdf/turbot/fileio/CoreAudioWriteStream"),
-    QStringList() << "mp3"
+    QStringList() << "m4a"
     );
 
 class CoreAudioWriteStream::D
@@ -49,9 +49,14 @@ public:
 static QString
 codestr(OSStatus err)
 {
-    static char buffer[20];
-    sprintf(buffer, "%ld", (long)err);
-    return QString(buffer);
+    char text[5];
+    UInt32 uerr = err;
+    text[0] = (uerr >> 24) & 0xff;
+    text[1] = (uerr >> 16) & 0xff;
+    text[2] = (uerr >> 8) & 0xff;
+    text[3] = (uerr) & 0xff;
+    text[4] = '\0';
+    return QString("%1 (%2)").arg(err).arg(QString::fromAscii(text));
 }
 
 CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
@@ -60,15 +65,13 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 {
     cerr << "CoreAudioWriteStream: file is " << getPath() << endl;
 
+    UInt32 propsize = sizeof(AudioStreamBasicDescription);
+
+    m_d->asbd.mFormatID = kAudioFormatMPEG4AAC;
     m_d->asbd.mSampleRate = getSampleRate();
-    m_d->asbd.mFormatID = kAudioFormatMPEGLayer3;
-    m_d->asbd.mFormatFlags = 0;
-    m_d->asbd.mBytesPerPacket = 0; //???
-    m_d->asbd.mFramesPerPacket = 0; //???
-    m_d->asbd.mBytesPerFrame = 0;
     m_d->asbd.mChannelsPerFrame = getChannelCount();
-    m_d->asbd.mBitsPerChannel = 0;
-    m_d->asbd.mReserved = 0;
+    m_d->err = AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, 0, 0,
+                                      &propsize, &m_d->asbd);
 
 #if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
 
@@ -95,14 +98,16 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
          (CFIndex)fba.length(),
 	 kCFStringEncodingUTF8,
 	 false);
-    
-    //!!! looks like this will refuse to overwrite an existing file,
-    //!!! unlike ExtAudioFileCreateWithURL
+
+    // Unlike ExtAudioFileCreateWithURL, ExtAudioFileCreateNew
+    // apparently cannot be told to overwrite an existing file
+    QFile qfi(getPath());
+    if (qfi.exists()) qfi.remove();
 
     m_d->err = ExtAudioFileCreateNew
 	(&dref,
 	 filename,
-	 kAudioFileMP3Type,
+	 kAudioFileM4AType,
 	 &m_d->asbd,
 	 0,
 	 &m_d->file);
@@ -122,7 +127,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 
     m_d->err = ExtAudioFileCreateWithURL
 	(url,
-	 kAudioFileMP3Type,
+	 kAudioFileM4AType,
 	 &m_d->asbd,
 	 0,
 	 flags,
@@ -150,7 +155,6 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->asbd.mChannelsPerFrame = getChannelCount();
     m_d->asbd.mReserved = 0;
 	
-    UInt32 propsize = sizeof(AudioStreamBasicDescription);
     m_d->err = ExtAudioFileSetProperty
 	(m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);
     

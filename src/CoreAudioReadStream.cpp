@@ -42,9 +42,14 @@ public:
 static QString
 codestr(OSStatus err)
 {
-    static char buffer[20];
-    sprintf(buffer, "%ld", (long)err);
-    return QString(buffer);
+    char text[5];
+    UInt32 uerr = err;
+    text[0] = (uerr >> 24) & 0xff;
+    text[1] = (uerr >> 16) & 0xff;
+    text[2] = (uerr >> 8) & 0xff;
+    text[3] = (uerr) & 0xff;
+    text[4] = '\0';
+    return QString("%1 (%2)").arg(err).arg(QString::fromAscii(text));
 }
 
 CoreAudioReadStream::CoreAudioReadStream(QString path) :
@@ -79,6 +84,10 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
         m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);
         return;
     }
+    if (!m_d->file) { 
+        m_error = "CoreAudioReadStream: Failed to open file, but no error reported!";
+        return;
+    }
     
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
     m_d->err = ExtAudioFileGetProperty
@@ -94,6 +103,9 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
 
     std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
 
+
+    m_d->asbd.mSampleRate = getSampleRate();
+
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |
@@ -101,8 +113,8 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
         kAudioFormatFlagsNativeEndian;
     m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
     m_d->asbd.mBytesPerFrame = sizeof(float) * m_channelCount;
-    m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
-    m_d->asbd.mChannelsPerFrame = m_channelCount;
+    m_d->asbd.mBytesPerPacket = sizeof(float) * m_channelCount;
+    m_d->asbd.mFramesPerPacket = 1;
     m_d->asbd.mReserved = 0;
 	
     m_d->err = ExtAudioFileSetProperty

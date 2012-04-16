@@ -13,6 +13,12 @@ class AudioWriteStream;
 class AudioWriteStreamFactory
 {
 public:
+    /**
+     * Create and return a write stream object for the given audio
+     * file name, if possible. The audio file format will be deduced
+     * from the file extension. If the file already exists, it will be
+     * silently overwritten.
+     */
     static AudioWriteStream *createWriteStream(QString fileName,
                                                size_t channelCount,
                                                size_t sampleRate);
