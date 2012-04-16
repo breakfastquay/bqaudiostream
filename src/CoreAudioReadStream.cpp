@@ -35,16 +35,21 @@ public:
 
     ExtAudioFileRef              file;
     AudioBufferList              buffer;
-    OSErr                        err; 
+    OSStatus                     err; 
     AudioStreamBasicDescription  asbd;
 };
 
 static QString
-codestr(OSErr err)
+codestr(OSStatus err)
 {
-    static char buffer[20];
-    sprintf(buffer, "%ld", (long)err);
-    return QString(buffer);
+    char text[5];
+    UInt32 uerr = err;
+    text[0] = (uerr >> 24) & 0xff;
+    text[1] = (uerr >> 16) & 0xff;
+    text[2] = (uerr >> 8) & 0xff;
+    text[3] = (uerr) & 0xff;
+    text[4] = '\0';
+    return QString("%1 (%2)").arg(err).arg(QString::fromAscii(text));
 }
 
 CoreAudioReadStream::CoreAudioReadStream(QString path) :
@@ -62,7 +67,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
          (CFIndex)ba.length(),
          false);
 
-#if (MAC_OS_X_VERSION_MIN_REQUIRED == 1040)
+#if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
     FSRef fsref;
     if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
         m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
@@ -77,6 +82,10 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
 
     if (m_d->err) { 
         m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);
+        return;
+    }
+    if (!m_d->file) { 
+        m_error = "CoreAudioReadStream: Failed to open file, but no error reported!";
         return;
     }
     
@@ -94,14 +103,19 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
 
     std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
 
+
+    m_d->asbd.mSampleRate = getSampleRate();
+
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |
         kAudioFormatFlagIsPacked |
         kAudioFormatFlagsNativeEndian;
     m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
-    m_d->asbd.mBytesPerFrame = sizeof(float) * m_d->asbd.mChannelsPerFrame;
-    m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
+    m_d->asbd.mBytesPerFrame = sizeof(float) * m_channelCount;
+    m_d->asbd.mBytesPerPacket = sizeof(float) * m_channelCount;
+    m_d->asbd.mFramesPerPacket = 1;
+    m_d->asbd.mReserved = 0;
 	
     m_d->err = ExtAudioFileSetProperty
 	(m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);
