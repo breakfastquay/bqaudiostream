@@ -18,7 +18,7 @@ AudioWriteStreamFactoryImpl;
 //AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *
-AudioWriteStreamFactory::createWriteStream(QString audioFileName,
+AudioWriteStreamFactory::createWriteStreamE(QString audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {
@@ -30,21 +30,7 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    try {
-        s = f->createFor(extension, target);
-    } catch (...) {
-    }
-
-    if (s && s->isOK() && s->getError() == "") {
-        return s;
-    } else if (s) {
-        std::cerr << "Error with recommended writer: \""
-                  << s->getError() << "\""
-                  << std::endl;
-    }
-
-    delete s;
-    return 0;
+    return f->createFor(extension, target);
 }
 
 QStringList

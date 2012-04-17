@@ -23,7 +23,7 @@ public:
 
     virtual QString getError() const { return m_error; }
 
-    virtual bool putInterleavedFrames(size_t count, float *frames);
+    virtual void putInterleavedFrames(size_t count, float *frames);
     
 protected:
     int m_bitDepth;

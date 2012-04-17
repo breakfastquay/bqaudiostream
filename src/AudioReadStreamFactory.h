@@ -14,9 +14,17 @@ class AudioReadStream;
 class AudioReadStreamFactory
 {
 public:
-    // May throw FileOpenFailed or AudioReadStream::FileDRMProtected,
-    // or simply return NULL, for failure
-    static AudioReadStream *createReadStream(QString fileName);
+    /**
+     * Create and return a read stream object for the given audio file
+     * name, if possible. The audio format will be deduced from the
+     * file extension.
+     *
+     * May throw FileNotFound, FileOpenFailed,
+     * AudioReadStream::FileDRMProtected, InvalidFileFormat, or
+     * FileOperationFailed. May also return NULL if the file extension
+     * is unrecognised.
+     */
+    static AudioReadStream *createReadStreamE(QString fileName);
 
     static QStringList getSupportedFileExtensions();
 

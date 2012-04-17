@@ -46,12 +46,14 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
+    if (!QFile(m_path).exists()) throw FileNotFound(m_path);
+
     long QTversion;
 
     m_d->err = Gestalt(gestaltQuickTime,&QTversion);
     if ((m_d->err != noErr) || (QTversion < 0x07000000)) {
         m_error = "QuickTimeReadStream: Failed to find a suitable version of QuickTime (version 7 or above required)";
-        return;
+        throw FileOperationFailed(m_path, "QuickTime initialise");
     }
 
     EnterMovies();
@@ -74,7 +76,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
 
     if (m_d->err) { 
         m_error = "QuickTimeReadStream: Error creating data reference: code " + codestr(m_d->err);
-        return;
+        throw FileReadFailed(m_path);
     }
     
     short fileID = movieInDataForkResID; 
@@ -85,7 +87,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
     DisposeHandle(dataRef);
     if (m_d->err) { 
         m_error = "QuickTimeReadStream: Error creating new movie: code " + codestr(m_d->err); 
-        return;
+        throw InvalidFileFormat(m_path);
     }
 
     Boolean isProtected = 0;
@@ -114,7 +116,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
 	
     if (m_d->err && m_d->err != kQTPropertyNotSupportedErr) { 
         m_error = "QuickTimeReadStream: Error checking for DRM in QuickTime decoder: code " + codestr(m_d->err);
-        return;
+        throw FileOperationFailed(m_path, "retrieve DRM status");
     } else if (!m_d->err && isProtected) { 
         throw FileDRMProtected(path);
     }
@@ -124,18 +126,18 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
         m_d->err = GetMoviesError();
         if (m_d->err) {
             m_error = "QuickTimeReadStream: Error in decoder activation: code " + codestr(m_d->err);
-            return;
+            throw FileOperationFailed(m_path, "activate QuickTime decoder");
         }
     } else {
 	m_error = "QuickTimeReadStream: Error in decoder: Movie object not valid";
-	return;
+        throw FileOperationFailed(m_path, "retrieve QuickTime decoder");
     }
     
     m_d->err = MovieAudioExtractionBegin
         (m_d->movie, 0, &m_d->extractionSessionRef);
     if (m_d->err) {
         m_error = "QuickTimeReadStream: Error in decoder extraction init: code " + codestr(m_d->err);
-        return;
+        throw FileOperationFailed(m_path, "initialise QuickTime decoder");
     }
 
     m_d->err = MovieAudioExtractionGetProperty
@@ -147,7 +149,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
 
     if (m_d->err) {
         m_error = "QuickTimeReadStream: Error in decoder property get: code " + codestr(m_d->err);
-        return;
+        throw FileOperationFailed(m_path, "get decoder property");
     }
 	
     m_channelCount = m_d->asbd.mChannelsPerFrame;
@@ -172,8 +174,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
 
     if (m_d->err) {
         m_error = "QuickTimeReadStream: Error in decoder property set: code " + codestr(m_d->err);
-        m_channelCount = 0; // so isOK() returns false
-        return;
+        throw FileOperationFailed(m_path, "set decoder property");
     }
     m_d->buffer.mNumberBuffers = 1;
     m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
@@ -199,6 +200,7 @@ QuickTimeReadStream::getFrames(size_t count, float *frames)
         (m_d->extractionSessionRef, &framesRead, &m_d->buffer, &extractionFlags);
     if (m_d->err) {
         m_error = "QuickTimeReadStream: Error in decoder: code " + codestr(m_d->err);
+        throw InvalidFileFormat(m_path, "error in decoder");
     }
 
     return framesRead;
