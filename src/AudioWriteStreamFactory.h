@@ -19,8 +19,10 @@ public:
      * from the file extension. If the file already exists, it will be
      * silently overwritten.
      *
-     * May throw FailedToWriteFile or FileOperationFailed. May also
-     * return NULL if the file extension is unrecognised.
+     * May throw FailedToWriteFile or FileOperationFailed.
+     *
+     * Returns NULL if there is no read stream registered for the file
+     * extension.
      */
     static AudioWriteStream *createWriteStreamE(QString fileName,
                                                size_t channelCount,

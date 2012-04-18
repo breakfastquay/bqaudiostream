@@ -21,8 +21,10 @@ public:
      *
      * May throw FileNotFound, FileOpenFailed,
      * AudioReadStream::FileDRMProtected, InvalidFileFormat, or
-     * FileOperationFailed. May also return NULL if the file extension
-     * is unrecognised.
+     * FileOperationFailed.
+     *
+     * Returns NULL if there is no read stream registered for the file
+     * extension.
      */
     static AudioReadStream *createReadStreamE(QString fileName);
 
