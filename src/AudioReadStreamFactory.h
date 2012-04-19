@@ -28,7 +28,7 @@ public:
      * registered for the file extension, it will throw
      * UnknownFileType.)
      */
-    static AudioReadStream *createReadStreamE(QString fileName);
+    static AudioReadStream *createReadStream(QString fileName);
 
     static QStringList getSupportedFileExtensions();
 

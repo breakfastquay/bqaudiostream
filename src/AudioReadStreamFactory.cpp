@@ -27,7 +27,7 @@ AudioReadStreamFactoryImpl;
 //AudioReadStreamFactoryImpl::m_instance = 0;
 
 AudioReadStream *
-AudioReadStreamFactory::createReadStreamE(QString audioFileName)
+AudioReadStreamFactory::createReadStream(QString audioFileName)
 {
     AudioReadStream *s = 0;
 

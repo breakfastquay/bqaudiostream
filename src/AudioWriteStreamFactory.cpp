@@ -19,7 +19,7 @@ AudioWriteStreamFactoryImpl;
 //AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *
-AudioWriteStreamFactory::createWriteStreamE(QString audioFileName,
+AudioWriteStreamFactory::createWriteStream(QString audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {

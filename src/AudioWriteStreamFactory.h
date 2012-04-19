@@ -27,7 +27,7 @@ public:
      * registered for the file extension, it will throw
      * UnknownFileType.)
      */
-    static AudioWriteStream *createWriteStreamE(QString fileName,
+    static AudioWriteStream *createWriteStream(QString fileName,
                                                size_t channelCount,
                                                size_t sampleRate);
 
