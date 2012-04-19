@@ -121,9 +121,11 @@ OggVorbisReadStream::OggVorbisReadStream(QString path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
+    if (!QFile(m_path).exists()) throw FileNotFound(m_path);
+
     if (!(m_d->m_oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
 	m_error = QString("File \"%1\" is not an OGG file.").arg(path);
-	return;
+        throw InvalidFileFormat(m_path);
     }
 
     FishSoundInfo fsinfo;

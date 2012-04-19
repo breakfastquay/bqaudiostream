@@ -10,6 +10,7 @@
 #include "AudioReadStream.h"
 
 #include "base/ThingFactory.h"
+#include "base/Exceptions.h"
 #include "system/Debug.h"
 
 #include <QFileInfo>
@@ -34,45 +35,16 @@ AudioReadStreamFactory::createReadStream(QString audioFileName)
 
     AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
 
-    // Try to use a reader that has actually registered an interest in
-    // this extension, first
+    // Earlier versions of this code would first try to use a reader
+    // that had actually registered an interest in this extension,
+    // then fall back (if that failed) to trying every reader in
+    // order. But we rely on extensions so much anyway, it's probably
+    // more predictable always to use only the reader that has
+    // registered the extension (if there is one).
 
-    try {
-        s = f->createFor(extension, audioFileName);
-    } catch (...) {
-    }
-
-    if (s && s->isOK() && s->getError() == "") {
-        return s;
-    } else if (s) {
-        std::cerr << "Error with recommended reader: \""
-                  << s->getError() << "\""
-                  << std::endl;
-    }
-
-    delete s;
-    s = 0;
-
-    // If that fails, try all readers in arbitrary order
-
-    AudioReadStreamFactoryImpl::URISet uris = f->getURIs();
-
-    for (AudioReadStreamFactoryImpl::URISet::const_iterator i = uris.begin();
-         i != uris.end(); ++i) {
-
-        try {
-            s = f->create(*i, audioFileName);
-        } catch (UnknownThingException) { }
-
-        if (s && s->isOK() && s->getError() == "") {
-            return s;
-        }
-
-        delete s;
-        s = 0;
-    }
-
-    return 0;
+    AudioReadStream *stream = f->createFor(extension, audioFileName);
+    if (!stream) throw UnknownFileType(audioFileName);
+    return stream;
 }
 
 QStringList

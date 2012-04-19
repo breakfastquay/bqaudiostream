@@ -32,8 +32,6 @@ public:
 
     virtual ~AudioReadStream();
 
-    bool isOK() const { return (m_channelCount > 0); }
-
     virtual QString getError() const { return ""; }
 
     size_t getChannelCount() const { return m_channelCount; }
@@ -51,6 +49,8 @@ public:
      * resampled to that rate (and \count refers to the number of
      * frames at the retrieval rate rather than the file's original
      * rate).
+     *
+     * May throw InvalidFileFormat if decoding fails.
      */
     size_t getInterleavedFrames(size_t count, float *frames);
     

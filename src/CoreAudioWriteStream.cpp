@@ -88,7 +88,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     if (!CFURLGetFSRef(durl, &dref)) { // returns Boolean, not error code
         m_error = "CoreAudioReadStream: Error looking up FS ref (directory not found?)";
         cerr << m_error << endl;
-        return;
+        throw FailedToWriteFile(getPath());
     }
 
     QByteArray fba = QFileInfo(getPath()).fileName().toUtf8();
@@ -139,7 +139,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Failed to create file: code " + codestr(m_d->err);
         cerr << m_error << endl;
-        return;
+        throw FailedToWriteFile(getPath());
     }
 
     m_d->asbd.mSampleRate = getSampleRate();
@@ -161,7 +161,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in setting client format: code " + codestr(m_d->err);
         cerr << m_error << endl;
-        return;
+        throw FileOperationFailed(getPath(), "set client format");
     }
 
     m_d->buffer.mNumberBuffers = 1;
@@ -177,11 +177,10 @@ CoreAudioWriteStream::~CoreAudioWriteStream()
     }
 }
 
-bool
+void
 CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
 {
-    if (!m_d->file || !getChannelCount()) return false;
-    if (count == 0) return true;
+    if (count == 0) return;
 
     m_d->buffer.mBuffers[0].mDataByteSize =
         sizeof(float) * getChannelCount() * count;
@@ -194,10 +193,8 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in encoder: code " + codestr(m_d->err);
         cerr << m_error << endl;
-	return false;
+        throw FileOperationFailed(m_path, "encode");
     }
-                
-    return true;
 }
 
 }

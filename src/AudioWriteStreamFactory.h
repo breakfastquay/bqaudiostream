@@ -18,6 +18,14 @@ public:
      * file name, if possible. The audio file format will be deduced
      * from the file extension. If the file already exists, it will be
      * silently overwritten.
+     *
+     * May throw FailedToWriteFile, FileOperationFailed, or
+     * UnknownFileType.
+     *
+     * This function never returns NULL; it will always throw an
+     * exception instead. (If there is simply no write stream
+     * registered for the file extension, it will throw
+     * UnknownFileType.)
      */
     static AudioWriteStream *createWriteStream(QString fileName,
                                                size_t channelCount,
