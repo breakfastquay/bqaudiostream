@@ -20,11 +20,13 @@ public:
      * file extension.
      *
      * May throw FileNotFound, FileOpenFailed,
-     * AudioReadStream::FileDRMProtected, InvalidFileFormat, or
-     * FileOperationFailed.
+     * AudioReadStream::FileDRMProtected, InvalidFileFormat,
+     * FileOperationFailed, or UnknownFileType.
      *
-     * Returns NULL if there is no read stream registered for the file
-     * extension.
+     * This function never returns NULL; it will always throw an
+     * exception instead. (If there is simply no read stream
+     * registered for the file extension, it will throw
+     * UnknownFileType.)
      */
     static AudioReadStream *createReadStreamE(QString fileName);
 

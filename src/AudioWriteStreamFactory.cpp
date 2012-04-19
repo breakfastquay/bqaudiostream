@@ -5,6 +5,7 @@
 #include "AudioWriteStream.h"
 
 #include "base/ThingFactory.h"
+#include "base/Exceptions.h"
 
 #include <QFileInfo>
 
@@ -30,7 +31,9 @@ AudioWriteStreamFactory::createWriteStreamE(QString audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    return f->createFor(extension, target);
+    AudioWriteStream *stream = f->createFor(extension, target);
+    if (!stream) throw UnknownFileType(audioFileName);
+    return stream;
 }
 
 QStringList

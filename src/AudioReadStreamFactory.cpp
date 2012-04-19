@@ -10,6 +10,7 @@
 #include "AudioReadStream.h"
 
 #include "base/ThingFactory.h"
+#include "base/Exceptions.h"
 #include "system/Debug.h"
 
 #include <QFileInfo>
@@ -41,7 +42,9 @@ AudioReadStreamFactory::createReadStreamE(QString audioFileName)
     // more predictable always to use only the reader that has
     // registered the extension (if there is one).
 
-    return f->createFor(extension, audioFileName);
+    AudioReadStream *stream = f->createFor(extension, audioFileName);
+    if (!stream) throw UnknownFileType(audioFileName);
+    return stream;
 }
 
 QStringList
