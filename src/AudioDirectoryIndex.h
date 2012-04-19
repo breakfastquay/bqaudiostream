@@ -16,9 +16,9 @@ class AudioDirectoryIndex : public QObject
 public:
     /**
      * Start reading the given directory and indexing the audio files
-     * in it. Indexing involves opening each file with
-     * AudioReadStreamFactory to determine whether it is actually of a
-     * supported type.
+     * in it. Indexing involves opening each file, in alphanumeric
+     * order, with AudioReadStreamFactory to determine whether it is
+     * actually of a supported type.
      *
      * Indexing happens asynchronously; the full list is not available
      * until complete() has been emitted (or wait() has been called

@@ -77,7 +77,8 @@ public:
 
     void index(QDir dir) {
 
-	QStringList entries = dir.entryList(QDir::Files | QDir::Readable);
+	QStringList entries = dir.entryList(QDir::Files | QDir::Readable,
+                                            QDir::Name);
 	m_total = entries.count();
 
 	foreach (QString entry, entries) {
