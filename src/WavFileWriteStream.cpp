@@ -5,6 +5,8 @@
 
 #include "WavFileWriteStream.h"
 
+#include "base/Exceptions.h"
+
 #include "system/Debug.h"
 
 #include <cstring>
@@ -36,8 +38,7 @@ WavFileWriteStream::WavFileWriteStream(Target target) :
 
         m_error = QString("Failed to open audio file '") +
             getPath() + "' for writing";
-        m_target.invalidate();
-	return;
+        throw FailedToWriteFile(getPath());
     }
 }
 
@@ -46,15 +47,16 @@ WavFileWriteStream::~WavFileWriteStream()
     if (m_file) sf_close(m_file);
 }
 
-bool
+void
 WavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
 {
-    if (!m_file || !getChannelCount()) return false;
-    if (count == 0) return false;
+    if (count == 0) return;
 
     sf_count_t written = sf_writef_float(m_file, frames, count);
 
-    return (written == count);
+    if (written != count) {
+        throw FileOperationFailed(getPath(), "write sf data");
+    }
 }
 
 }

@@ -34,8 +34,7 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
         cerr << "SimpleWavFileWriteStream: Failed to open output file for writing" << endl;
         m_error = QString("Failed to open audio file '") +
             getPath() + "' for writing";
-        m_target.invalidate();
-        return;
+        throw FailedToWriteFile(getPath());
     }
 
     writeFormatChunk();
@@ -135,11 +134,10 @@ SimpleWavFileWriteStream::writeFormatChunk()
     putBytes(outString);
 }
 
-bool
+void
 SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
 {
-    if (!m_file || !getChannelCount()) return false;
-    if (count == 0) return false;
+    if (count == 0) return;
 
     for (size_t i = 0; i < count; ++i) {
         for (size_t c = 0; c < getChannelCount(); ++c) {
@@ -171,8 +169,6 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
             putBytes(ubuf, m_bitDepth / 8);
         }
     }
-                
-    return true;
 }
 
 }

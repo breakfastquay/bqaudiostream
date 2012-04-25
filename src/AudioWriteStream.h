@@ -27,8 +27,6 @@ public:
         size_t getChannelCount() const { return m_channelCount; }
         size_t getSampleRate() const { return m_sampleRate; }
 
-        void invalidate() { m_channelCount = 0; }
-
     private:
         QString m_path;
         size_t m_channelCount;
@@ -37,15 +35,16 @@ public:
 
     virtual ~AudioWriteStream() { }
 
-    bool isOK() const { return (m_target.getChannelCount() > 0); }
-
     virtual QString getError() const { return ""; }
 
     QString getPath() const { return m_target.getPath(); }
     size_t getChannelCount() const { return m_target.getChannelCount(); }
     size_t getSampleRate() const { return m_target.getSampleRate(); }
     
-    virtual bool putInterleavedFrames(size_t count, float *frames) = 0;
+    /**
+     * May throw FileOperationFailed if encoding fails.
+     */
+    virtual void putInterleavedFrames(size_t count, float *frames) = 0;
     
 protected:
     AudioWriteStream(Target t) : m_target(t) { }

@@ -5,6 +5,7 @@
 #include "AudioWriteStream.h"
 
 #include "base/ThingFactory.h"
+#include "base/Exceptions.h"
 
 #include <QFileInfo>
 
@@ -30,21 +31,9 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    try {
-        s = f->createFor(extension, target);
-    } catch (...) {
-    }
-
-    if (s && s->isOK() && s->getError() == "") {
-        return s;
-    } else if (s) {
-        std::cerr << "Error with recommended writer: \""
-                  << s->getError() << "\""
-                  << std::endl;
-    }
-
-    delete s;
-    return 0;
+    AudioWriteStream *stream = f->createFor(extension, target);
+    if (!stream) throw UnknownFileType(audioFileName);
+    return stream;
 }
 
 QStringList
