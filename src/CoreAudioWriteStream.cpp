@@ -193,7 +193,7 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in encoder: code " + codestr(m_d->err);
         cerr << m_error << endl;
-        throw FileOperationFailed(m_path, "encode");
+        throw FileOperationFailed(getPath(), "encode");
     }
 }
 
