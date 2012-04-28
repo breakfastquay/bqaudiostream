@@ -75,6 +75,11 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 
 #if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
 
+    // Unlike ExtAudioFileCreateWithURL, ExtAudioFileCreateNew
+    // apparently cannot be told to overwrite an existing file
+    QFile qfi(getPath());
+    if (qfi.exists()) qfi.remove();
+
     QDir dir = QFileInfo(getPath()).dir();
     QByteArray dba = dir.absolutePath().toLocal8Bit();
 
@@ -98,11 +103,6 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
          (CFIndex)fba.length(),
 	 kCFStringEncodingUTF8,
 	 false);
-
-    // Unlike ExtAudioFileCreateWithURL, ExtAudioFileCreateNew
-    // apparently cannot be told to overwrite an existing file
-    QFile qfi(getPath());
-    if (qfi.exists()) qfi.remove();
 
     m_d->err = ExtAudioFileCreateNew
 	(&dref,
@@ -147,8 +147,6 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->asbd.mSampleRate = getSampleRate();
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mChannelsPerFrame = getChannelCount();
-    AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, 0, 0,
-                           &propsize, &m_d->asbd);
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |
         kAudioFormatFlagIsPacked |
@@ -158,6 +156,13 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->asbd.mBytesPerFrame = sizeof(float) * getChannelCount();
     m_d->asbd.mBytesPerPacket = sizeof(float) * getChannelCount();
 	
+    cerr << "Client format contains:" << endl;
+    for (int i = 0; i < sizeof(AudioStreamBasicDescription); ++i) {
+        if (i % 8 == 0) cerr << endl;
+        cerr << int(((char *)(&m_d->asbd))[i]) << " ";
+    }
+    cerr << endl;
+
     m_d->err = ExtAudioFileSetProperty
 	(m_d->file, kExtAudioFileProperty_ClientDataFormat,
          sizeof(AudioStreamBasicDescription), &m_d->asbd);
@@ -165,7 +170,18 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in setting client format: code " + codestr(m_d->err);
         cerr << m_error << endl;
+	ExtAudioFileDispose(m_d->file);
         throw FileOperationFailed(getPath(), "set client format");
+    }
+
+    // Initialise writes
+    m_d->err = ExtAudioFileWriteAsync(m_d->file, 0, 0);
+    
+    if (m_d->err) {
+        m_error = "CoreAudioWriteStream: Error in initialising file writes: code " + codestr(m_d->err);
+        cerr << m_error << endl;
+	ExtAudioFileDispose(m_d->file);
+        throw FileOperationFailed(getPath(), "initialise file writes");
     }
 
     m_d->buffer.mNumberBuffers = 1;
@@ -177,6 +193,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 CoreAudioWriteStream::~CoreAudioWriteStream()
 {
     if (m_d->file) {
+        cerr << "CoreAudioWriteStream::~CoreAudioWriteStream: disposing" << endl;
 	ExtAudioFileDispose(m_d->file);
     }
 }
@@ -193,7 +210,7 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
 
     UInt32 framesToWrite = count;
 
-    m_d->err = ExtAudioFileWrite(m_d->file, framesToWrite, &m_d->buffer);
+    m_d->err = ExtAudioFileWriteAsync(m_d->file, framesToWrite, &m_d->buffer);
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in encoder: code " + codestr(m_d->err);
         cerr << m_error << endl;
