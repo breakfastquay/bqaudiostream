@@ -34,6 +34,24 @@ public:
     static QStringList getSupportedFileExtensions();
 
     static bool isExtensionSupportedFor(QString fileName);
+
+    /**
+     * Return a "preferred" and definitely supported file extension
+     * for writing uncompressed audio files.
+     *
+     * Returns an empty string if no sufficiently mainstream
+     * uncompressed format is supported.
+     */
+    static QString getDefaultUncompressedFileExtension();
+
+    /**
+     * Return a "preferred" and definitely supported file extension
+     * for writing lossily compressed audio files.
+     *
+     * Returns an empty string if no sufficiently mainstream lossy
+     * format is supported.
+     */
+    static QString getDefaultLossyFileExtension();
 };
 
 }

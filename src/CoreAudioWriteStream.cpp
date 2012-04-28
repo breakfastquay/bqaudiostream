@@ -63,7 +63,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     AudioWriteStream(target),
     m_d(new D)
 {
-    cerr << "CoreAudioWriteStream: file is " << getPath() << endl;
+    cerr << "CoreAudioWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
 
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
 
@@ -142,8 +142,13 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
         throw FailedToWriteFile(getPath());
     }
 
+    memset(&m_d->asbd, 0, sizeof(AudioStreamBasicDescription));
+    propsize = sizeof(AudioStreamBasicDescription);
     m_d->asbd.mSampleRate = getSampleRate();
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
+    m_d->asbd.mChannelsPerFrame = getChannelCount();
+    AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, 0, 0,
+                           &propsize, &m_d->asbd);
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |
         kAudioFormatFlagIsPacked |
@@ -152,11 +157,10 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
     m_d->asbd.mBytesPerFrame = sizeof(float) * getChannelCount();
     m_d->asbd.mBytesPerPacket = sizeof(float) * getChannelCount();
-    m_d->asbd.mChannelsPerFrame = getChannelCount();
-    m_d->asbd.mReserved = 0;
 	
     m_d->err = ExtAudioFileSetProperty
-	(m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);
+	(m_d->file, kExtAudioFileProperty_ClientDataFormat,
+         sizeof(AudioStreamBasicDescription), &m_d->asbd);
     
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in setting client format: code " + codestr(m_d->err);

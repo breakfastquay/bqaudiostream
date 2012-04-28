@@ -42,6 +42,30 @@ AudioWriteStreamFactory::getSupportedFileExtensions()
     return AudioWriteStreamFactoryImpl::getInstance()->getTags();
 }
 
+QString
+AudioWriteStreamFactory::getDefaultUncompressedFileExtension()
+{
+    QStringList candidates;
+    candidates << "wav" << "aiff";
+    QStringList supported = getSupportedFileExtensions();
+    foreach (QString ext, candidates) {
+        if (supported.contains(ext)) return ext;
+    }
+    return "";
+}
+
+QString
+AudioWriteStreamFactory::getDefaultLossyFileExtension()
+{
+    QStringList candidates;
+    candidates << "mp3" << "m4a" << "ogg" << "oga";
+    QStringList supported = getSupportedFileExtensions();
+    foreach (QString ext, candidates) {
+        if (supported.contains(ext)) return ext;
+    }
+    return "";
+}
+
 bool
 AudioWriteStreamFactory::isExtensionSupportedFor(QString fileName)
 {
