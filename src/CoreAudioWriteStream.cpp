@@ -40,10 +40,10 @@ class CoreAudioWriteStream::D
 public:
     D() : file(0) { }
 
+    AudioStreamBasicDescription  asbd;
     ExtAudioFileRef              file;
     AudioBufferList              buffer;
     OSStatus                     err; 
-    AudioStreamBasicDescription  asbd;
 };
 
 static QString
@@ -67,6 +67,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
 
+    memset(&m_d->asbd, 0, sizeof(AudioStreamBasicDescription));
     m_d->asbd.mFormatID = kAudioFormatMPEG4AAC;
     m_d->asbd.mSampleRate = getSampleRate();
     m_d->asbd.mChannelsPerFrame = getChannelCount();
@@ -156,13 +157,14 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->asbd.mBytesPerFrame = sizeof(float) * getChannelCount();
     m_d->asbd.mBytesPerPacket = sizeof(float) * getChannelCount();
 	
+/*
     cerr << "Client format contains:" << endl;
     for (int i = 0; i < sizeof(AudioStreamBasicDescription); ++i) {
         if (i % 8 == 0) cerr << endl;
         cerr << int(((char *)(&m_d->asbd))[i]) << " ";
     }
     cerr << endl;
-
+*/
     m_d->err = ExtAudioFileSetProperty
 	(m_d->file, kExtAudioFileProperty_ClientDataFormat,
          sizeof(AudioStreamBasicDescription), &m_d->asbd);
@@ -210,7 +212,7 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
 
     UInt32 framesToWrite = count;
 
-    m_d->err = ExtAudioFileWriteAsync(m_d->file, framesToWrite, &m_d->buffer);
+    m_d->err = ExtAudioFileWrite(m_d->file, framesToWrite, &m_d->buffer);
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in encoder: code " + codestr(m_d->err);
         cerr << m_error << endl;
