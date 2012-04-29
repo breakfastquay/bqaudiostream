@@ -5,6 +5,7 @@
 #include "AudioWriteStream.h"
 
 #include "base/ThingFactory.h"
+#include "base/Exceptions.h"
 
 #include <QFileInfo>
 
@@ -30,27 +31,39 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    try {
-        s = f->createFor(extension, target);
-    } catch (...) {
-    }
-
-    if (s && s->isOK() && s->getError() == "") {
-        return s;
-    } else if (s) {
-        std::cerr << "Error with recommended writer: \""
-                  << s->getError() << "\""
-                  << std::endl;
-    }
-
-    delete s;
-    return 0;
+    AudioWriteStream *stream = f->createFor(extension, target);
+    if (!stream) throw UnknownFileType(audioFileName);
+    return stream;
 }
 
 QStringList
 AudioWriteStreamFactory::getSupportedFileExtensions()
 {
     return AudioWriteStreamFactoryImpl::getInstance()->getTags();
+}
+
+QString
+AudioWriteStreamFactory::getDefaultUncompressedFileExtension()
+{
+    QStringList candidates;
+    candidates << "wav" << "aiff";
+    QStringList supported = getSupportedFileExtensions();
+    foreach (QString ext, candidates) {
+        if (supported.contains(ext)) return ext;
+    }
+    return "";
+}
+
+QString
+AudioWriteStreamFactory::getDefaultLossyFileExtension()
+{
+    QStringList candidates;
+    candidates << "mp3" << "m4a" << "ogg" << "oga";
+    QStringList supported = getSupportedFileExtensions();
+    foreach (QString ext, candidates) {
+        if (supported.contains(ext)) return ext;
+    }
+    return "";
 }
 
 bool

@@ -27,7 +27,7 @@ static
 AudioReadStreamBuilder<DirectShowReadStream>
 directshowbuilder(
     QString("http://breakfastquay.com/rdf/turbot/fileio/DirectShowReadStream"),
-    QStringList() << "wav" << "mp3" << "wma" << "ogg" //!!! how to do this properly?
+    QStringList() << "wav" << "mp3" << "wma"
     );
 
 
@@ -237,6 +237,8 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
 
     cerr << "DirectShowReadStream(" << path << ")" << endl;
 
+    if (!QFile(m_path).exists()) throw FileNotFound(m_path);
+
     // c.f. http://msdn.microsoft.com/en-gb/library/ms787867(VS.85).aspx
 
     // Note: CoInitializeEx(NULL, COINIT_MULTITHREADED) must
@@ -249,7 +251,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
                                 (void **)&(m_d->graphBuilder));
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to initialise DirectShow graph builder";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow initialise graph");
     }
 
     IBaseFilter *grabberFilter = 0;
@@ -260,13 +262,13 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
                                 IID_IBaseFilter, (void**)&grabberFilter);  
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to initialise sample grabber";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow initialise sample grabber");
     }
 
     m_d->err = m_d->graphBuilder->AddFilter(grabberFilter, L"Sample Grabber");
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to add sample grabber to filter graph";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow add sample grabber to graph");
     }
 
     IBaseFilter *nullFilter = 0;
@@ -278,13 +280,13 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
 
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to initialise null renderer";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow initialise null renderer");
     }
 
     m_d->err = m_d->graphBuilder->AddFilter(nullFilter, L"Null Renderer");
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to add null renderer to filter graph";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow add null renderer to graph");
     }
 
     grabberFilter->QueryInterface(IID_ISampleGrabber, (void**)&(m_d->grabber));
@@ -303,7 +305,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
     m_d->err = m_d->grabber->SetMediaType(&mt);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to set sample grabber media type";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow set media type");
     }
 
     WCHAR wpath[MAX_PATH+1];
@@ -313,19 +315,19 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
     m_d->err = m_d->graphBuilder->AddSourceFilter(wpath, L"Source", &src);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to open source file";
-        return;
+        throw FileReadFailed(m_path);
     }
 
     m_d->err = ConnectFilters(m_d->graphBuilder, src, grabberFilter);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to connect source filter";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow connect source filter");
     }
 
     m_d->err = ConnectFilters(m_d->graphBuilder, grabberFilter, nullFilter);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to connect null renderer";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow connect null renderer");
     }
 
     IMediaFilter *mediaFilter = 0;
@@ -333,7 +335,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
         (IID_IMediaFilter, (void**)&mediaFilter);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to query media filter interface";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow query media filter interface");
     }
 
     mediaFilter->SetSyncSource(NULL); // no clock: run as fast as you can
@@ -341,7 +343,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
     m_d->err = m_d->grabber->SetBufferSamples(TRUE);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to set grabber buffer mode";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow set grabber buffer mode");
     }
 
     static GUID guids[] = {
@@ -366,11 +368,11 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
     m_d->err = m_d->grabber->GetConnectedMediaType(&mt);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to query connected media type";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow media type query");
     }
     if (mt.majortype != MEDIATYPE_Audio) {
         m_error = "DirectShowReadStream: Connected medium is not audio type";
-        return;
+        throw InvalidFileFormat(m_path);
     }
     if (mt.subtype == MEDIASUBTYPE_DRM_Audio) {
         throw FileDRMProtected(path);
@@ -381,7 +383,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
         cerr << "Note: DirectShowReadStream: Connected medium has subtype IEEE Float" << endl;
     } else {
         m_error = "DirectShowReadStream: Connected medium has unsupported subtype";
-        return;
+        throw InvalidFileFormat(m_path);
     }
 
     cerr << "Note: DirectShowReadStream: Connected medium has sample size "
@@ -410,18 +412,18 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
 
         if (m_d->bitDepth % 8 != 0) {
             m_error = "DirectShowReadStream: Connected medium has non-integer bytes per sample, cannot handle this";
-            return;
+            throw InvalidFileFormat(m_path);
         }
         if (m_d->bitDepth != 8 && m_d->bitDepth != 16 && m_d->bitDepth != 24) {
             if (!m_d->isFloat) {
                 m_error = "DirectShowReadStream: Connected medium has PCM data at unsupported bit depth (only 8, 16, 24 bits per sample are supported for non-float data types)";
-                return;
+                throw InvalidFileFormat(m_path);
             }
         }
 
     } else {
         m_error = "DirectShowReadStream: Connected medium has unsupported format type";
-        return;
+        throw InvalidFileFormat(m_path);
     }
     
     if (mt.cbFormat != 0) {
@@ -436,14 +438,14 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
         (IID_IMediaControl, (void**)&(m_d->mediaControl));
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to query media control interface";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow query control interface");
     }
 
     m_d->err = m_d->graphBuilder->QueryInterface
         (IID_IMediaEvent, (void**)&(m_d->mediaEvent));
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to query media event interface";
-        return;
+        throw FileOperationFailed(m_path, "DirectShow query event interface");
     }
 
     m_d->mediaControl->Run();
@@ -633,6 +635,23 @@ DirectShowReadStream::~DirectShowReadStream()
     cerr << "DirectShowReadStream::~DirectShowReadStream" << endl;
 
     //!!! clean up properly!
+
+    /**
+     * from http://msdn.microsoft.com/en-us/library/windows/desktop/dd407288%28v=vs.85%29.aspx:
+
+    CoTaskMemFree(pBuffer);
+    SafeRelease(&pPin);
+    SafeRelease(&pEnum);
+    SafeRelease(&pNullF);
+    SafeRelease(&pSourceF);
+    SafeRelease(&pGrabber);
+    SafeRelease(&pGrabberF);
+    SafeRelease(&pControl);
+    SafeRelease(&pEvent);
+    SafeRelease(&pGraph);
+
+    - update these for our case, compare with D above
+    */
 
     delete m_d;
 }

@@ -59,6 +59,10 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
+    if (!QFile(m_path).exists()) {
+        throw FileNotFound(m_path);
+    }
+
     QByteArray ba = m_path.toLocal8Bit();
 
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
@@ -67,11 +71,13 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
          (CFIndex)ba.length(),
          false);
 
+    //!!! how do we find out if the file open fails because of DRM protection?
+
 #if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
     FSRef fsref;
     if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
         m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
-        return;
+        throw FileReadFailed(m_path);
     }
     m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
 #else
@@ -82,11 +88,11 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
 
     if (m_d->err) { 
         m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);
-        return;
+        throw InvalidFileFormat(path, "failed to open audio file");
     }
     if (!m_d->file) { 
         m_error = "CoreAudioReadStream: Failed to open file, but no error reported!";
-        return;
+        throw InvalidFileFormat(path, "failed to open audio file");
     }
     
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
@@ -95,7 +101,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in getting basic description: code " + codestr(m_d->err);
-        return;
+        throw FileOperationFailed(m_path, "get basic description", codestr(m_d->err));
     }
 	
     m_channelCount = m_d->asbd.mChannelsPerFrame;
@@ -122,7 +128,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in setting client format: code " + codestr(m_d->err);
-        return;
+        throw FileOperationFailed(m_path, "set client format", codestr(m_d->err));
     }
 
     m_d->buffer.mNumberBuffers = 1;
@@ -147,6 +153,7 @@ CoreAudioReadStream::getFrames(size_t count, float *frames)
     m_d->err = ExtAudioFileRead(m_d->file, &framesRead, &m_d->buffer);
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in decoder: code " + codestr(m_d->err);
+        throw InvalidFileFormat(m_path, "error in decoder");
     }
 
  //   std::cerr << "CoreAudioReadStream::getFrames: " << count << " frames requested across " << m_channelCount << " channel(s), " << framesRead << " frames actually read" << std::endl;
