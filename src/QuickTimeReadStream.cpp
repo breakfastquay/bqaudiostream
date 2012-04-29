@@ -87,7 +87,7 @@ QuickTimeReadStream::QuickTimeReadStream(QString path) :
     DisposeHandle(dataRef);
     if (m_d->err) { 
         m_error = "QuickTimeReadStream: Error creating new movie: code " + codestr(m_d->err); 
-        throw InvalidFileFormat(m_path);
+        throw InvalidFileFormat(m_path, "error creating movie from fork");
     }
 
     Boolean isProtected = 0;

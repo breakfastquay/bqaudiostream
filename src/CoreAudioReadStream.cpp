@@ -60,7 +60,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     m_sampleRate = 0;
 
     if (!QFile(m_path).exists()) {
-        return FileNotFound(m_path);
+        throw FileNotFound(m_path);
     }
 
     QByteArray ba = m_path.toLocal8Bit();
