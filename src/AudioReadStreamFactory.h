@@ -11,6 +11,9 @@ namespace Turbot {
 
 class AudioReadStream;
 
+//!!! Todo: make this library actually use exceptions, instead of
+//!!! getError
+
 class AudioReadStreamFactory
 {
 public:
