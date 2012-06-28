@@ -372,7 +372,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
     }
     if (mt.majortype != MEDIATYPE_Audio) {
         m_error = "DirectShowReadStream: Connected medium is not audio type";
-        throw InvalidFileFormat(m_path);
+        throw InvalidFileFormat(m_path, "Media file is not of audio type");
     }
     if (mt.subtype == MEDIASUBTYPE_DRM_Audio) {
         throw FileDRMProtected(path);
@@ -383,7 +383,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
         cerr << "Note: DirectShowReadStream: Connected medium has subtype IEEE Float" << endl;
     } else {
         m_error = "DirectShowReadStream: Connected medium has unsupported subtype";
-        throw InvalidFileFormat(m_path);
+        throw InvalidFileFormat(m_path, "Media file has unsupported audio subtype (not PCM or float)");
     }
 
     cerr << "Note: DirectShowReadStream: Connected medium has sample size "
@@ -412,18 +412,18 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
 
         if (m_d->bitDepth % 8 != 0) {
             m_error = "DirectShowReadStream: Connected medium has non-integer bytes per sample, cannot handle this";
-            throw InvalidFileFormat(m_path);
+            throw InvalidFileFormat(m_path, "Media file has non-integer bytes per sample");
         }
         if (m_d->bitDepth != 8 && m_d->bitDepth != 16 && m_d->bitDepth != 24) {
             if (!m_d->isFloat) {
                 m_error = "DirectShowReadStream: Connected medium has PCM data at unsupported bit depth (only 8, 16, 24 bits per sample are supported for non-float data types)";
-                throw InvalidFileFormat(m_path);
+                throw InvalidFileFormat(m_path, "Media file has unsupported PCM bit depth");
             }
         }
 
     } else {
         m_error = "DirectShowReadStream: Connected medium has unsupported format type";
-        throw InvalidFileFormat(m_path);
+        throw InvalidFileFormat(m_path, "Media file has unsupported format type");
     }
     
     if (mt.cbFormat != 0) {
