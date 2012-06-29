@@ -74,7 +74,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->err = AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, 0, 0,
                                       &propsize, &m_d->asbd);
 
-#if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
+#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
 
     // Unlike ExtAudioFileCreateWithURL, ExtAudioFileCreateNew
     // apparently cannot be told to overwrite an existing file

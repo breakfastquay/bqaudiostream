@@ -73,7 +73,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
 
     //!!! how do we find out if the file open fails because of DRM protection?
 
-#if (MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
+#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
     FSRef fsref;
     if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
         m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
