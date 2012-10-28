@@ -60,6 +60,18 @@ AudioReadStreamFactory::isExtensionSupportedFor(QString fileName)
         (QFileInfo(fileName).suffix().toLower());
 }
 
+QString
+AudioReadStreamFactory::getFileFilter()
+{
+    QStringList extensions = getSupportedFileExtensions();
+    QString filter;
+    foreach (QString ext, extensions) {
+        if (filter != "") filter += " ";
+        filter += "*." + ext;
+    }
+    return filter;
+}
+
 }
 
 // We rather eccentrically include the C++ files here, not the

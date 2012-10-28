@@ -11,9 +11,6 @@ namespace Turbot {
 
 class AudioReadStream;
 
-//!!! Todo: make this library actually use exceptions, instead of
-//!!! getError
-
 class AudioReadStreamFactory
 {
 public:
@@ -33,9 +30,24 @@ public:
      */
     static AudioReadStream *createReadStream(QString fileName);
 
+    /**
+     * Return a list of the file extensions supported by registered
+     * readers (e.g. "wav", "aiff", "mp3").
+     */
     static QStringList getSupportedFileExtensions();
 
+    /**
+     * Return true if the given extension (e.g. "wav") is supported by
+     * a registered reader.
+     */
     static bool isExtensionSupportedFor(QString fileName);
+
+    /**
+     * Return a string containing the file extensions supported by
+     * registered readers, in a format suitable for use as a file
+     * dialog filter (e.g. "*.wav *.aiff *.mp3").
+     */
+    static QString getFileFilter();
 };
 
 }
