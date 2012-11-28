@@ -72,7 +72,7 @@ public:
         float *fi = (float *)alloca(n * channels * sizeof(float));
 #endif
 	for (long i = 0; i < n * channels; ++i) {
-	    fi[i] = float(interleaved[i]) / 31768.f;
+	    fi[i] = float(interleaved[i]) / 32768.f;
         }
         m_buffer->write(fi, n * channels);
         return 0;
