@@ -122,7 +122,7 @@ BasicMP3ReadStream::getFrames(size_t count, float *frames)
 
     while (m_d->getAvailableFrameCount() < count) {
         if (m_d->isFinished()) break;
-        m_d->readNextBlock();
+        m_d->process();
     }
 
     return m_d->m_buffer->read(frames, count * m_channelCount);
