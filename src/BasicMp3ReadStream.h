@@ -21,6 +21,8 @@ public:
 
 protected:
     virtual size_t getFrames(size_t count, float *frames);
+    virtual void setChannelCount(int c);
+    virtual void setSampleRate(int r);
 
     QString m_path;
     QString m_error;

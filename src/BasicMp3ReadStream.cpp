@@ -3,11 +3,11 @@
 
 #ifdef USE_ISO_MP3
 
-#include "BasicMP3ReadStream.h"
+#include "BasicMp3ReadStream.h"
 
 #include "base/RingBuffer.h"
 
-#include "iso-mp3/wrap/mp3decode.h"
+#include "iso-mp3/wrap/MP3Decoder.h"
 
 #ifndef __GNUC__
 #include <alloca.h>
@@ -23,51 +23,46 @@ oggbuilder(
     QStringList() << "mp3"
     );
 
-class BasicMP3ReadStream::D
+class BasicMP3ReadStream::D : public MP3DecoderCallback
 {
 public:
     D(BasicMP3ReadStream *rs) :
         m_rs(rs),
-        m_mp3dec(0),
-        m_fishSound(0),
+        m_decoder(0),
         m_buffer(0),
         m_finished(false) { }
     ~D() {
-	delete m_mp3dec;
+	delete m_decoder;
         delete m_buffer;
     }
 
     BasicMP3ReadStream *m_rs;
-    MP3Decoder *m_mp3dec;
+    MP3Decoder *m_decoder;
     RingBuffer<float> *m_buffer;
     bool m_finished;
 
-    bool isFinished() const {
-        return m_finished;
-    }
+    // Callback methods
 
-    int getAvailableFrameCount() const {
-        if (!m_buffer) return 0;
-        return m_buffer->getReadSpace() / m_rs->getChannelCount();
-    }
-
-    void process() {
-        if (m_finished) return;
-        if (m_mp3dec->process(1024) <= 0) {
+    void changeState(State s) {
+        std::cerr << "changeState: " << s << std::endl;
+        if (s == Finished || s == Failed) {
             m_finished = true;
         }
     }
 
-    void sizeBuffer(int minFrames) {
-        int samples = minFrames * m_rs->getChannelCount();
-        if (!m_buffer) {
-            m_buffer = new RingBuffer<float>(samples);
-        } else if (m_buffer->getSize() < samples) {
-            m_buffer = m_buffer->resized(samples);
-        }
+    void setChannelCount(int c) {
+        std::cerr << "setChannelCount: " << c << std::endl;
+        m_rs->setChannelCount(c);
     }
 
-    int acceptFrames(short *interleaved, long n) {
+    void setSampleRate(int r) {
+        std::cerr << "setSampleRate: " << r << std::endl;
+        m_rs->setSampleRate(r);
+    }
+
+    int acceptFrames(const short *interleaved, int n) {
+
+        std::cerr << "acceptFrames: " << n << std::endl;
 
         sizeBuffer(getAvailableFrameCount() + n);
         int channels = m_rs->getChannelCount();
@@ -82,6 +77,37 @@ public:
         m_buffer->write(fi, n * channels);
         return 0;
     }
+
+    bool isFinished() const {
+        std::cerr << "isFinished?: " << m_finished << std::endl;
+        return m_finished;
+    }
+
+    int getAvailableFrameCount() const {
+        if (!m_buffer) {
+            std::cerr << "getAvailableFrameCount: no buffer" << std::endl;
+            return 0;
+        }
+        int n = m_buffer->getReadSpace() / m_rs->getChannelCount();
+        std::cerr << "getAvailableFrameCount: " << n << std::endl;
+        return n;
+    }
+
+    void process() {
+        std::cerr << "process: m_finished = " << m_finished << std::endl;
+        if (m_finished) return;
+        m_decoder->processBlock();
+    }
+
+    void sizeBuffer(int minFrames) {
+        std::cerr << "sizeBuffer: " << minFrames << std::endl;
+        int samples = minFrames * m_rs->getChannelCount();
+        if (!m_buffer) {
+            m_buffer = new RingBuffer<float>(samples);
+        } else if (m_buffer->getSize() < samples) {
+            m_buffer = m_buffer->resized(samples);
+        }
+    }
 };
 
 BasicMP3ReadStream::BasicMP3ReadStream(QString path) :
@@ -93,25 +119,30 @@ BasicMP3ReadStream::BasicMP3ReadStream(QString path) :
 
     if (!QFile(m_path).exists()) throw FileNotFound(m_path);
 
-    if (!m_d->m_mp3dec = new MP3Decoder(path.toLocal8Bit().data())) {
-	m_error = QString("File \"%1\" is not a valid MP3 file.").arg(path);
-	throw InvalidFileFormat(m_path);
-    }
+    m_d->m_decoder = new MP3Decoder(path.toLocal8Bit().data(), m_d);
 
-//    mp3dec_set_read_callback(m_d->m_mp3dec, -1, D::acceptPacketStatic, m_d);
-
-    // initialise m_channelCount
-//!!!???
-/*
-    while (m_channelCount == 0 && !m_d->m_finished) {
+    while ((m_channelCount == 0 || m_sampleRate == 0) && !m_d->m_finished) {
         m_d->process();
     }
-*/
 }
 
 BasicMP3ReadStream::~BasicMP3ReadStream()
 {
     delete m_d;
+}
+
+void
+BasicMP3ReadStream::setChannelCount(int c)
+{
+    m_channelCount = c;
+    std::cerr << "setChannelCount: " << c << std::endl;
+}
+
+void
+BasicMP3ReadStream::setSampleRate(int r)
+{
+    m_sampleRate = r;
+    std::cerr << "setSampleRate: " << r << std::endl;
 }
 
 size_t
@@ -125,10 +156,11 @@ BasicMP3ReadStream::getFrames(size_t count, float *frames)
         m_d->process();
     }
 
-    return m_d->m_buffer->read(frames, count * m_channelCount);
+    int n = m_d->m_buffer->read(frames, count * m_channelCount);
+    std::cerr << "getFrames: " << n << std::endl;
+    return n;
 }
 
 }
 
-#endif
 #endif
