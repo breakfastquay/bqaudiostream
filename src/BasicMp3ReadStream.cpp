@@ -13,6 +13,8 @@
 #include <alloca.h>
 #endif
 
+//#define DEBUG_BASIC_MP3_READ_STREAM 1
+
 namespace Turbot
 {
 
@@ -31,7 +33,7 @@ public:
         m_decoder(0),
         m_buffer(0),
         m_finished(false) { }
-    ~D() {
+    virtual ~D() {
 	delete m_decoder;
         delete m_buffer;
     }
@@ -44,63 +46,86 @@ public:
     // Callback methods
 
     void changeState(State s) {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "changeState: " << s << std::endl;
+#endif
         if (s == Finished || s == Failed) {
             m_finished = true;
         }
     }
 
     void setChannelCount(int c) {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "setChannelCount: " << c << std::endl;
+#endif
         m_rs->setChannelCount(c);
     }
 
     void setSampleRate(int r) {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "setSampleRate: " << r << std::endl;
+#endif
         m_rs->setSampleRate(r);
     }
 
-    int acceptFrames(const short *interleaved, int n) {
+    int acceptFrames(const short *interleaved, int total) {
 
+        int channels = m_rs->getChannelCount();
+        int n = total / channels;
+
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "acceptFrames: " << n << std::endl;
+#endif
 
         sizeBuffer(getAvailableFrameCount() + n);
-        int channels = m_rs->getChannelCount();
 #ifdef __GNUC__
         float fi[n * channels];
 #else
         float *fi = (float *)alloca(n * channels * sizeof(float));
 #endif
-	for (long i = 0; i < n * channels; ++i) {
-	    fi[i] = float(interleaved[i]) / 32768.f;
+
+        for (int i = 0; i < n * channels; ++i) {
+            short s = interleaved[i];
+	    fi[i] = float(s) / 32768.f;
         }
+
         m_buffer->write(fi, n * channels);
         return 0;
     }
 
     bool isFinished() const {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "isFinished?: " << m_finished << std::endl;
+#endif
         return m_finished;
     }
 
     int getAvailableFrameCount() const {
         if (!m_buffer) {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
             std::cerr << "getAvailableFrameCount: no buffer" << std::endl;
+#endif
             return 0;
         }
         int n = m_buffer->getReadSpace() / m_rs->getChannelCount();
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "getAvailableFrameCount: " << n << std::endl;
+#endif
         return n;
     }
 
     void process() {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "process: m_finished = " << m_finished << std::endl;
+#endif
         if (m_finished) return;
         m_decoder->processBlock();
     }
 
     void sizeBuffer(int minFrames) {
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
         std::cerr << "sizeBuffer: " << minFrames << std::endl;
+#endif
         int samples = minFrames * m_rs->getChannelCount();
         if (!m_buffer) {
             m_buffer = new RingBuffer<float>(samples);
@@ -135,14 +160,12 @@ void
 BasicMP3ReadStream::setChannelCount(int c)
 {
     m_channelCount = c;
-    std::cerr << "setChannelCount: " << c << std::endl;
 }
 
 void
 BasicMP3ReadStream::setSampleRate(int r)
 {
     m_sampleRate = r;
-    std::cerr << "setSampleRate: " << r << std::endl;
 }
 
 size_t
@@ -157,7 +180,9 @@ BasicMP3ReadStream::getFrames(size_t count, float *frames)
     }
 
     int n = m_d->m_buffer->read(frames, count * m_channelCount);
+#ifdef DEBUG_BASIC_MP3_READ_STREAM
     std::cerr << "getFrames: " << n << std::endl;
+#endif
     return n;
 }
 
