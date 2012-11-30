@@ -179,11 +179,19 @@ BasicMP3ReadStream::getFrames(size_t count, float *frames)
         m_d->process();
     }
 
-    int n = m_d->m_buffer->read(frames, count * m_channelCount);
+    int avail = m_d->m_buffer->getReadSpace();
+    int favail = avail / m_channelCount;
+    int toRead = count;
+    if (toRead > favail) toRead = favail;
+
+    int got = m_d->m_buffer->read(frames, toRead * m_channelCount);
+    int fgot = got / m_channelCount;
+
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-    std::cerr << "getFrames: " << n << std::endl;
+    std::cerr << "getFrames: " << fgot << std::endl;
 #endif
-    return n / m_channelCount;
+
+    return fgot;
 }
 
 }
