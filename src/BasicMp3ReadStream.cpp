@@ -183,7 +183,7 @@ BasicMP3ReadStream::getFrames(size_t count, float *frames)
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
     std::cerr << "getFrames: " << n << std::endl;
 #endif
-    return n;
+    return n / m_channelCount;
 }
 
 }
