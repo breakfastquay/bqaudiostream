@@ -42,7 +42,7 @@ public:
     /**
      * Retrieve \count frames of audio data (that is, \count *
      * getChannelCount() samples) from the source and store in
-     * \frames.  Return the number of samples actually retrieved; this
+     * \frames.  Return the number of frames actually retrieved; this
      * will differ from \count only when the end of stream is reached.
      *
      * If a retrieval sample rate has been set, the audio will be

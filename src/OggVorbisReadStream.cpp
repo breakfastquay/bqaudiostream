@@ -156,7 +156,8 @@ OggVorbisReadStream::getFrames(size_t count, float *frames)
         m_d->readNextBlock();
     }
 
-    return m_d->m_buffer->read(frames, count * m_channelCount);
+    int n = m_d->m_buffer->read(frames, count * m_channelCount);
+    return n / m_channelCount;
 }
 
 }
