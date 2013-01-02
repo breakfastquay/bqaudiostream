@@ -15,7 +15,7 @@ namespace Turbot
 static
 AudioReadStreamBuilder<QuickTimeReadStream>
 quicktimebuilder(
-    QString("http://breakfastquay.com/rdf/turbot/fileio/QuickTimeReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/audiostream/QuickTimeReadStream"),
     QStringList() << "aiff" << "aif" << "au" << "avi" << "m4a" << "m4b" << "m4p" << "m4v" << "mov" << "mp3" << "mp4" << "wav"
     );
 
