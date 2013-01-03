@@ -20,6 +20,8 @@ namespace Turbot {
  *
  * Note that AudioReadStreamBuffer may hold the file descriptor for
  * the underlying audio file open throughout its lifespan.
+ *
+ *!!! WARNING: Untested and not quite complete as of 2013-01-03
  */
 class AudioReadStreamBuffer
 {
@@ -55,6 +57,7 @@ public:
      * Throw away any buffered frames and return to the start of the
      * stream. This operation will block on refilling the buffer, and
      * may take some time.
+     *!!! WARNING: Unimplemented as of 2013-01-03
      */
     void rewind();
 
