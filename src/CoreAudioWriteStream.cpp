@@ -31,7 +31,7 @@ namespace Turbot
 static 
 AudioWriteStreamBuilder<CoreAudioWriteStream>
 coreaudiowritebuilder(
-    QString("http://breakfastquay.com/rdf/turbot/fileio/CoreAudioWriteStream"),
+    QString("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioWriteStream"),
     QStringList() << "m4a"
     );
 

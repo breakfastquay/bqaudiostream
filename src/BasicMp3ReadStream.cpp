@@ -21,7 +21,7 @@ namespace Turbot
 static
 AudioReadStreamBuilder<BasicMP3ReadStream>
 oggbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/fileio/BasicMP3ReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/audiostream/BasicMP3ReadStream"),
     QStringList() << "mp3"
     );
 

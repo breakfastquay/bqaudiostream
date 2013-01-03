@@ -24,7 +24,7 @@ namespace Turbot
 static
 AudioReadStreamBuilder<CoreAudioReadStream>
 coreaudiobuilder(
-    QString("http://breakfastquay.com/rdf/turbot/fileio/CoreAudioReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioReadStream"),
     QStringList() << "aiff" << "aif" << "au" << "avi" << "m4a" << "m4b" << "m4p" << "m4v" << "mov" << "mp3" << "mp4" << "wav"
     );
 
