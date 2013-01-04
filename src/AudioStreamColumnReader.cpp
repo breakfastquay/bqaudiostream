@@ -3,12 +3,20 @@
 
 #include "AudioStreamColumnReader.h"
 
+#include "base/DataAreaCache.h"
+#include "base/DataValueCache.h"
+#include "base/TurbotTypes.h"
+
 namespace Turbot {
 
 class AudioStreamColumnReader::D
 {
 public:
-    D(QString filename) {
+    D(QString filename) :
+	m_channels(0),
+	m_columnCache(0),
+	m_streamCache(0)
+    {
     }
 
     ~D() {
@@ -18,10 +26,19 @@ public:
 
     QString getFileName() const;
 
-    Timebase getTimebase() const;
-    int getChannelCount() const;
+    Timebase getTimebase() const {
+	return m_timebase;
+    }
+
+    int getChannelCount() const {
+	return m_channels;
+    }
+
     int getWidth() const;
-    int getHeight() const;
+
+    int getHeight() const {
+	return m_timebase.getColumnSize() / 2 + 1;
+    }
 
     void prepareColumn(int);
 
@@ -29,6 +46,13 @@ public:
     (int x, int channel, turbot_sample_t *column);
 
     void close();
+
+
+private:
+    int m_channels;
+    Timebase m_timebase;
+    DataValueCache<turbot_sample_t> *m_columnCache;
+    DataValueCache<float> *m_streamCache;
 };
 
 AudioStreamColumnReader::AudioStreamColumnReader(QString filename) :

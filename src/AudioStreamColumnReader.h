@@ -11,6 +11,8 @@ namespace Turbot {
 /**
  * AudioStreamColumnReader is an adapter that provides data from an
  * AudioReadStream in the format expected by RegionColumnReader.
+ *
+ * Not RT-safe.
  */
 class AudioStreamColumnReader : public RegionColumnReader
 {
