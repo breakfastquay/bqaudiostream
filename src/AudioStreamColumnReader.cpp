@@ -97,14 +97,26 @@ private:
                 for (int i = 0; i < hop; ++i) {
                     m_streamCache[c][sz - hop + i] = iframes[i * m_channels + c];
                 }
+                processColumnFromStreamCache(c);
             }
-            processColumnFromStreamCache();
         }
         deallocate(iframes);
     }
 
-    void processColumnFromStreamCache() {
+    void processColumnFromStreamCache(int ch) {
+        int sz = m_timebase.getColumnSize();
+        int hs1 = sz/2 + 1;
+        float *in = allocate<float>(sz);
+        v_copy(in, m_streamCache[ch], sz);
+        m_window->cut(in);
+        v_fftshift(in, sz);
+        float *magOut = allocate<float>(hs1);
+        float *phaseOut = allocate<float>(hs1);
+        m_fft->forwardPolar(in, magOut, phaseOut);
+
         
+
+
     }
 
     QString m_filename;
