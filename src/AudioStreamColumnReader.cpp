@@ -97,26 +97,41 @@ private:
                 for (int i = 0; i < hop; ++i) {
                     m_streamCache[c][sz - hop + i] = iframes[i * m_channels + c];
                 }
-                processColumnFromStreamCache(c);
             }
+            processColumnFromStreamCache(columnNo);
         }
         deallocate(iframes);
     }
 
-    void processColumnFromStreamCache(int ch) {
+    void processColumnFromStreamCache(int columnNo) {
+
         int sz = m_timebase.getColumnSize();
         int hs1 = sz/2 + 1;
+        int colSize = hs1 * 2;
+        turbot_sample_t *columns = allocate<turbot_sample_t>
+            (colSize * m_channels);
+
         float *in = allocate<float>(sz);
-        v_copy(in, m_streamCache[ch], sz);
-        m_window->cut(in);
-        v_fftshift(in, sz);
         float *magOut = allocate<float>(hs1);
         float *phaseOut = allocate<float>(hs1);
-        m_fft->forwardPolar(in, magOut, phaseOut);
 
-        
+        for (int ch = 0; ch < m_channels; ++ch) {
+            v_copy(in, m_streamCache[ch], sz);
+            m_window->cut(in);
+            v_fftshift(in, sz);
+            m_fft->forwardPolar(in, magOut, phaseOut);
+            for (int i = 0; i < hs1; ++i) {
+                columns[colSize * ch + 2*i] = magOut[i];
+                columns[colSize * ch + 2*i + 1] = phaseOut[i];
+            }
+        }
 
+        m_columnCache->update(colSize * columnNo * m_channels, columns,
+                              colSize * m_channels);
 
+        deallocate(in);
+        deallocate(magOut);
+        deallocate(phaseOut);
     }
 
     QString m_filename;
