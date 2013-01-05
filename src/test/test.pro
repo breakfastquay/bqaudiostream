@@ -20,7 +20,7 @@ TEMPLATE += platform
 OBJECTS_DIR = o
 MOC_DIR = o
 
-HEADERS += TestSimpleWavRead.h
+HEADERS += TestSimpleWavRead.h TestAudioStreamColumnReader.h
 SOURCES += main.cpp
 
 !win32 {

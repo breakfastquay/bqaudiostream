@@ -12,6 +12,9 @@
 
 namespace Turbot {
 
+//!!! Note we also have lib/process/TestAudioStream, which is a rather
+// higher-level test -- need to merge the two
+
 class TestSimpleWavRead : public QObject
 {
     Q_OBJECT
@@ -72,7 +75,17 @@ private slots:
 	QCOMPARE(frames[19], -1.f);
 	delete s;
     }
-
+/*!!! currently fails! returns nothing
+    void resampledLength() {
+	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound());
+	QVERIFY(s);
+	s->setRetrievalSampleRate(22050);
+	float frames[22];
+	size_t n = s->getInterleavedFrames(22, frames);
+	QCOMPARE(n, size_t(10));
+	delete s;
+    }
+*/  
 
 };
 

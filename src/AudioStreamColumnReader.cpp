@@ -74,16 +74,22 @@ public:
 	return m_channels;
     }
 
-    int getWidth() const;
+    int getWidth() const {
+        return 0; //!!!
+    }
 
     int getHeight() const {
 	return m_timebase.getColumnSize() / 2 + 1;
     }
 
-    void prepareColumn(int);
+    void prepareColumn(int x) {
+        //!!!
+    }
 
     bool getColumnPolarInterleaved
-    (int x, int channel, turbot_sample_t *column);
+    (int x, int channel, turbot_sample_t *column) {
+        return false; //!!!
+    }
 
     void close() {
         deallocate_channels(m_streamCache, m_channels);
