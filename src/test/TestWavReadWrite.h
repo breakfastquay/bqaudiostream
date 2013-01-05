@@ -141,28 +141,22 @@ private slots:
         deallocate(block);
         deallocate(buffer);
 
-        QVERIFY(maxdiff < error);
-/*
-    if (maxdiff > error) {
-	cerr << "ERROR: Max diff of " << maxdiff << " (" 
-	     << AudioLevel::ratio_to_dB(maxdiff) 
-	     << " dB) at index " << maxdiffindex
-	     << " (a = " << mda << ", b = " << mdb  << ")"
-	     << " exceeds error threshold of " << error << " ("
-	     << AudioLevel::ratio_to_dB(error) << " dB)" << endl;
-	bad = true;
-    } else if (maxdiff > warning) {
-	cerr << "WARNING: Max diff of " << maxdiff << " (" 
-	     << AudioLevel::ratio_to_dB(maxdiff) 
-	     << " dB) at index " << maxdiffindex
-	     << " (a = " << mda << ", b = " << mdb << ")"
-	     << " exceeds warning threshold of " << warning << " ("
-	     << AudioLevel::ratio_to_dB(warning) << " dB)" << endl;
-    }	
-    
-    if (bad) return false;
-    else return true;
-*/
+        QString message = QString("Max diff is %1 (%2 dB) at index %3 (a = %4, b = %5) [error threshold %6 (%7 dB), warning threshold %8 (%9 dB)]")
+            .arg(maxdiff)
+            .arg(AudioLevel::ratio_to_dB(maxdiff))
+            .arg(maxdiffindex)
+            .arg(mda)
+            .arg(mdb)
+            .arg(error)
+            .arg(AudioLevel::ratio_to_dB(error))
+            .arg(warning)
+            .arg(AudioLevel::ratio_to_dB(warning));
+
+        QVERIFY2(maxdiff < error, message.toLocal8Bit().data());
+
+        if (maxdiff > warning) {
+            QWARN(message.toLocal8Bit().data());
+        }	
     }
 };
 
