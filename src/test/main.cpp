@@ -3,6 +3,7 @@
 
 #include "TestSimpleWavRead.h"
 #include "TestAudioStreamColumnReader.h"
+#include "TestWavReadWrite.h"
 #include <QtTest>
 
 #include <iostream>
@@ -21,6 +22,12 @@ int main(int argc, char *argv[])
 
     {
 	Turbot::TestAudioStreamColumnReader t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+
+    {
+	Turbot::TestWavReadWrite t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }

@@ -12,9 +12,6 @@
 
 namespace Turbot {
 
-//!!! Note we also have lib/process/TestAudioStream, which is a rather
-// higher-level test -- need to merge the two
-
 class TestSimpleWavRead : public QObject
 {
     Q_OBJECT
