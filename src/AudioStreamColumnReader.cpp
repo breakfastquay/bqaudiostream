@@ -11,6 +11,9 @@
 #include "AudioReadStream.h"
 #include "AudioReadStreamFactory.h"
 
+#include "dsp/Window.h"
+#include "dsp/FFT.h"
+
 namespace Turbot {
 
 class AudioStreamColumnReader::D
@@ -21,11 +24,13 @@ public:
 	m_stream(0),
 	m_channels(0),
 	m_columnCache(0),
-	m_streamCache(0)
+	m_streamCache(0),
+        m_streamCacheColumnNo(-1)
     {
     }
 
     ~D() {
+        if (m_stream) close();
     }
 
     void open() {
@@ -39,6 +44,9 @@ public:
 			      DefaultColumnSize,
 			      DefaultHopSize);
 
+        m_window = new Window<float>(HanningWindow, DefaultColumnSize);
+        m_fft = new FFT(DefaultColumnSize);
+
         // Somewhat arbitrary cache size of 8 columns across all
         // channels. We need to allow backward seeks of at least 1 or
         // 2 columns for Region to operate.
@@ -49,6 +57,8 @@ public:
         // and we read a hop then push it on the end at each step
         m_streamCache = allocate_channels<float>
             (m_channels, m_timebase.getColumnSize());
+
+        m_streamCacheColumnNo = -1;
     }
 
 
@@ -79,6 +89,8 @@ public:
         deallocate_channels(m_streamCache, m_channels);
 	delete m_columnCache;
 	delete m_stream;
+        delete m_window;
+        delete m_fft;
 	m_stream = 0;
     }
 
@@ -98,13 +110,15 @@ private:
                     m_streamCache[c][sz - hop + i] = iframes[i * m_channels + c];
                 }
             }
-            processColumnFromStreamCache(columnNo);
+            ++m_streamCacheColumnNo;
+            processColumnFromStreamCache();
         }
         deallocate(iframes);
     }
 
-    void processColumnFromStreamCache(int columnNo) {
+    void processColumnFromStreamCache() {
 
+        int columnNo = m_streamCacheColumnNo;
         int sz = m_timebase.getColumnSize();
         int hs1 = sz/2 + 1;
         int colSize = hs1 * 2;
@@ -138,8 +152,11 @@ private:
     AudioReadStream *m_stream;
     int m_channels;
     Timebase m_timebase;
+    Window<float> *m_window;
+    FFT *m_fft;
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved
     float **m_streamCache; // per channel
+    int m_streamCacheColumnNo;
 };
 
 AudioStreamColumnReader::AudioStreamColumnReader(QString filename) :
