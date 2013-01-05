@@ -52,6 +52,9 @@ public:
 private:
     class D;
     D *m_d;
+
+    AudioStreamColumnReader(const AudioStreamColumnReader &); // not provided
+    AudioStreamColumnReader &operator=(const AudioStreamColumnReader &); // not provided
 };
 
 }

@@ -11,6 +11,8 @@
 #include "AudioReadStream.h"
 #include "AudioReadStreamFactory.h"
 
+#include "musicdb/MusicDatabase.h"
+
 #include "dsp/Window.h"
 #include "dsp/FFT.h"
 
@@ -37,6 +39,8 @@ public:
 	if (m_stream) {
 	    throw PreconditionFailed("AudioStreamColumnReader already open");
 	}
+
+        m_id = MusicDatabase::getInstance()->getID(m_filename);
 
 	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
 	m_channels = m_stream->getChannelCount();
@@ -75,7 +79,10 @@ public:
     }
 
     int getWidth() const {
-        return 0; //!!!
+        int frames = MusicDatabase::getInstance()->getFrameCount(m_id);
+        int hop = m_timebase.getHop();
+        int sz = m_timebase.getColumnSize();
+        return int(ceil(double(frames + (sz - hop)) / hop));
     }
 
     int getHeight() const {
@@ -155,14 +162,21 @@ private:
     }
 
     QString m_filename;
+
     AudioReadStream *m_stream;
+
     int m_channels;
     Timebase m_timebase;
+
     Window<float> *m_window;
     FFT *m_fft;
+
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved
+
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
+
+    MusicDatabase::ID m_id;
 };
 
 AudioStreamColumnReader::AudioStreamColumnReader(QString filename) :

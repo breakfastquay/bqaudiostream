@@ -41,6 +41,16 @@ private slots:
 	reader.close();
     }
 
+    void width() {
+	AudioStreamColumnReader reader(shorttest());
+	reader.open();
+	// The short file contains only one block of data, but because
+	// of overlaps, from hop 256 and blocksize 1024 we expect to
+	// get back columns starting at -768, -512, -256, and 0
+	QCOMPARE(reader.getWidth(), 4);
+	reader.close();
+    }
+
 
 };
 

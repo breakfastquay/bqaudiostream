@@ -13,6 +13,8 @@ int main(int argc, char *argv[])
     int good = 0, bad = 0;
 
     QCoreApplication app(argc, argv);
+    app.setOrganizationName("Particular Programs");
+    app.setApplicationName("test-audiostream");
 
     {
 	Turbot::TestSimpleWavRead t;
