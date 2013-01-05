@@ -44,12 +44,13 @@ public:
 
 	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
 	m_channels = m_stream->getChannelCount();
-	m_timebase = Timebase(m_stream->getSampleRate(),
-			      DefaultColumnSize,
-			      DefaultHopSize);
 
-        m_window = new Window<float>(HanningWindow, DefaultColumnSize);
-        m_fft = new FFT(DefaultColumnSize);
+        int sz = DefaultColumnSize;
+        int hop = DefaultHopSize;
+
+	m_timebase = Timebase(m_stream->getSampleRate(), sz, hop);
+        m_window = new Window<float>(HanningWindow, sz);
+        m_fft = new FFT(sz);
 
         // Somewhat arbitrary cache size of 8 columns across all
         // channels. We need to allow backward seeks of at least 1 or
@@ -59,8 +60,8 @@ public:
 
         // Stream cache is exactly one FFT-input frame in size,
         // and we read a hop then push it on the end at each step
-        m_streamCache = allocate_channels<float>
-            (m_channels, m_timebase.getColumnSize());
+        m_streamCache = allocate_channels<float>(m_channels, sz);
+        v_zero_channels(m_streamCache, m_channels, sz);
 
         m_streamCacheColumnNo = -1;
     }
@@ -109,6 +110,7 @@ public:
 
 private:
     void processColumn() {
+
         // Read one hop
         int hop = m_timebase.getHop();
         int sz = m_timebase.getColumnSize();
