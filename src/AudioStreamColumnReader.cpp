@@ -96,6 +96,10 @@ public:
 
     bool getColumnPolarInterleaved
     (int x, int channel, turbot_sample_t *column) {
+        if (isColumnInCache(x)) {
+            retrieveColumnFromCache(x, channel, column);
+            return true;
+        }
         return false; //!!!
     }
 
@@ -109,6 +113,42 @@ public:
     }
 
 private:
+    int singleChannelColumnSize() {
+        int sz = m_timebase.getColumnSize();
+        int hs1 = sz/2 + 1;
+        int colSize = hs1 * 2;
+        return colSize;
+    }
+
+    int offsetForColumn(int x, int channel) {
+        int colSize = singleChannelColumnSize();
+        int ix = x * colSize * m_channels + channel;
+        return ix;
+    }
+
+    bool isColumnInCache(int x) {
+        int colSize = singleChannelColumnSize();
+        int ix = offsetForColumn(x, 0);
+        if (ix < m_columnCache->offset()) {
+            return false; // off to left
+        }
+        if (ix + colSize * m_channels >
+            m_columnCache->offset() + m_columnCache->size()) {
+            return false; // off to right
+        }
+        return true;
+    }
+
+    void retrieveColumnFromCache(int x, int channel, turbot_sample_t *column) {
+        if (!isColumnInCache(x)) {
+            throw PreconditionFailed("retrieveColumnFromCache: column not in cache");
+        }
+        int colSize = singleChannelColumnSize();
+        int ix = offsetForColumn(x, channel);
+        const turbot_sample_t *data = m_columnCache->data();
+        v_copy(column, data + (ix - m_columnCache->offset()), colSize);
+    }
+
     void processColumn() {
 
         // Read one hop
