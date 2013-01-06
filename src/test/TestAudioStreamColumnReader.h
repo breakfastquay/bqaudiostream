@@ -9,6 +9,9 @@
 
 #include "AudioStreamColumnReader.h"
 
+#include "taf/AudioImporter.h"
+#include "taf/TurbotAudioFileReader.h"
+
 namespace Turbot {
 
 class TestAudioStreamColumnReader : public QObject
@@ -49,6 +52,38 @@ private slots:
 	// get back columns starting at -768, -512, -256, and 0
 	QCOMPARE(reader.getWidth(), 4);
 	reader.close();
+    }
+
+    void compare() {
+	// Load WAV file using the column reader, and also import to a
+	// TAF file. They should have identical data.
+
+	AudioStreamColumnReader colReader(longertest());
+	colReader.open();
+
+	AudioImporter importer;
+	Timebase timebase(44100, 1024, 256);
+	QString tafname = importer.importAudioFile
+	    (longertest(), QDir("."), timebase);
+
+	{
+
+	TurbotAudioFileReader tafReader(tafname);
+	tafReader.open();
+
+	QCOMPARE(colReader.getTimebase(), tafReader.getTimebase());
+	QCOMPARE(colReader.getChannelCount(), tafReader.getChannelCount());
+	QCOMPARE(colReader.getWidth(), tafReader.getWidth());
+	QCOMPARE(colReader.getHeight(), tafReader.getHeight());
+
+	//... and the data too
+
+	tafReader.close();
+
+	}
+
+	QFile(tafname).remove();
+	colReader.close();
     }
 
 
