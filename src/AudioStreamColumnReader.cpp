@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+//#define DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS 1
+
 namespace Turbot {
 
 class AudioStreamColumnReader::D
@@ -61,7 +63,7 @@ public:
         int hop = DefaultHopSize;
 
 	m_timebase = Timebase(m_stream->getSampleRate(), sz, hop);
-        m_window = new Window<float>(HanningWindow, sz);
+        m_window = new Window<turbot_sample_t>(HanningWindow, sz);
         m_fft = new FFT(sz);
 
         // Somewhat arbitrary cache size of 8 columns across all
@@ -151,7 +153,7 @@ private:
 
     int offsetForColumn(int x, int channel) {
         int colSize = singleChannelColumnSize();
-        int ix = x * colSize * m_channels + channel;
+        int ix = x * colSize * m_channels + channel * colSize;
         return ix;
     }
 
@@ -230,22 +232,35 @@ private:
         turbot_sample_t *columns = allocate<turbot_sample_t>
             (colSize * m_channels);
 
-        float *in = allocate<float>(sz);
-        float *magOut = allocate<float>(hs1);
-        float *phaseOut = allocate<float>(hs1);
+        turbot_sample_t *in = allocate<turbot_sample_t>(sz);
+        turbot_sample_t *magOut = allocate<turbot_sample_t>(hs1);
+        turbot_sample_t *phaseOut = allocate<turbot_sample_t>(hs1);
 
         for (int ch = 0; ch < m_channels; ++ch) {
-            v_copy(in, m_streamCache[ch], sz);
+
+            v_convert(in, m_streamCache[ch], sz);
             m_window->cut(in);
             v_fftshift(in, sz);
             m_fft->forwardPolar(in, magOut, phaseOut);
+
             for (int i = 0; i < hs1; ++i) {
+
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS
+                std::cerr << "columns[" << colSize * ch + 2*i << "] <- magOut[" << i << "] = " << magOut[i] << std::endl;
+#endif
+
                 columns[colSize * ch + 2*i] = magOut[i];
+
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS
+                std::cerr << "columns[" << colSize * ch + 2*i + 1 << "] <- phaseOut[" << i << "] = " << phaseOut[i] << std::endl;
+#endif
+
                 columns[colSize * ch + 2*i + 1] = phaseOut[i];
             }
         }
 
-        m_columnCache->update(colSize * columnNo * m_channels, columns,
+        m_columnCache->update(colSize * m_channels * columnNo,
+                              columns,
                               colSize * m_channels);
 
         deallocate(in);
@@ -260,7 +275,7 @@ private:
     int m_channels;
     Timebase m_timebase;
 
-    Window<float> *m_window;
+    Window<turbot_sample_t> *m_window;
     FFT *m_fft;
 
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved

@@ -85,18 +85,24 @@ private slots:
 		bool ar = colReader.getColumnPolarInterleaved(i, c, a);
 		bool br = tafReader.getColumnPolarInterleaved(i, c, b);
 		QCOMPARE(ar, br);
+                double tolerance = 1e-5;
                 for (int j = 0; j < sz; ++j) {
-                    // The 1e-5 in the next line is too forgiving, really
-                    QVERIFY2(fabs(a[j] - b[j]) < 1e-5,
-                             QString("At column %1 channel %2 with i = %3 of %4, col reader has %5, taf reader has %6, diff = %7")
-                             .arg(i)
-                             .arg(c)
-                             .arg(j)
-                             .arg(sz)
-                             .arg(a[j])
-                             .arg(b[j])
-                             .arg(a[j] - b[j])
-                             .toLocal8Bit().data());
+                    // Do the test first, then call QVERIFY2 only if
+                    // it fails -- so as to avoid constructing the
+                    // string every time
+                    if (!(fabs(a[j] - b[j]) < tolerance)) {
+                        QVERIFY2(fabs(a[j] - b[j]) < tolerance,
+                                 QString("At column %1 channel %2 with i = %3 of %4, col reader has %5, taf reader has %6, diff = %7")
+                                 .arg(i)
+                                 .arg(c)
+                                 .arg(j)
+                                 .arg(sz)
+                                 .arg(a[j])
+                                 .arg(b[j])
+                                 .arg(a[j] - b[j])
+                                 .toLocal8Bit().data());
+
+                    }
                 }
 	    }
 	}
