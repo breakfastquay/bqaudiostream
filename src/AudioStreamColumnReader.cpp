@@ -8,6 +8,8 @@
 #include "base/TurbotTypes.h"
 #include "base/Exceptions.h"
 
+#include "system/sysutils.h"
+
 #include "AudioReadStream.h"
 #include "AudioReadStreamFactory.h"
 
@@ -16,10 +18,20 @@
 #include "dsp/Window.h"
 #include "dsp/FFT.h"
 
+#include <cassert>
+
 namespace Turbot {
 
 class AudioStreamColumnReader::D
 {
+    enum ColumnLocation {
+        InCache,
+        LeftOfCache,
+        NearRightOfCache,
+        FarRightOfCache,
+        OutsideFile
+    };
+
 public:
     D(QString filename) :
 	m_filename(filename),
@@ -91,16 +103,26 @@ public:
     }
 
     void prepareColumn(int x) {
-        //!!!
+        if (findColumnRelativeToCache(x) == LeftOfCache) {
+            rewind();
+        }
+        while (findColumnRelativeToCache(x) == FarRightOfCache) {
+            readToStreamCache();
+        }
+        while (findColumnRelativeToCache(x) == NearRightOfCache) {
+            processColumn();
+        }
     }
 
     bool getColumnPolarInterleaved
     (int x, int channel, turbot_sample_t *column) {
-        if (isColumnInCache(x)) {
+        ColumnLocation loc = findColumnRelativeToCache(x);
+        if (loc == OutsideFile) return false;
+        else {
+            prepareColumn(x);
             retrieveColumnFromCache(x, channel, column);
             return true;
         }
-        return false; //!!!
     }
 
     void close() {
@@ -110,6 +132,13 @@ public:
         delete m_window;
         delete m_fft;
 	m_stream = 0;
+    }
+
+    void rewind() {
+        delete m_stream;
+	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
+        v_zero_channels(m_streamCache, m_channels, DefaultColumnSize);
+        m_streamCacheColumnNo = -1;
     }
 
 private:
@@ -126,21 +155,34 @@ private:
         return ix;
     }
 
-    bool isColumnInCache(int x) {
+    ColumnLocation findColumnRelativeToCache(int x) {
+
+        if (x < 0 || x >= getWidth()) {
+            return OutsideFile;
+        }
+
         int colSize = singleChannelColumnSize();
         int ix = offsetForColumn(x, 0);
-        if (ix < m_columnCache->offset()) {
-            return false; // off to left
+
+        int left = m_columnCache->offset();
+        int right = m_columnCache->offset() + m_columnCache->size();
+
+        if (ix < left) {
+            return LeftOfCache;
         }
-        if (ix + colSize * m_channels >
-            m_columnCache->offset() + m_columnCache->size()) {
-            return false; // off to right
+        if (ix + colSize * m_channels > right) {
+            if (ix > right + 7 * colSize * m_channels) {
+                return FarRightOfCache;
+            } else {
+                return NearRightOfCache;
+            }
         }
-        return true;
+
+        return InCache;
     }
 
     void retrieveColumnFromCache(int x, int channel, turbot_sample_t *column) {
-        if (!isColumnInCache(x)) {
+        if (findColumnRelativeToCache(x) != InCache) {
             throw PreconditionFailed("retrieveColumnFromCache: column not in cache");
         }
         int colSize = singleChannelColumnSize();
@@ -149,12 +191,15 @@ private:
         v_copy(column, data + (ix - m_columnCache->offset()), colSize);
     }
 
-    void processColumn() {
+    void readToStreamCache() {
 
         // Read one hop
+
         int hop = m_timebase.getHop();
         int sz = m_timebase.getColumnSize();
+
         float *iframes = allocate<float>(hop * m_channels);
+
         int read = m_stream->getInterleavedFrames(hop, iframes);
         if (read < hop) {
             //... indicate end of stream somehow
@@ -166,9 +211,14 @@ private:
                 }
             }
             ++m_streamCacheColumnNo;
-            processColumnFromStreamCache();
         }
+
         deallocate(iframes);
+    }
+
+    void processColumn() {
+        readToStreamCache();
+        processColumnFromStreamCache();
     }
 
     void processColumnFromStreamCache() {

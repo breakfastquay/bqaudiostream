@@ -12,6 +12,11 @@
 #include "taf/AudioImporter.h"
 #include "taf/TurbotAudioFileReader.h"
 
+#define COMPARE_ARRAY(a, b, n) \
+    for (int cmp_i = 0; cmp_i < n; ++cmp_i) { \
+        QCOMPARE(float(a[cmp_i] + 1000.0), float(b[cmp_i] + 1000.0)); \
+    }
+
 namespace Turbot {
 
 class TestAudioStreamColumnReader : public QObject
@@ -76,7 +81,18 @@ private slots:
 	QCOMPARE(colReader.getWidth(), tafReader.getWidth());
 	QCOMPARE(colReader.getHeight(), tafReader.getHeight());
 
-	//... and the data too
+	int sz = colReader.getHeight()*2;
+	turbot_sample_t *a = new turbot_sample_t[sz];
+	turbot_sample_t *b = new turbot_sample_t[sz];
+	
+	for (int i = 0; i < colReader.getWidth(); ++i) {
+	    for (int c = 0; c < colReader.getChannelCount(); ++c) {
+		bool ar = colReader.getColumnPolarInterleaved(i, c, a);
+		bool br = tafReader.getColumnPolarInterleaved(i, c, b);
+		QCOMPARE(ar, br);
+		COMPARE_ARRAY(a, b, sz);
+	    }
+	}
 
 	tafReader.close();
 
