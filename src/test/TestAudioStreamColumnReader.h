@@ -12,11 +12,6 @@
 #include "taf/AudioImporter.h"
 #include "taf/TurbotAudioFileReader.h"
 
-#define COMPARE_ARRAY(a, b, n) \
-    for (int cmp_i = 0; cmp_i < n; ++cmp_i) { \
-        QCOMPARE(float(a[cmp_i] + 1000.0), float(b[cmp_i] + 1000.0)); \
-    }
-
 namespace Turbot {
 
 class TestAudioStreamColumnReader : public QObject
@@ -90,7 +85,19 @@ private slots:
 		bool ar = colReader.getColumnPolarInterleaved(i, c, a);
 		bool br = tafReader.getColumnPolarInterleaved(i, c, b);
 		QCOMPARE(ar, br);
-		COMPARE_ARRAY(a, b, sz);
+                for (int j = 0; j < sz; ++j) {
+                    // The 1e-5 in the next line is too forgiving, really
+                    QVERIFY2(fabs(a[j] - b[j]) < 1e-5,
+                             QString("At column %1 channel %2 with i = %3 of %4, col reader has %5, taf reader has %6, diff = %7")
+                             .arg(i)
+                             .arg(c)
+                             .arg(j)
+                             .arg(sz)
+                             .arg(a[j])
+                             .arg(b[j])
+                             .arg(a[j] - b[j])
+                             .toLocal8Bit().data());
+                }
 	    }
 	}
 
