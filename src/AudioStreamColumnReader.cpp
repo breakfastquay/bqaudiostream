@@ -204,16 +204,20 @@ private:
 
         int read = m_stream->getInterleavedFrames(hop, iframes);
         if (read < hop) {
-            //... indicate end of stream somehow
-        } else {
             for (int c = 0; c < m_channels; ++c) {
-                v_move(m_streamCache[c], m_streamCache[c] + hop, sz - hop);
-                for (int i = 0; i < hop; ++i) {
-                    m_streamCache[c][sz - hop + i] = iframes[i * m_channels + c];
+                for (int i = read; i < hop; ++i) {
+                    iframes[i * m_channels + c] = 0.f;
                 }
             }
-            ++m_streamCacheColumnNo;
         }
+
+        for (int c = 0; c < m_channels; ++c) {
+            v_move(m_streamCache[c], m_streamCache[c] + hop, sz - hop);
+            for (int i = 0; i < hop; ++i) {
+                m_streamCache[c][sz - hop + i] = iframes[i * m_channels + c];
+            }
+        }
+        ++m_streamCacheColumnNo;
 
         deallocate(iframes);
     }
