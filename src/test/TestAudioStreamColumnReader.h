@@ -116,9 +116,6 @@ private slots:
 
         delete[] a;
         delete[] b;
-        tafReader.close();
-
-        double v, w;
 
 	TurbotAudioMetadataReader tamReader(tafname);
 	tamReader.open();
@@ -128,6 +125,10 @@ private slots:
 	QCOMPARE(colReader.getWidth(), tamReader.getWidth());
 	QCOMPARE(colReader.getHeight(), tamReader.getHeight());
 
+        double v, w;
+        double conf1, conf2;
+        bool b1, b2;
+
 	for (int i = 0; i < colReader.getWidth(); ++i) {
 
             v = colReader.getAudioCurveValue(i);
@@ -136,9 +137,45 @@ private slots:
                 cerr << "At column " << i << ", " << v << " - " << w << " >= " << tolerance << " for getAudioCurveValue" << endl;
                 QCOMPARE(v, w);
             }
+/*
+            for (int channel = 0; channel < colReader.getChannelCount(); ++channel) {
+                v = colReader.getColumnUniquePower(i, channel);
+                w = tamReader.getColumnUniquePower(i, channel);
+                if (fabs(v - w) >= tolerance) {
+                    cerr << "At column " << i << " channel " << channel << ", " << v << " - " << w << " >= " << tolerance << " for getColumnUniquePower" << endl;
+                    QCOMPARE(v, w);
+                }
+
+                v = colReader.getColumnTotalPower(i, channel);
+                w = tamReader.getColumnTotalPower(i, channel);
+                if (fabs(v - w) >= tolerance) {
+                    cerr << "At column " << i << " channel " << channel << ", " << v << " - " << w << " >= " << tolerance << " for getColumnTotalPower" << endl;
+                    QCOMPARE(v, w);
+                }
+            }
+*/
+            v = colReader.getPitchValue(i, conf1);
+            w = tamReader.getPitchValue(i, conf2);
+            if (fabs(v - w) >= tolerance) {
+                cerr << "At column " << i << ", " << v << " - " << w << " >= " << tolerance << " for getPitchValue" << endl;
+//                QCOMPARE(v, w);
+            }
+            if (fabs(conf1 - conf2) >= tolerance) {
+                cerr << "At column " << i << ", " << conf1 << " - " << conf2 << " >= " << tolerance << " for getPitchValue confidence" << endl;
+//                QCOMPARE(conf1, conf2);
+            }
+/*
+            b1 = colReader.getPhaseSync(i);
+            b2 = tamReader.getPhaseSync(i);
+            if (b1 != b2) {
+                cerr << "At column " << i << ", " << b1 << " != " << b2 << " for getPhaseSync" << endl;
+                QCOMPARE(b1, b2);
+            }
+*/
 	}
 
 	tamReader.close();
+        tafReader.close();
 
 	}
 

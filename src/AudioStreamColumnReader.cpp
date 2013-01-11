@@ -19,6 +19,7 @@
 #include "dsp/FFT.h"
 
 #include "audiocurves/CompoundAudioCurve.h"
+#include "audiocurves/CepstralPitchCurve.h"
 
 #include <vector>
 
@@ -49,6 +50,7 @@ public:
 	m_channels(0),
 	m_columnCache(0),
         m_audioCurve(0),
+        m_pitchCurve(0),
 	m_streamCache(0),
         m_streamCacheColumnNo(-1)
     {
@@ -68,10 +70,12 @@ public:
 	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
 	m_channels = m_stream->getChannelCount();
 
+        int rate = m_stream->getSampleRate();
+
         int sz = DefaultColumnSize;
         int hop = DefaultHopSize;
 
-	m_timebase = Timebase(m_stream->getSampleRate(), sz, hop);
+	m_timebase = Timebase(rate, sz, hop);
         m_window = new Window<turbot_sample_t>(HanningWindow, sz);
         m_fft = new FFT(sz);
 
@@ -88,13 +92,17 @@ public:
 
         m_streamCacheColumnNo = -1;
 
-        m_audioCurve = new CompoundAudioCurve(CompoundAudioCurve::Parameters
-                                              (m_stream->getSampleRate(), sz));
+        m_audioCurve = new CompoundAudioCurve
+            (CompoundAudioCurve::Parameters(rate, sz));
+
+        m_pitchCurve = new CepstralPitchCurve
+            (CepstralPitchCurve::Parameters(rate, sz));
     }
 
     void close() {
         deallocate_channels(m_streamCache, m_channels);
         delete m_audioCurve;
+        delete m_pitchCurve;
 	delete m_columnCache;
 	delete m_stream;
         delete m_window;
@@ -168,7 +176,7 @@ public:
 
     turbot_sample_t getAudioCurveValue(int x) {
         if (!prepareColumn(x)) return 0;
-        assert(x >= 0 && x < dflen());
+        assert(x >= 0 && x < curvesLength());
         return m_df[x];
     }
 
@@ -181,7 +189,10 @@ public:
     }
 
     turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
-        return 0; //!!!
+        if (!prepareColumn(x)) { confidence = 0; return 0; }
+        assert(x >= 0 && x < curvesLength());
+        confidence = m_pitchConfidence[x];
+        return m_pitch[x];
     }
 
 private:
@@ -278,8 +289,8 @@ private:
 
         int columnNo = m_streamCacheColumnNo;
 
-        if (columnNo > dflen()) {
-            cerr << "processColumnFromStreamCache: column " << columnNo << " found, but audio curve only reaches " << int(dflen())-1 << " -- can't append (no way to fill the gap)" << endl;
+        if (columnNo > curvesLength()) {
+            cerr << "processColumnFromStreamCache: column " << columnNo << " found, but audio curve only reaches " << int(curvesLength())-1 << " -- can't append (no way to fill the gap)" << endl;
             throw PreconditionFailed("processColumnFromStreamCache: column to right of audio curve (would leave a gap)");
         }
 
@@ -295,7 +306,7 @@ private:
 
         turbot_sample_t *magSum = 0;
 
-        if (m_channels > 0 && columnNo == dflen()) {
+        if (m_channels > 0 && columnNo == curvesLength()) {
             // We will be appending a metadata calculation and we need
             // to mix down for it
             magSum = allocate<turbot_sample_t>(hs1);
@@ -329,7 +340,7 @@ private:
             }
         }
 
-        if (columnNo == dflen()) {
+        if (columnNo == curvesLength()) {
             // append a metadata calculation as well, using the sum of
             // the magnitudes as the inputs (rather than a single
             // magnitude calculated from a mixture of the time-domain
@@ -337,9 +348,7 @@ private:
             // is the same as Rubber Band does in RT mode
             turbot_sample_t *m = magSum;
             if (!m) m = magOut;
-            turbot_sample_t val = m_audioCurve->process(m, m_timebase.getHop());
-            cerr << "df: adding " << val << " for col " << columnNo << endl;
-            m_df.push_back((float)val);
+            addMetadataEntry(m);
         }
         
         m_columnCache->update(colSize * m_channels * columnNo,
@@ -356,11 +365,11 @@ private:
 
         int columnNo = m_streamCacheColumnNo;
 
-        if (columnNo > dflen()) {
-            cerr << "processColumnFromStreamCacheMetadataOnly: column " << columnNo << " found, but audio curve only reaches " << int(dflen())-1 << " -- can't append (no way to fill the gap)" << endl;
+        if (columnNo > curvesLength()) {
+            cerr << "processColumnFromStreamCacheMetadataOnly: column " << columnNo << " found, but audio curve only reaches " << int(curvesLength())-1 << " -- can't append (no way to fill the gap)" << endl;
             throw PreconditionFailed("processColumnFromStreamCacheMetadataOnly: column to right of audio curve (would leave a gap)");
         }
-        if (columnNo < dflen()) {
+        if (columnNo < curvesLength()) {
             return; // nothing to do
         }
         
@@ -390,14 +399,23 @@ private:
             v_add(magSum, magOut, hs1);
         }
 
-        turbot_sample_t val = m_audioCurve->process(magSum, m_timebase.getHop());
-        cerr << "df: adding " << val << " for col " << columnNo << " (metadata-only)" << endl;
-
-        m_df.push_back((float)val);
+        addMetadataEntry(magSum);
         
         deallocate(in);
         deallocate(magOut);
         deallocate(magSum);
+    }
+
+    void addMetadataEntry(const turbot_sample_t *const m) {
+
+        turbot_sample_t val = m_audioCurve->process(m, m_timebase.getHop());
+        m_df.push_back(val);
+
+        val = m_pitchCurve->process(m, m_timebase.getHop());
+        m_pitch.push_back(val);
+
+        turbot_sample_t confidence = m_pitchCurve->getConfidence();
+        m_pitchConfidence.push_back(confidence);
     }
 
     QString m_filename;
@@ -412,9 +430,14 @@ private:
 
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved
 
+    int curvesLength() { return (int)m_df.size(); }
+
     AudioCurveCalculator *m_audioCurve;
     vector<float> m_df;
-    int dflen() { return (int)m_df.size(); }
+
+    AudioCurveCalculator *m_pitchCurve;
+    vector<float> m_pitch;
+    vector<float> m_pitchConfidence;
     
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
