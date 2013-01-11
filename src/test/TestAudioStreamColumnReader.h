@@ -11,6 +11,12 @@
 
 #include "taf/AudioImporter.h"
 #include "taf/TurbotAudioFileReader.h"
+#include "taf/TurbotAudioMetadataReader.h"
+
+#include <iostream>
+
+using std::cerr;
+using std::endl;
 
 namespace Turbot {
 
@@ -56,7 +62,7 @@ private slots:
 
     void compare() {
 	// Load WAV file using the column reader, and also import to a
-	// TAF file. They should have identical data.
+	// TAF file. They should have identical data and metadata.
 
 	AudioStreamColumnReader colReader(longertest());
 	colReader.open();
@@ -80,12 +86,13 @@ private slots:
 	turbot_sample_t *a = new turbot_sample_t[sz];
 	turbot_sample_t *b = new turbot_sample_t[sz];
 	
+        double tolerance = 1e-5;
+
 	for (int i = 0; i < colReader.getWidth(); ++i) {
 	    for (int c = 0; c < colReader.getChannelCount(); ++c) {
 		bool ar = colReader.getColumnPolarInterleaved(i, c, a);
 		bool br = tafReader.getColumnPolarInterleaved(i, c, b);
 		QCOMPARE(ar, br);
-                double tolerance = 1e-5;
                 for (int j = 0; j < sz; ++j) {
                     // Do the test first, then call QVERIFY2 only if
                     // it fails -- so as to avoid constructing the
@@ -107,7 +114,31 @@ private slots:
 	    }
 	}
 
-	tafReader.close();
+        delete[] a;
+        delete[] b;
+        tafReader.close();
+
+        double v, w;
+
+	TurbotAudioMetadataReader tamReader(tafname);
+	tamReader.open();
+
+	QCOMPARE(colReader.getTimebase(), tamReader.getTimebase());
+	QCOMPARE(colReader.getChannelCount(), tamReader.getChannelCount());
+	QCOMPARE(colReader.getWidth(), tamReader.getWidth());
+	QCOMPARE(colReader.getHeight(), tamReader.getHeight());
+
+	for (int i = 0; i < colReader.getWidth(); ++i) {
+
+            v = colReader.getAudioCurveValue(i);
+            w = tamReader.getAudioCurveValue(i);
+            if (fabs(v - w) >= tolerance) {
+                cerr << "At column " << i << ", " << v << " - " << w << " >= " << tolerance << " for getAudioCurveValue" << endl;
+                QCOMPARE(v, w);
+            }
+	}
+
+	tamReader.close();
 
 	}
 

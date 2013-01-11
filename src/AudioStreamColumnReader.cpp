@@ -48,9 +48,9 @@ public:
 	m_stream(0),
 	m_channels(0),
 	m_columnCache(0),
+        m_audioCurve(0),
 	m_streamCache(0),
-        m_streamCacheColumnNo(-1),
-        m_audioCurve(0)
+        m_streamCacheColumnNo(-1)
     {
     }
 
@@ -133,8 +133,11 @@ public:
 	return m_timebase.getColumnSize() / 2 + 1;
     }
 
-    void prepareColumn(int x) {
-        if (findColumnRelativeToCache(x) == LeftOfCache) {
+    bool prepareColumn(int x) {
+        ColumnLocation loc = findColumnRelativeToCache(x);
+        if (loc == OutsideFile) {
+            return false;
+        } else if (loc == LeftOfCache) {
             rewind();
         }
         while (findColumnRelativeToCache(x) == FarRightOfCache) {
@@ -143,17 +146,42 @@ public:
         while (findColumnRelativeToCache(x) == NearRightOfCache) {
             processColumn();
         }
+        return true;
     }
 
     bool getColumnPolarInterleaved
     (int x, int channel, turbot_sample_t *column) {
-        ColumnLocation loc = findColumnRelativeToCache(x);
-        if (loc == OutsideFile) return false;
-        else {
-            prepareColumn(x);
-            retrieveColumnFromCache(x, channel, column);
-            return true;
-        }
+        if (!prepareColumn(x)) return false;
+        retrieveColumnFromCache(x, channel, column);
+        return true;
+    }
+
+    bool getPhaseSync(int x) {
+        if (!prepareColumn(x)) return false;
+        return false; //!!!
+    }
+
+    bool getHumanOnset(int x) {
+        if (!prepareColumn(x)) return false;
+        return false; //!!!
+    }
+
+    turbot_sample_t getAudioCurveValue(int x) {
+        if (!prepareColumn(x)) return 0;
+        assert(x >= 0 && x < dflen());
+        return m_df[x];
+    }
+
+    turbot_sample_t getColumnUniquePower(int x, int channel) {
+        return 0; //!!!
+    }
+
+    turbot_sample_t getColumnTotalPower(int x, int channel) {
+        return 0; //!!!
+    }
+
+    turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
+        return 0; //!!!
     }
 
 private:
@@ -250,8 +278,8 @@ private:
 
         int columnNo = m_streamCacheColumnNo;
 
-        if (columnNo > m_df.size()) {
-            cerr << "processColumnFromStreamCache: column " << columnNo << " found, but audio curve only reaches " << int(m_df.size())-1 << " -- can't append (no way to fill the gap)" << endl;
+        if (columnNo > dflen()) {
+            cerr << "processColumnFromStreamCache: column " << columnNo << " found, but audio curve only reaches " << int(dflen())-1 << " -- can't append (no way to fill the gap)" << endl;
             throw PreconditionFailed("processColumnFromStreamCache: column to right of audio curve (would leave a gap)");
         }
 
@@ -267,7 +295,7 @@ private:
 
         turbot_sample_t *magSum = 0;
 
-        if (m_channels > 0 && columnNo == m_df.size()) {
+        if (m_channels > 0 && columnNo == dflen()) {
             // We will be appending a metadata calculation and we need
             // to mix down for it
             magSum = allocate<turbot_sample_t>(hs1);
@@ -301,7 +329,7 @@ private:
             }
         }
 
-        if (columnNo == m_df.size()) {
+        if (columnNo == dflen()) {
             // append a metadata calculation as well, using the sum of
             // the magnitudes as the inputs (rather than a single
             // magnitude calculated from a mixture of the time-domain
@@ -328,11 +356,11 @@ private:
 
         int columnNo = m_streamCacheColumnNo;
 
-        if (columnNo > m_df.size()) {
-            cerr << "processColumnFromStreamCacheMetadataOnly: column " << columnNo << " found, but audio curve only reaches " << int(m_df.size())-1 << " -- can't append (no way to fill the gap)" << endl;
+        if (columnNo > dflen()) {
+            cerr << "processColumnFromStreamCacheMetadataOnly: column " << columnNo << " found, but audio curve only reaches " << int(dflen())-1 << " -- can't append (no way to fill the gap)" << endl;
             throw PreconditionFailed("processColumnFromStreamCacheMetadataOnly: column to right of audio curve (would leave a gap)");
         }
-        if (columnNo < m_df.size()) {
+        if (columnNo < dflen()) {
             return; // nothing to do
         }
         
@@ -386,6 +414,7 @@ private:
 
     AudioCurveCalculator *m_audioCurve;
     vector<float> m_df;
+    int dflen() { return (int)m_df.size(); }
     
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
@@ -450,6 +479,42 @@ AudioStreamColumnReader::getColumnPolarInterleaved
 (int x, int channel, turbot_sample_t *column)
 {
     return m_d->getColumnPolarInterleaved(x, channel, column);
+}
+
+bool
+AudioStreamColumnReader::getPhaseSync(int x)
+{
+    return m_d->getPhaseSync(x);
+}
+
+bool
+AudioStreamColumnReader::getHumanOnset(int x)
+{
+    return m_d->getHumanOnset(x);
+}
+
+turbot_sample_t
+AudioStreamColumnReader::getAudioCurveValue(int x)
+{
+    return m_d->getAudioCurveValue(x);
+}
+
+turbot_sample_t
+AudioStreamColumnReader::getColumnUniquePower(int x, int channel)
+{
+    return m_d->getColumnUniquePower(x, channel);
+}
+
+turbot_sample_t
+AudioStreamColumnReader::getColumnTotalPower(int x, int channel)
+{
+    return m_d->getColumnTotalPower(x, channel);
+}
+
+turbot_sample_t
+AudioStreamColumnReader::getPitchValue(int x, turbot_sample_t &confidence)
+{
+    return m_d->getPitchValue(x, confidence);
 }
 
 void

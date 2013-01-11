@@ -5,6 +5,7 @@
 #define _TURBOT_AUDIO_STREAM_COLUMN_READER_H_
 
 #include "process/RegionColumnReader.h"
+#include "process/RegionMetadataReader.h"
 
 namespace Turbot {
 
@@ -14,7 +15,8 @@ namespace Turbot {
  *
  * Reentrant. Not thread-safe; not RT-safe.
  */
-class AudioStreamColumnReader : public RegionColumnReader
+class AudioStreamColumnReader : virtual public RegionColumnReader,
+                                virtual public RegionMetadataReader
 {
     Q_OBJECT
 
@@ -46,6 +48,14 @@ public:
 
     virtual bool getColumnPolarInterleaved
     (int x, int channel, turbot_sample_t *column);
+
+    virtual bool getPhaseSync(int col);
+    virtual bool getHumanOnset(int col);
+
+    virtual turbot_sample_t getAudioCurveValue(int col); 
+    virtual turbot_sample_t getColumnUniquePower(int col, int channel); 
+    virtual turbot_sample_t getColumnTotalPower(int col, int channel); 
+    virtual turbot_sample_t getPitchValue(int col, turbot_sample_t &confidence);
 
     virtual void close();
 
