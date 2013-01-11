@@ -18,9 +18,17 @@
 #include "dsp/Window.h"
 #include "dsp/FFT.h"
 
+#include "audiocurves/CompoundAudioCurve.h"
+
+#include <vector>
+
 #include <cassert>
 
 //#define DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS 1
+
+using std::vector;
+using std::cerr;
+using std::endl;
 
 namespace Turbot {
 
@@ -41,7 +49,8 @@ public:
 	m_channels(0),
 	m_columnCache(0),
 	m_streamCache(0),
-        m_streamCacheColumnNo(-1)
+        m_streamCacheColumnNo(-1),
+        m_audioCurve(0)
     {
     }
 
@@ -78,8 +87,28 @@ public:
         v_zero_channels(m_streamCache, m_channels, sz);
 
         m_streamCacheColumnNo = -1;
+
+        m_audioCurve = new CompoundAudioCurve(CompoundAudioCurve::Parameters
+                                              (m_stream->getSampleRate(), sz));
     }
 
+    void close() {
+        deallocate_channels(m_streamCache, m_channels);
+        delete m_audioCurve;
+	delete m_columnCache;
+	delete m_stream;
+        delete m_window;
+        delete m_fft;
+	m_stream = 0;
+    }
+
+    void rewind() {
+        delete m_stream;
+	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
+        v_zero_channels(m_streamCache, m_channels, DefaultColumnSize);
+        m_streamCacheColumnNo = -1;
+        // leave m_df unchanged
+    }
 
     QString getFileName() const {
 	return m_filename;
@@ -109,7 +138,7 @@ public:
             rewind();
         }
         while (findColumnRelativeToCache(x) == FarRightOfCache) {
-            readToStreamCache();
+            processColumnMetadataOnly();
         }
         while (findColumnRelativeToCache(x) == NearRightOfCache) {
             processColumn();
@@ -125,22 +154,6 @@ public:
             retrieveColumnFromCache(x, channel, column);
             return true;
         }
-    }
-
-    void close() {
-        deallocate_channels(m_streamCache, m_channels);
-	delete m_columnCache;
-	delete m_stream;
-        delete m_window;
-        delete m_fft;
-	m_stream = 0;
-    }
-
-    void rewind() {
-        delete m_stream;
-	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
-        v_zero_channels(m_streamCache, m_channels, DefaultColumnSize);
-        m_streamCacheColumnNo = -1;
     }
 
 private:
@@ -185,6 +198,7 @@ private:
 
     void retrieveColumnFromCache(int x, int channel, turbot_sample_t *column) {
         if (findColumnRelativeToCache(x) != InCache) {
+            cerr << "retrieveColumnFromCache: column " << x << " not in cache (starts " << m_columnCache->offset() << " of size " << m_columnCache->size() << ")" << endl;
             throw PreconditionFailed("retrieveColumnFromCache: column not in cache");
         }
         int colSize = singleChannelColumnSize();
@@ -227,9 +241,20 @@ private:
         processColumnFromStreamCache();
     }
 
+    void processColumnMetadataOnly() {
+        readToStreamCache();
+        processColumnFromStreamCacheMetadataOnly();
+    }
+
     void processColumnFromStreamCache() {
 
         int columnNo = m_streamCacheColumnNo;
+
+        if (columnNo > m_df.size()) {
+            cerr << "processColumnFromStreamCache: column " << columnNo << " found, but audio curve only reaches " << int(m_df.size())-1 << " -- can't append (no way to fill the gap)" << endl;
+            throw PreconditionFailed("processColumnFromStreamCache: column to right of audio curve (would leave a gap)");
+        }
+
         int sz = m_timebase.getColumnSize();
         int hs1 = sz/2 + 1;
         int colSize = hs1 * 2;
@@ -240,6 +265,15 @@ private:
         turbot_sample_t *magOut = allocate<turbot_sample_t>(hs1);
         turbot_sample_t *phaseOut = allocate<turbot_sample_t>(hs1);
 
+        turbot_sample_t *magSum = 0;
+
+        if (m_channels > 0 && columnNo == m_df.size()) {
+            // We will be appending a metadata calculation and we need
+            // to mix down for it
+            magSum = allocate<turbot_sample_t>(hs1);
+            v_zero(magSum, hs1);
+        }
+        
         for (int ch = 0; ch < m_channels; ++ch) {
 
             v_convert(in, m_streamCache[ch], sz);
@@ -250,19 +284,36 @@ private:
             for (int i = 0; i < hs1; ++i) {
 
 #ifdef DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS
-                std::cerr << "columns[" << colSize * ch + 2*i << "] <- magOut[" << i << "] = " << magOut[i] << std::endl;
+                cerr << "columns[" << colSize * ch + 2*i << "] <- magOut[" << i << "] = " << magOut[i] << endl;
 #endif
 
                 columns[colSize * ch + 2*i] = magOut[i];
 
 #ifdef DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS
-                std::cerr << "columns[" << colSize * ch + 2*i + 1 << "] <- phaseOut[" << i << "] = " << phaseOut[i] << std::endl;
+                cerr << "columns[" << colSize * ch + 2*i + 1 << "] <- phaseOut[" << i << "] = " << phaseOut[i] << endl;
 #endif
 
                 columns[colSize * ch + 2*i + 1] = phaseOut[i];
             }
+
+            if (magSum) {
+                v_add(magSum, magOut, hs1);
+            }
         }
 
+        if (columnNo == m_df.size()) {
+            // append a metadata calculation as well, using the sum of
+            // the magnitudes as the inputs (rather than a single
+            // magnitude calculated from a mixture of the time-domain
+            // channels, which we don't have available here) -- this
+            // is the same as Rubber Band does in RT mode
+            turbot_sample_t *m = magSum;
+            if (!m) m = magOut;
+            turbot_sample_t val = m_audioCurve->process(m, m_timebase.getHop());
+            cerr << "df: adding " << val << " for col " << columnNo << endl;
+            m_df.push_back((float)val);
+        }
+        
         m_columnCache->update(colSize * m_channels * columnNo,
                               columns,
                               colSize * m_channels);
@@ -270,6 +321,55 @@ private:
         deallocate(in);
         deallocate(magOut);
         deallocate(phaseOut);
+        if (magSum) deallocate(magSum);
+    }
+
+    void processColumnFromStreamCacheMetadataOnly() {
+
+        int columnNo = m_streamCacheColumnNo;
+
+        if (columnNo > m_df.size()) {
+            cerr << "processColumnFromStreamCacheMetadataOnly: column " << columnNo << " found, but audio curve only reaches " << int(m_df.size())-1 << " -- can't append (no way to fill the gap)" << endl;
+            throw PreconditionFailed("processColumnFromStreamCacheMetadataOnly: column to right of audio curve (would leave a gap)");
+        }
+        if (columnNo < m_df.size()) {
+            return; // nothing to do
+        }
+        
+        int sz = m_timebase.getColumnSize();
+        int hs1 = sz/2 + 1;
+        int colSize = hs1 * 2;
+
+        turbot_sample_t *in = allocate<turbot_sample_t>(sz);
+        turbot_sample_t *magOut = allocate<turbot_sample_t>(hs1);
+        turbot_sample_t *magSum = allocate<turbot_sample_t>(hs1);
+
+        // Sadly we have to process both channels here so we can
+        // calculate a magnitude sum (for consistency with the
+        // calculation in processColumnFromStreamCache above). We
+        // prioritise efficient working of that function rather than
+        // this one, as it's the normal playback case
+
+        v_zero(magSum, hs1);
+
+        for (int ch = 0; ch < m_channels; ++ch) {
+
+            v_convert(in, m_streamCache[ch], sz);
+            m_window->cut(in);
+            v_fftshift(in, sz);
+            m_fft->forwardMagnitude(in, magOut);
+
+            v_add(magSum, magOut, hs1);
+        }
+
+        turbot_sample_t val = m_audioCurve->process(magSum, m_timebase.getHop());
+        cerr << "df: adding " << val << " for col " << columnNo << " (metadata-only)" << endl;
+
+        m_df.push_back((float)val);
+        
+        deallocate(in);
+        deallocate(magOut);
+        deallocate(magSum);
     }
 
     QString m_filename;
@@ -284,6 +384,9 @@ private:
 
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved
 
+    AudioCurveCalculator *m_audioCurve;
+    vector<float> m_df;
+    
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
 
