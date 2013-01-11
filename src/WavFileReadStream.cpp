@@ -52,6 +52,10 @@ WavFileReadStream::WavFileReadStream(QString path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
+    if (!QFile(m_path).exists()) {
+        throw FileNotFound(m_path);
+    }
+
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
     m_file = sf_open(m_path.toLocal8Bit().data(), SFM_READ, &m_fileInfo);
@@ -68,7 +72,7 @@ WavFileReadStream::WavFileReadStream(QString path) :
 	    m_error = QString("Failed to open audio file '") +
 		m_path + "'";
 	}
-	return;
+        throw InvalidFileFormat(m_path, m_error);
     }
 
     m_channelCount = m_fileInfo.channels;
