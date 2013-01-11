@@ -125,7 +125,7 @@ private slots:
 	QCOMPARE(colReader.getWidth(), tamReader.getWidth());
 	QCOMPARE(colReader.getHeight(), tamReader.getHeight());
 
-        double v, w;
+        double v, w; 
         double conf1, conf2;
         bool b1, b2;
 
@@ -137,7 +137,7 @@ private slots:
                 cerr << "At column " << i << ", " << v << " - " << w << " >= " << tolerance << " for getAudioCurveValue" << endl;
                 QCOMPARE(v, w);
             }
-/*
+
             for (int channel = 0; channel < colReader.getChannelCount(); ++channel) {
                 v = colReader.getColumnUniquePower(i, channel);
                 w = tamReader.getColumnUniquePower(i, channel);
@@ -153,25 +153,24 @@ private slots:
                     QCOMPARE(v, w);
                 }
             }
-*/
+
             v = colReader.getPitchValue(i, conf1);
             w = tamReader.getPitchValue(i, conf2);
             if (fabs(v - w) >= tolerance) {
                 cerr << "At column " << i << ", " << v << " - " << w << " >= " << tolerance << " for getPitchValue" << endl;
-//                QCOMPARE(v, w);
+                QCOMPARE(v, w);
             }
             if (fabs(conf1 - conf2) >= tolerance) {
                 cerr << "At column " << i << ", " << conf1 << " - " << conf2 << " >= " << tolerance << " for getPitchValue confidence" << endl;
-//                QCOMPARE(conf1, conf2);
+                QCOMPARE(conf1, conf2);
             }
-/*
+
             b1 = colReader.getPhaseSync(i);
             b2 = tamReader.getPhaseSync(i);
             if (b1 != b2) {
                 cerr << "At column " << i << ", " << b1 << " != " << b2 << " for getPhaseSync" << endl;
                 QCOMPARE(b1, b2);
             }
-*/
 	}
 
 	tamReader.close();
