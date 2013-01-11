@@ -181,11 +181,19 @@ public:
     }
 
     turbot_sample_t getColumnUniquePower(int x, int channel) {
-        return 0; //!!!
+        if (!prepareColumn(x)) return 0;
+        assert(x >= 0 && x < curvesLength());
+        int ix = m_channels * x + channel;
+        assert(ix < (int)m_uniquePowers.size());
+        return m_uniquePowers[ix];
     }
 
     turbot_sample_t getColumnTotalPower(int x, int channel) {
-        return 0; //!!!
+        if (!prepareColumn(x)) return 0;
+        assert(x >= 0 && x < curvesLength());
+        int ix = m_channels * x + channel;
+        assert(ix < (int)m_totalPowers.size());
+        return m_totalPowers[ix];
     }
 
     turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
@@ -316,8 +324,14 @@ private:
         for (int ch = 0; ch < m_channels; ++ch) {
 
             v_convert(in, m_streamCache[ch], sz);
+
+            addUniquePowerAndPeak(in);
+
             m_window->cut(in);
             v_fftshift(in, sz);
+
+            addTotalPower(in);
+
             m_fft->forwardPolar(in, magOut, phaseOut);
 
             for (int i = 0; i < hs1; ++i) {
@@ -348,7 +362,7 @@ private:
             // is the same as Rubber Band does in RT mode
             turbot_sample_t *m = magSum;
             if (!m) m = magOut;
-            addMetadataEntry(m);
+            addMagMetadata(m);
         }
         
         m_columnCache->update(colSize * m_channels * columnNo,
@@ -392,26 +406,64 @@ private:
         for (int ch = 0; ch < m_channels; ++ch) {
 
             v_convert(in, m_streamCache[ch], sz);
+
+            addUniquePowerAndPeak(in);
+
             m_window->cut(in);
             v_fftshift(in, sz);
+
+            addTotalPower(in);
+
             m_fft->forwardMagnitude(in, magOut);
 
             v_add(magSum, magOut, hs1);
         }
 
-        addMetadataEntry(magSum);
+        addMagMetadata(magSum);
         
         deallocate(in);
         deallocate(magOut);
         deallocate(magSum);
     }
 
-    void addMetadataEntry(const turbot_sample_t *const m) {
+    void addUniquePowerAndPeak(const turbot_sample_t *const in) {
 
-        turbot_sample_t val = m_audioCurve->process(m, m_timebase.getHop());
+        turbot_sample_t peak = 0.0;
+        turbot_sample_t uniquePower = 0.0;
+        
+        int sz = m_timebase.getColumnSize();
+        int hop = m_timebase.getHop();
+
+        int base = sz/2 - hop/2;
+        for (int i = 0; i < hop; ++i) {
+            turbot_sample_t value = in[base + i];
+            if (fabs(value) > peak) peak = fabs(value);
+            uniquePower += value * value;
+        }
+        
+        m_peaks.push_back(peak);
+        m_uniquePowers.push_back(uniquePower);
+    }
+
+    void addTotalPower(const turbot_sample_t *const in) {
+
+        turbot_sample_t totalPower = 0.0;
+        
+        int sz = m_timebase.getColumnSize();
+
+        for (int i = 0; i < sz; ++i) {
+            totalPower += in[i] * in[i];
+        }
+        
+        m_totalPowers.push_back(totalPower);
+    }
+
+    void addMagMetadata(const turbot_sample_t *const mags) {
+
+        turbot_sample_t val = m_audioCurve->process(mags, m_timebase.getHop());
         m_df.push_back(val);
 
-        val = m_pitchCurve->process(m, m_timebase.getHop());
+        val = m_pitchCurve->process(mags, m_timebase.getHop());
         m_pitch.push_back(val);
 
         turbot_sample_t confidence = m_pitchCurve->getConfidence();
@@ -431,6 +483,10 @@ private:
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved
 
     int curvesLength() { return (int)m_df.size(); }
+
+    vector<float> m_totalPowers;
+    vector<float> m_uniquePowers;
+    vector<float> m_peaks;
 
     AudioCurveCalculator *m_audioCurve;
     vector<float> m_df;
