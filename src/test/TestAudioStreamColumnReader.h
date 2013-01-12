@@ -31,6 +31,13 @@ class TestAudioStreamColumnReader : public QObject
 	return f;
     }
 
+    // This is an 8KHz 8-bit mono WAV file 6 seconds long, with a
+    // Dirac impulse every half a second
+    static const char *bpmtest() { 
+	static const char *f = "../../../resources/testfiles/120bpm.wav";
+	return f;
+    }
+
     // This one is a 44.1KHz, 32-bit float WAV, about 13 seconds of music
     static const char *longertest() { 
 	static const char *f = "../../../resources/testfiles/clip.wav";
@@ -151,6 +158,9 @@ private slots:
         double conf1, conf2;
         bool b1, b2;
 
+        // Now compare all those metadata values that are supposed to
+        // be identical across different column readers
+        
 	for (int i = 0; i < colReader.getWidth(); ++i) {
 
             v = colReader.getAudioCurveValue(i);
@@ -200,6 +210,32 @@ private slots:
 	colReader.close();
     }
 
+    void syncpoints() {
+
+	AudioStreamColumnReader colReader(bpmtest());
+	colReader.open();
+
+        // This file is supposed to have an impulse every 0.5 sec,
+        // which at 8KHz means every 4000 samples
+
+        int hop = colReader.getTimebase().getHop();
+
+        int tick = 0;
+
+        for (int i = 0; i < colReader.getWidth(); ++i) {
+
+            bool sync = colReader.getPhaseSync(i);
+
+            if (i == int(float(tick * 4000) / hop + 0.5)) {
+                QVERIFY2(sync == true, QString("Column %1, tick %2").arg(i).arg(tick).toLocal8Bit().data());
+                ++tick;
+            } else {
+                QVERIFY2(sync == false, QString("Column %1, tick %2").arg(i).arg(tick).toLocal8Bit().data());
+            }
+        }
+
+        colReader.close();
+    }
 
 };
 
