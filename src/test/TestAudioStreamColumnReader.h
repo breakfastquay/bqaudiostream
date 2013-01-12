@@ -88,10 +88,30 @@ private slots:
 	
         double tolerance = 1e-5;
 
-	for (int i = 0; i < colReader.getWidth(); ++i) {
+        int initialMiscValues = 10;
+        int *ix = new int[colReader.getWidth() + initialMiscValues];
+
+        // First we'll try some misc "random access" lookups from
+        // within the file, to make sure it can do seeks (however
+        // slowly)
+
+        for (int i = 0; i < initialMiscValues/2; ++i) {
+            ix[i*2] = int(colReader.getWidth() * (1 - float(i) / initialMiscValues)) - 1;
+            ix[i*2+1] = ix[i*2] + 2;
+        }
+
+        // Then we'll exhaustively compare all columns
+
+        for (int i = 0; i < colReader.getWidth(); ++i) {
+            ix[initialMiscValues + i] = i;
+        }
+
+	for (int i = 0; i < colReader.getWidth() + initialMiscValues; ++i) {
+            int index = ix[i];
+//            std::cerr << "testing " << index << " of " << colReader.getWidth() << std::endl;
 	    for (int c = 0; c < colReader.getChannelCount(); ++c) {
-		bool ar = colReader.getColumnPolarInterleaved(i, c, a);
-		bool br = tafReader.getColumnPolarInterleaved(i, c, b);
+		bool ar = colReader.getColumnPolarInterleaved(index, c, a);
+		bool br = tafReader.getColumnPolarInterleaved(index, c, b);
 		QCOMPARE(ar, br);
                 for (int j = 0; j < sz; ++j) {
                     // Do the test first, then call QVERIFY2 only if
@@ -100,7 +120,7 @@ private slots:
                     if (!(fabs(a[j] - b[j]) < tolerance)) {
                         QVERIFY2(fabs(a[j] - b[j]) < tolerance,
                                  QString("At column %1 channel %2 with i = %3 of %4, col reader has %5, taf reader has %6, diff = %7")
-                                 .arg(i)
+                                 .arg(index)
                                  .arg(c)
                                  .arg(j)
                                  .arg(sz)
@@ -113,6 +133,8 @@ private slots:
                 }
 	    }
 	}
+
+        delete[] ix;
 
         delete[] a;
         delete[] b;
@@ -165,12 +187,8 @@ private slots:
                 QCOMPARE(conf1, conf2);
             }
 
-            b1 = colReader.getPhaseSync(i);
-            b2 = tamReader.getPhaseSync(i);
-            if (b1 != b2) {
-                cerr << "At column " << i << ", " << b1 << " != " << b2 << " for getPhaseSync" << endl;
-                QCOMPARE(b1, b2);
-            }
+            // We can't compare the phase sync values, as the two use
+            // different methods (AudioStreamColumnReader is causal)
 	}
 
 	tamReader.close();

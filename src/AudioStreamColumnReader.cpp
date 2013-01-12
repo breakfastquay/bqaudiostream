@@ -115,6 +115,7 @@ public:
 	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
         v_zero_channels(m_streamCache, m_channels, DefaultColumnSize);
         m_streamCacheColumnNo = -1;
+        m_columnCache->clear();
         // leave m_df unchanged
     }
 
@@ -148,10 +149,12 @@ public:
         } else if (loc == LeftOfCache) {
             rewind();
         }
-        while (findColumnRelativeToCache(x) == FarRightOfCache) {
+        while (findColumnRelativeToCache(x) == FarRightOfCache &&
+               m_streamCacheColumnNo + 2 < x) {
             processColumnMetadataOnly();
         }
-        while (findColumnRelativeToCache(x) == NearRightOfCache) {
+        while (findColumnRelativeToCache(x) == NearRightOfCache ||
+               findColumnRelativeToCache(x) == FarRightOfCache) {
             processColumn();
         }
         return true;
@@ -165,8 +168,13 @@ public:
     }
 
     bool getPhaseSync(int x) {
-        if (!prepareColumn(x)) return false;
-        return false; //!!!
+        turbot_sample_t prev = (x == 0 ? 0 : getAudioCurveValue(x-1));
+        turbot_sample_t curr = getAudioCurveValue(x);
+        const turbot_sample_t transientThreshold = 0.35;
+        if (curr > prev * 1.1 && curr > transientThreshold) {
+            return true;
+        }
+        return false;
     }
 
     bool getHumanOnset(int x) {
@@ -175,13 +183,13 @@ public:
     }
 
     turbot_sample_t getAudioCurveValue(int x) {
-        if (!prepareColumn(x)) return 0;
+        if (x >= curvesLength() && !prepareColumn(x)) return 0;
         assert(x >= 0 && x < curvesLength());
         return m_df[x];
     }
 
     turbot_sample_t getColumnUniquePower(int x, int channel) {
-        if (!prepareColumn(x)) return 0;
+        if (x >= curvesLength() && !prepareColumn(x)) return 0;
         assert(x >= 0 && x < curvesLength());
         int ix = m_channels * x + channel;
         assert(ix < (int)m_uniquePowers.size());
@@ -189,7 +197,7 @@ public:
     }
 
     turbot_sample_t getColumnTotalPower(int x, int channel) {
-        if (!prepareColumn(x)) return 0;
+        if (x >= curvesLength() && !prepareColumn(x)) return 0;
         assert(x >= 0 && x < curvesLength());
         int ix = m_channels * x + channel;
         assert(ix < (int)m_totalPowers.size());
@@ -197,7 +205,9 @@ public:
     }
 
     turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
-        if (!prepareColumn(x)) { confidence = 0; return 0; }
+        if (x >= curvesLength() && !prepareColumn(x)) {
+            confidence = 0; return 0; 
+        }
         assert(x >= 0 && x < curvesLength());
         confidence = m_pitchConfidence[x];
         return m_pitch[x];
@@ -244,11 +254,11 @@ private:
     }
 
     void retrieveColumnFromCache(int x, int channel, turbot_sample_t *column) {
+        int colSize = singleChannelColumnSize();
         if (findColumnRelativeToCache(x) != InCache) {
-            cerr << "retrieveColumnFromCache: column " << x << " not in cache (starts " << m_columnCache->offset() << " of size " << m_columnCache->size() << ")" << endl;
+            cerr << "retrieveColumnFromCache: column " << x << " not in cache (starts " << m_columnCache->offset() / (colSize * m_channels) << " of size " << m_columnCache->size() / (colSize * m_channels) << ")" << endl;
             throw PreconditionFailed("retrieveColumnFromCache: column not in cache");
         }
-        int colSize = singleChannelColumnSize();
         int ix = offsetForColumn(x, channel);
         const turbot_sample_t *data = m_columnCache->data();
         v_copy(column, data + (ix - m_columnCache->offset()), colSize);

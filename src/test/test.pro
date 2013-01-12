@@ -32,4 +32,5 @@ SOURCES += main.cpp
     }
 }
 
-win32:QMAKE_POST_LINK=$${DESTDIR}$${T
+win32:QMAKE_POST_LINK=$${DESTDIR}$${TARGET}.exe
+
