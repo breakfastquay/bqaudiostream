@@ -65,6 +65,9 @@ private:
 
     AudioStreamColumnReader(const AudioStreamColumnReader &); // not provided
     AudioStreamColumnReader &operator=(const AudioStreamColumnReader &); // not provided
+
+    static RegionColumnReaderBuilder<AudioStreamColumnReader> m_colBuilder;
+    static RegionMetadataReaderBuilder<AudioStreamColumnReader> m_metaBuilder;
 };
 
 }
