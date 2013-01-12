@@ -168,10 +168,11 @@ public:
     }
 
     bool getPhaseSync(int x) {
+        if (x < 0) return false;
         turbot_sample_t prev = (x == 0 ? 0 : getAudioCurveValue(x-1));
         turbot_sample_t curr = getAudioCurveValue(x);
         const turbot_sample_t transientThreshold = 0.35;
-        if (curr > prev * 1.1 && curr > transientThreshold) {
+        if (curr > prev * 1.1 && curr > transientThreshold && !getPhaseSync(x-1)) {
             return true;
         }
         return false;

@@ -216,7 +216,8 @@ private slots:
 	colReader.open();
 
         // This file is supposed to have an impulse every 0.5 sec,
-        // which at 8KHz means every 4000 samples
+        // which at 8KHz and 6 seconds means 12 ticks every 4000
+        // samples
 
         int hop = colReader.getTimebase().getHop();
 
@@ -226,7 +227,7 @@ private slots:
 
             bool sync = colReader.getPhaseSync(i);
 
-            if (i == int(float(tick * 4000) / hop + 0.5)) {
+            if (i == int(float(tick * 4000) / hop + 0.7) && tick < 12) {
                 QVERIFY2(sync == true, QString("Column %1, tick %2").arg(i).arg(tick).toLocal8Bit().data());
                 ++tick;
             } else {
