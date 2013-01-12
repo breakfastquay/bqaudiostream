@@ -33,18 +33,6 @@ using std::endl;
 
 namespace Turbot {
 
-RegionColumnReaderBuilder<AudioStreamColumnReader>
-AudioStreamColumnReader::m_colBuilder(
-    "http://breakfastquay.com/rdf/turbot/regionreader/AudioStreamColumnReader",
-    QStringList() << "wav" //!!!
-);
-
-RegionMetadataReaderBuilder<AudioStreamColumnReader>
-AudioStreamColumnReader::m_metaBuilder(
-    "http://breakfastquay.com/rdf/turbot/regionreader/AudioStreamColumnReader",
-    QStringList() << "wav" //!!!
-);
-
 class AudioStreamColumnReader::D
 {
     enum ColumnLocation {
