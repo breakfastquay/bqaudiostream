@@ -22,10 +22,6 @@ namespace Turbot {
 typedef ThingFactory<AudioReadStream, QString>
 AudioReadStreamFactoryImpl;
 
-//template <>
-//AudioReadStreamFactoryImpl *
-//AudioReadStreamFactoryImpl::m_instance = 0;
-
 AudioReadStream *
 AudioReadStreamFactory::createReadStream(QString audioFileName)
 {
@@ -91,3 +87,4 @@ AudioReadStreamFactory::getFileFilter()
 #include "CoreAudioReadStream.cpp"
 #include "BasicMp3ReadStream.cpp"
 
+#include "AudioStreamColumnBuilders.cpp"

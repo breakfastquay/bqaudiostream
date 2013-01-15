@@ -2,7 +2,9 @@
 #include "AudioStreamColumnReader.h"
 #include "AudioReadStreamFactory.h"
 
-// Include this into your main file to defined the factories in question
+// Include this into your main file to defined the factories in
+// question (NOTE: is now included by AudioReadStreamFactory.cpp, so
+// that shouldn't be necessary)
 
 namespace Turbot {
 
