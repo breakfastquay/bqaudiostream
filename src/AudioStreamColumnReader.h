@@ -15,8 +15,9 @@ namespace Turbot {
  *
  * Reentrant. Not thread-safe; not RT-safe.
  */
-class AudioStreamColumnReader : virtual public RegionColumnReader,
-                                virtual public RegionMetadataReader
+class AudioStreamColumnReader : public QObject,
+                                public RegionColumnReader,
+                                public RegionMetadataReader
 {
     Q_OBJECT
 
