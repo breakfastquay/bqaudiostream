@@ -52,12 +52,17 @@ public:
         m_audioCurve(0),
         m_pitchCurve(0),
 	m_streamCache(0),
-        m_streamCacheColumnNo(-1)
+        m_streamCacheColumnNo(-1),
+        m_retrievalRate(0)
     {
     }
 
     ~D() {
         if (m_stream) close();
+    }
+
+    void setRetrievalSampleRate(int rate) {
+        m_retrievalRate = rate;
     }
 
     void open() {
@@ -70,7 +75,11 @@ public:
 	m_stream = AudioReadStreamFactory::createReadStream(m_filename);
 	m_channels = m_stream->getChannelCount();
 
-        int rate = m_stream->getSampleRate();
+        int rate = m_retrievalRate;
+        if (rate == 0) rate = m_stream->getSampleRate();
+        else if (rate != m_stream->getSampleRate()) {
+            m_stream->setRetrievalSampleRate(rate);
+        }
 
         int sz = DefaultColumnSize;
         int hop = DefaultHopSize;
@@ -510,6 +519,8 @@ private:
     int m_streamCacheColumnNo;
 
     MusicDatabase::ID m_id;
+
+    int m_retrievalRate;
 };
 
 AudioStreamColumnReader::AudioStreamColumnReader(QString filename) :
@@ -520,6 +531,12 @@ AudioStreamColumnReader::AudioStreamColumnReader(QString filename) :
 AudioStreamColumnReader::~AudioStreamColumnReader()
 {
     delete m_d;
+}
+
+void
+AudioStreamColumnReader::setRetrievalSampleRate(int rate)
+{
+    m_d->setRetrievalSampleRate(rate);
 }
 
 void

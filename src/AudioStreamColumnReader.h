@@ -31,6 +31,11 @@ public:
     ~AudioStreamColumnReader();
 
     /**
+     * Must be called before open()
+     */
+    virtual void setRetrievalSampleRate(int rate);
+
+    /**
      * Open the file. May throw any of the exceptions thrown by
      * AudioReadStreamFactory::createReadStream, or PreconditionFailed
      * if the AudioStreamColumnReader is not in a state suitable for
