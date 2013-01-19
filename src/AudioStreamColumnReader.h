@@ -13,6 +13,9 @@ namespace Turbot {
  * AudioStreamColumnReader is an adapter that provides data from an
  * AudioReadStream in the format expected by RegionColumnReader.
  *
+ * For performance reasons, neither getHumanOnset nor getPitchValue
+ * are implemented.
+ *
  * Reentrant. Not thread-safe; not RT-safe.
  */
 class AudioStreamColumnReader : public QObject,
@@ -56,12 +59,12 @@ public:
     (int x, int channel, turbot_sample_t *column);
 
     virtual bool getPhaseSync(int col);
-    virtual bool getHumanOnset(int col);
+    virtual bool getHumanOnset(int col); // Not implemented, returns false
 
     virtual turbot_sample_t getAudioCurveValue(int col); 
     virtual turbot_sample_t getColumnUniquePower(int col, int channel); 
     virtual turbot_sample_t getColumnTotalPower(int col, int channel); 
-    virtual turbot_sample_t getPitchValue(int col, turbot_sample_t &confidence);
+    virtual turbot_sample_t getPitchValue(int col, turbot_sample_t &confidence); // Not implemented, returns zero and zero
 
     virtual void close();
 

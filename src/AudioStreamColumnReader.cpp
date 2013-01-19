@@ -19,7 +19,10 @@
 #include "dsp/FFT.h"
 
 #include "audiocurves/CompoundAudioCurve.h"
+
+#ifdef NOT_DEFINED
 #include "audiocurves/CepstralPitchCurve.h"
+#endif
 
 #include <vector>
 
@@ -50,7 +53,9 @@ public:
 	m_channels(0),
 	m_columnCache(0),
         m_audioCurve(0),
+#ifdef NOT_DEFINED
         m_pitchCurve(0),
+#endif
 	m_streamCache(0),
         m_streamCacheColumnNo(-1),
         m_retrievalRate(0)
@@ -104,14 +109,18 @@ public:
         m_audioCurve = new CompoundAudioCurve
             (CompoundAudioCurve::Parameters(rate, sz));
 
+#ifdef NOT_DEFINED
         m_pitchCurve = new CepstralPitchCurve
             (CepstralPitchCurve::Parameters(rate, sz));
+#endif
     }
 
     void close() {
         deallocate_channels(m_streamCache, m_channels);
         delete m_audioCurve;
+#ifdef NOT_DEFINED
         delete m_pitchCurve;
+#endif
 	delete m_columnCache;
 	delete m_stream;
         delete m_window;
@@ -223,12 +232,15 @@ public:
     }
 
     turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
+        confidence = 0; return 0;
+#ifdef NOT_DEFINED
         if (x >= curvesLength() && !prepareColumn(x)) {
             confidence = 0; return 0; 
         }
         assert(x >= 0 && x < curvesLength());
         confidence = m_pitchConfidence[x];
         return m_pitch[x];
+#endif
     }
 
 private:
@@ -491,11 +503,13 @@ private:
         turbot_sample_t val = m_audioCurve->process(mags, m_timebase.getHop());
         m_df.push_back(val);
 
+#ifdef NOT_DEFINED
         val = m_pitchCurve->process(mags, m_timebase.getHop());
         m_pitch.push_back(val);
 
         turbot_sample_t confidence = m_pitchCurve->getConfidence();
         m_pitchConfidence.push_back(confidence);
+#endif
     }
 
     QString m_filename;
@@ -519,9 +533,11 @@ private:
     AudioCurveCalculator *m_audioCurve;
     vector<float> m_df;
 
+#ifdef NOT_DEFINED
     AudioCurveCalculator *m_pitchCurve;
     vector<float> m_pitch;
     vector<float> m_pitchConfidence;
+#endif
     
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
