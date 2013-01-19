@@ -156,14 +156,22 @@ public:
         if (loc == OutsideFile) {
             return false;
         } else if (loc == LeftOfCache) {
+            std::cout << "JUMP" << std::endl;
             rewind();
         }
+
+        //!!!
+        if (findColumnRelativeToCache(x) == FarRightOfCache) {
+            std::cout << "SKIP" << std::endl;
+        }
+
         while (findColumnRelativeToCache(x) == FarRightOfCache &&
                m_streamCacheColumnNo + 2 < x) {
             processColumnMetadataOnly();
         }
         while (findColumnRelativeToCache(x) == NearRightOfCache ||
                findColumnRelativeToCache(x) == FarRightOfCache) {
+            std::cout << "HOP" << std::endl;
             processColumn();
         }
         return true;
