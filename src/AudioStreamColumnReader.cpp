@@ -161,17 +161,18 @@ public:
     }
 
     bool prepareColumn(int x) {
+        std::cerr << "AudioStreamColumnReader[" << this << "]::prepareColumn(" << x << ")" << std::endl;
         ColumnLocation loc = findColumnRelativeToCache(x);
         if (loc == OutsideFile) {
             return false;
         } else if (loc == LeftOfCache) {
-            std::cout << "JUMP" << std::endl;
+            std::cerr << "JUMP" << std::endl;
             rewind();
         }
 
         //!!!
         if (findColumnRelativeToCache(x) == FarRightOfCache) {
-            std::cout << "SKIP" << std::endl;
+            std::cerr << "SKIP" << std::endl;
         }
 
         while (findColumnRelativeToCache(x) == FarRightOfCache &&
@@ -180,7 +181,7 @@ public:
         }
         while (findColumnRelativeToCache(x) == NearRightOfCache ||
                findColumnRelativeToCache(x) == FarRightOfCache) {
-            std::cout << "HOP" << std::endl;
+            std::cerr << "HOP" << std::endl;
             processColumn();
         }
         return true;
