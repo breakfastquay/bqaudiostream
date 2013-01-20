@@ -58,13 +58,16 @@ public:
     virtual bool getColumnPolarInterleaved
     (int x, int channel, turbot_sample_t *column);
 
+    virtual int getSupportedMetadata() const;
+    virtual void setRequiredMetadata(int);
+
     virtual bool getPhaseSync(int col);
-    virtual bool getHumanOnset(int col); // Not implemented, returns false
+    virtual bool getHumanOnset(int col); // Not implemented
 
     virtual turbot_sample_t getAudioCurveValue(int col); 
     virtual turbot_sample_t getColumnUniquePower(int col, int channel); 
     virtual turbot_sample_t getColumnTotalPower(int col, int channel); 
-    virtual turbot_sample_t getPitchValue(int col, turbot_sample_t &confidence); // Not implemented, returns zero and zero
+    virtual turbot_sample_t getPitchValue(int col, turbot_sample_t &confidence);
 
     virtual void close();
 

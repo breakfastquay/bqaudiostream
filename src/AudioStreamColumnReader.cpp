@@ -19,10 +19,7 @@
 #include "dsp/FFT.h"
 
 #include "audiocurves/CompoundAudioCurve.h"
-
-#ifdef NOT_DEFINED
 #include "audiocurves/CepstralPitchCurve.h"
-#endif
 
 #include <vector>
 
@@ -52,10 +49,9 @@ public:
 	m_stream(0),
 	m_channels(0),
 	m_columnCache(0),
+        m_metadataFlags(AllMetadata),
         m_audioCurve(0),
-#ifdef NOT_DEFINED
         m_pitchCurve(0),
-#endif
 	m_streamCache(0),
         m_streamCacheColumnNo(-1),
         m_retrievalRate(0)
@@ -109,18 +105,14 @@ public:
         m_audioCurve = new CompoundAudioCurve
             (CompoundAudioCurve::Parameters(rate, sz));
 
-#ifdef NOT_DEFINED
         m_pitchCurve = new CepstralPitchCurve
             (CepstralPitchCurve::Parameters(rate, sz));
-#endif
     }
 
     void close() {
         deallocate_channels(m_streamCache, m_channels);
         delete m_audioCurve;
-#ifdef NOT_DEFINED
         delete m_pitchCurve;
-#endif
 	delete m_columnCache;
 	delete m_stream;
         delete m_window;
@@ -194,7 +186,16 @@ public:
         return true;
     }
 
+    int getSupportedMetadata() const {
+        return PhaseSync | AudioCurve | UniquePower | TotalPower | Pitch;
+    }
+
+    void setRequiredMetadata(int mflags) {
+        m_metadataFlags = mflags;
+    }
+
     bool getPhaseSync(int x) {
+        if (!(m_metadataFlags & PhaseSync)) return false;
         if (x < 0) return false;
         turbot_sample_t prev = (x == 0 ? 0 : getAudioCurveValue(x-1));
         turbot_sample_t curr = getAudioCurveValue(x);
@@ -206,17 +207,20 @@ public:
     }
 
     bool getHumanOnset(int x) {
+        if (!(m_metadataFlags & HumanOnset)) return false;
         if (!prepareColumn(x)) return false;
         return false; //!!!
     }
 
     turbot_sample_t getAudioCurveValue(int x) {
+        if (!(m_metadataFlags & AudioCurve)) return 0;
         if (x >= curvesLength() && !prepareColumn(x)) return 0;
         assert(x >= 0 && x < curvesLength());
         return m_df[x];
     }
 
     turbot_sample_t getColumnUniquePower(int x, int channel) {
+        if (!(m_metadataFlags & UniquePower)) return 0;
         if (x >= curvesLength() && !prepareColumn(x)) return 0;
         assert(x >= 0 && x < curvesLength());
         int ix = m_channels * x + channel;
@@ -225,6 +229,7 @@ public:
     }
 
     turbot_sample_t getColumnTotalPower(int x, int channel) {
+        if (!(m_metadataFlags & TotalPower)) return 0;
         if (x >= curvesLength() && !prepareColumn(x)) return 0;
         assert(x >= 0 && x < curvesLength());
         int ix = m_channels * x + channel;
@@ -233,15 +238,15 @@ public:
     }
 
     turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
-        confidence = 0; return 0;
-#ifdef NOT_DEFINED
+        if (!(m_metadataFlags & Pitch)) {
+            confidence = 0; return 0;
+        }
         if (x >= curvesLength() && !prepareColumn(x)) {
             confidence = 0; return 0; 
         }
         assert(x >= 0 && x < curvesLength());
         confidence = m_pitchConfidence[x];
         return m_pitch[x];
-#endif
     }
 
 private:
@@ -469,6 +474,13 @@ private:
 
     void addUniquePowerAndPeak(const turbot_sample_t *const in) {
 
+        if (!(m_metadataFlags & UniquePower) &&
+            !(m_metadataFlags & PeakSample)) {
+            m_peaks.push_back(0);
+            m_uniquePowers.push_back(0);
+            return;
+        }
+
         turbot_sample_t peak = 0.0;
         turbot_sample_t uniquePower = 0.0;
         
@@ -488,6 +500,11 @@ private:
 
     void addTotalPower(const turbot_sample_t *const in) {
 
+        if (!(m_metadataFlags & TotalPower)) {
+            m_totalPowers.push_back(0);
+            return;
+        }
+
         turbot_sample_t totalPower = 0.0;
         
         int sz = m_timebase.getColumnSize();
@@ -501,16 +518,23 @@ private:
 
     void addMagMetadata(const turbot_sample_t *const mags) {
 
-        turbot_sample_t val = m_audioCurve->process(mags, m_timebase.getHop());
-        m_df.push_back(val);
+        if (m_metadataFlags & AudioCurve) {
+            turbot_sample_t val = m_audioCurve->process(mags, m_timebase.getHop());
+            m_df.push_back(val);
+        } else {
+            m_df.push_back(0);
+        }
 
-#ifdef NOT_DEFINED
-        val = m_pitchCurve->process(mags, m_timebase.getHop());
-        m_pitch.push_back(val);
-
-        turbot_sample_t confidence = m_pitchCurve->getConfidence();
-        m_pitchConfidence.push_back(confidence);
-#endif
+        if (m_metadataFlags & Pitch) {
+            turbot_sample_t val = m_pitchCurve->process(mags, m_timebase.getHop());
+            std::cerr << "AudioStreamColumnReader: calculating pitch: val = " << val << std::endl;
+            m_pitch.push_back(val);
+            turbot_sample_t confidence = m_pitchCurve->getConfidence();
+            m_pitchConfidence.push_back(confidence);
+        } else {
+            m_pitch.push_back(0);
+            m_pitchConfidence.push_back(0);
+        }
     }
 
     QString m_filename;
@@ -527,6 +551,8 @@ private:
 
     int curvesLength() { return (int)m_df.size(); }
 
+    int m_metadataFlags;
+
     vector<float> m_totalPowers;
     vector<float> m_uniquePowers;
     vector<float> m_peaks;
@@ -534,11 +560,9 @@ private:
     AudioCurveCalculator *m_audioCurve;
     vector<float> m_df;
 
-#ifdef NOT_DEFINED
     AudioCurveCalculator *m_pitchCurve;
     vector<float> m_pitch;
     vector<float> m_pitchConfidence;
-#endif
     
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
@@ -611,6 +635,18 @@ AudioStreamColumnReader::getColumnPolarInterleaved
 (int x, int channel, turbot_sample_t *column)
 {
     return m_d->getColumnPolarInterleaved(x, channel, column);
+}
+
+int
+AudioStreamColumnReader::getSupportedMetadata() const
+{
+    return m_d->getSupportedMetadata();
+}
+
+void
+AudioStreamColumnReader::setRequiredMetadata(int mflags)
+{
+    m_d->setRequiredMetadata(mflags);
 }
 
 bool

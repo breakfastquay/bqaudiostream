@@ -186,10 +186,6 @@ private slots:
                 }
             }
 
-            // No -- we removed the pitch implementation from
-            // AudioStreamColumnReader -- too expensive to
-            // compute. We'd have to make it optional if restored
-/*
             v = colReader.getPitchValue(i, conf1);
             w = tamReader.getPitchValue(i, conf2);
             if (fabs(v - w) >= tolerance) {
@@ -200,7 +196,7 @@ private slots:
                 cerr << "At column " << i << ", " << conf1 << " - " << conf2 << " >= " << tolerance << " for getPitchValue confidence" << endl;
                 QCOMPARE(conf1, conf2);
             }
-*/
+
             // We can't compare the phase sync values, as the two use
             // different methods (AudioStreamColumnReader is causal)
 	}
