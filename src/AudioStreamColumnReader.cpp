@@ -28,6 +28,7 @@
 
 #include <cassert>
 
+//#define DEBUG_AUDIO_STREAM_COLUMN_READER 1
 //#define DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS 1
 
 using std::vector;
@@ -161,27 +162,36 @@ public:
     }
 
     bool prepareColumn(int x) {
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER
         std::cerr << "AudioStreamColumnReader[" << this << "]::prepareColumn(" << x << ")" << std::endl;
+#endif
+        //!!! actually seeking decisions should be made based on the
+        //!!! relationship of x to m_streamCacheColumnNo, not to the
+        //!!! cache extents. If we were ever to seek in more places
+        //!!! than just this function (e.g. if we separated out
+        //!!! reading-for-metadata-only from reading-to-cache) then we
+        //!!! would have to handle this better
+        
         ColumnLocation loc = findColumnRelativeToCache(x);
         if (loc == OutsideFile) {
             return false;
         } else if (loc == LeftOfCache) {
-            std::cerr << "JUMP" << std::endl;
+            std::cerr << this << ": JUMP [rewind]" << std::endl;
             rewind();
         }
 
         //!!!
         if (findColumnRelativeToCache(x) == FarRightOfCache) {
-            std::cerr << "SKIP" << std::endl;
+            std::cerr << this << ": SKIP" << std::endl;
         }
 
         while (findColumnRelativeToCache(x) == FarRightOfCache &&
                m_streamCacheColumnNo + 2 < x) {
-            processColumnMetadataOnly();
+            processColumnSkipping();
         }
         while (findColumnRelativeToCache(x) == NearRightOfCache ||
                findColumnRelativeToCache(x) == FarRightOfCache) {
-            std::cerr << "HOP" << std::endl;
+            std::cerr << this << ": HOP" << std::endl;
             processColumn();
         }
         return true;
@@ -211,22 +221,22 @@ public:
     }
 
     turbot_sample_t getAudioCurveValue(int x) {
-        if (x >= curvesLength() && !prepareColumn(x)) return 0;
-        assert(x >= 0 && x < curvesLength());
+        if (!haveMetadataFor(x) && !prepareColumn(x)) return 0;
+        assert(haveMetadataFor(x));
         return m_df[x];
     }
 
     turbot_sample_t getColumnUniquePower(int x, int channel) {
-        if (x >= curvesLength() && !prepareColumn(x)) return 0;
-        assert(x >= 0 && x < curvesLength());
+        if (!haveMetadataFor(x) && !prepareColumn(x)) return 0;
+        assert(haveMetadataFor(x));
         int ix = m_channels * x + channel;
         assert(ix < (int)m_uniquePowers.size());
         return m_uniquePowers[ix];
     }
 
     turbot_sample_t getColumnTotalPower(int x, int channel) {
-        if (x >= curvesLength() && !prepareColumn(x)) return 0;
-        assert(x >= 0 && x < curvesLength());
+        if (!haveMetadataFor(x) && !prepareColumn(x)) return 0;
+        assert(haveMetadataFor(x));
         int ix = m_channels * x + channel;
         assert(ix < (int)m_totalPowers.size());
         return m_totalPowers[ix];
@@ -235,10 +245,10 @@ public:
     turbot_sample_t getPitchValue(int x, turbot_sample_t &confidence) {
         confidence = 0; return 0;
 #ifdef NOT_DEFINED
-        if (x >= curvesLength() && !prepareColumn(x)) {
+        if (!haveMetadataFor(x) && !prepareColumn(x)) {
             confidence = 0; return 0; 
         }
-        assert(x >= 0 && x < curvesLength());
+        assert(haveMetadataFor(x));
         confidence = m_pitchConfidence[x];
         return m_pitch[x];
 #endif
@@ -334,14 +344,15 @@ private:
         processColumnFromStreamCacheMetadataOnly();
     }
 
+    void processColumnSkipping() {
+        readToStreamCache();
+    }
+
     void processColumnFromStreamCache() {
 
         int columnNo = m_streamCacheColumnNo;
 
-        if (columnNo > curvesLength()) {
-            cerr << "processColumnFromStreamCache: column " << columnNo << " found, but audio curve only reaches " << int(curvesLength())-1 << " -- can't append (no way to fill the gap)" << endl;
-            throw PreconditionFailed("processColumnFromStreamCache: column to right of audio curve (would leave a gap)");
-        }
+        bool needMetadata = !haveMetadataFor(columnNo);
 
         int sz = m_timebase.getColumnSize();
         int hs1 = sz/2 + 1;
@@ -355,7 +366,7 @@ private:
 
         turbot_sample_t *magSum = 0;
 
-        if (m_channels > 0 && columnNo == curvesLength()) {
+        if (m_channels > 1 && needMetadata) {
             // We will be appending a metadata calculation and we need
             // to mix down for it
             magSum = allocate<turbot_sample_t>(hs1);
@@ -366,12 +377,12 @@ private:
 
             v_convert(in, m_streamCache[ch], sz);
 
-            addUniquePowerAndPeak(in);
+            setUniquePowerAndPeak(columnNo, ch, in);
 
             m_window->cut(in);
             v_fftshift(in, sz);
 
-            addTotalPower(in);
+            setTotalPower(columnNo, ch, in);
 
             m_fft->forwardPolar(in, magOut, phaseOut);
 
@@ -395,7 +406,7 @@ private:
             }
         }
 
-        if (columnNo == curvesLength()) {
+        if (needMetadata) {
             // append a metadata calculation as well, using the sum of
             // the magnitudes as the inputs (rather than a single
             // magnitude calculated from a mixture of the time-domain
@@ -403,7 +414,7 @@ private:
             // is the same as Rubber Band does in RT mode
             turbot_sample_t *m = magSum;
             if (!m) m = magOut;
-            addMagMetadata(m);
+            setMagMetadata(columnNo, m);
         }
         
         m_columnCache->update(colSize * m_channels * columnNo,
@@ -420,11 +431,7 @@ private:
 
         int columnNo = m_streamCacheColumnNo;
 
-        if (columnNo > curvesLength()) {
-            cerr << "processColumnFromStreamCacheMetadataOnly: column " << columnNo << " found, but audio curve only reaches " << int(curvesLength())-1 << " -- can't append (no way to fill the gap)" << endl;
-            throw PreconditionFailed("processColumnFromStreamCacheMetadataOnly: column to right of audio curve (would leave a gap)");
-        }
-        if (columnNo < curvesLength()) {
+        if (haveMetadataFor(columnNo)) {
             return; // nothing to do
         }
         
@@ -448,26 +455,28 @@ private:
 
             v_convert(in, m_streamCache[ch], sz);
 
-            addUniquePowerAndPeak(in);
+            setUniquePowerAndPeak(columnNo, ch, in);
 
             m_window->cut(in);
             v_fftshift(in, sz);
 
-            addTotalPower(in);
+            setTotalPower(columnNo, ch, in);
 
             m_fft->forwardMagnitude(in, magOut);
 
             v_add(magSum, magOut, hs1);
         }
 
-        addMagMetadata(magSum);
+        setMagMetadata(columnNo, magSum);
         
         deallocate(in);
         deallocate(magOut);
         deallocate(magSum);
     }
 
-    void addUniquePowerAndPeak(const turbot_sample_t *const in) {
+    void setUniquePowerAndPeak(int col, int ch, const turbot_sample_t *const in) {
+
+        aboutToSetMetadataFor(col);
 
         turbot_sample_t peak = 0.0;
         turbot_sample_t uniquePower = 0.0;
@@ -482,11 +491,13 @@ private:
             uniquePower += value * value;
         }
         
-        m_peaks.push_back(peak);
-        m_uniquePowers.push_back(uniquePower);
+        m_peaks[col*m_channels + ch] = peak;
+        m_uniquePowers[col*m_channels + ch] = uniquePower;
     }
 
-    void addTotalPower(const turbot_sample_t *const in) {
+    void setTotalPower(int col, int ch, const turbot_sample_t *const in) {
+
+        aboutToSetMetadataFor(col);
 
         turbot_sample_t totalPower = 0.0;
         
@@ -496,21 +507,50 @@ private:
             totalPower += in[i] * in[i];
         }
         
-        m_totalPowers.push_back(totalPower);
+        m_totalPowers[col*m_channels + ch] = totalPower;
     }
 
-    void addMagMetadata(const turbot_sample_t *const mags) {
+    void setMagMetadata(int col, const turbot_sample_t *const mags) {
+
+        aboutToSetMetadataFor(col);
 
         turbot_sample_t val = m_audioCurve->process(mags, m_timebase.getHop());
-        m_df.push_back(val);
+        std::cerr << "m_df[" << col << "] <- " << val << std::endl;
+        m_df[col] = val;
 
 #ifdef NOT_DEFINED
         val = m_pitchCurve->process(mags, m_timebase.getHop());
-        m_pitch.push_back(val);
+        m_pitch[col] = val;
 
         turbot_sample_t confidence = m_pitchCurve->getConfidence();
-        m_pitchConfidence.push_back(confidence);
+        m_pitchConfidence[col] = confidence;
 #endif
+    }
+
+    bool haveMetadataFor(int column) {
+        return column < m_haveMetadata.size() && m_haveMetadata[column];
+    }
+
+    void aboutToSetMetadataFor(int column) {
+
+        while (column >= m_haveMetadata.size()) {
+            m_haveMetadata.push_back(false);
+            
+            // these ones are per-channel:
+            for (int ch = 0; ch < m_channels; ++ch) {
+                m_totalPowers.push_back(0);
+                m_uniquePowers.push_back(0);
+                m_peaks.push_back(0);
+            }
+
+            m_df.push_back(0);
+#ifdef NOT_DEFINED
+            m_pitchCurve.push_back(0);
+            m_pitchConfidence.push_back(0);
+#endif
+        }
+
+        m_haveMetadata[column] = true;
     }
 
     QString m_filename;
@@ -525,8 +565,6 @@ private:
 
     DataValueCache<turbot_sample_t> *m_columnCache; // columns interleaved
 
-    int curvesLength() { return (int)m_df.size(); }
-
     vector<float> m_totalPowers;
     vector<float> m_uniquePowers;
     vector<float> m_peaks;
@@ -539,6 +577,8 @@ private:
     vector<float> m_pitch;
     vector<float> m_pitchConfidence;
 #endif
+
+    vector<bool> m_haveMetadata;
     
     float **m_streamCache; // per channel
     int m_streamCacheColumnNo;
