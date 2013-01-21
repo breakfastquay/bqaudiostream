@@ -59,6 +59,7 @@ public:
     (int x, int channel, turbot_sample_t *column);
 
     virtual int getSupportedMetadata() const;
+    virtual int getDefaultMetadata() const; // Not all calculated by default
     virtual void setRequiredMetadata(int);
 
     virtual bool getPhaseSync(int col);

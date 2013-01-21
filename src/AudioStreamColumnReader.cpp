@@ -190,8 +190,18 @@ public:
         return PhaseSync | AudioCurve | UniquePower | TotalPower | Pitch;
     }
 
+    int getDefaultMetadata() const {
+        return PhaseSync | AudioCurve | UniquePower;
+    }
+
     void setRequiredMetadata(int mflags) {
         m_metadataFlags = mflags;
+
+        // Must have AudioCurve is PhaseSync is requested, we use it
+        // to calculate PhaseSync
+        if (m_metadataFlags & PhaseSync) {
+            m_metadataFlags |= AudioCurve;
+        }
     }
 
     bool getPhaseSync(int x) {
@@ -641,6 +651,12 @@ int
 AudioStreamColumnReader::getSupportedMetadata() const
 {
     return m_d->getSupportedMetadata();
+}
+
+int
+AudioStreamColumnReader::getDefaultMetadata() const
+{
+    return m_d->getDefaultMetadata();
 }
 
 void
