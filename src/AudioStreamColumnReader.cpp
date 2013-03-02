@@ -25,6 +25,7 @@
 
 #include <cassert>
 
+#define DEBUG_AUDIO_STREAM_COLUMN_READER 1
 //#define DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS 1
 
 using std::vector;
@@ -153,18 +154,24 @@ public:
     }
 
     bool prepareColumn(int x) {
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS
         std::cerr << "AudioStreamColumnReader[" << this << "]::prepareColumn(" << x << ")" << std::endl;
+#endif
         ColumnLocation loc = findColumnRelativeToCache(x);
         if (loc == OutsideFile) {
             return false;
         } else if (loc == LeftOfCache) {
-            std::cerr << "JUMP" << std::endl;
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER
+            std::cerr << "JUMP to " << x << std::endl;
+#endif
             rewind();
         }
 
         //!!!
         if (findColumnRelativeToCache(x) == FarRightOfCache) {
-            std::cerr << "SKIP" << std::endl;
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER
+            std::cerr << "SKIP to " << x << std::endl;
+#endif
         }
 
         while (findColumnRelativeToCache(x) == FarRightOfCache &&
@@ -173,7 +180,9 @@ public:
         }
         while (findColumnRelativeToCache(x) == NearRightOfCache ||
                findColumnRelativeToCache(x) == FarRightOfCache) {
-            std::cerr << "HOP" << std::endl;
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER
+            std::cerr << "HOP to " << x << std::endl;
+#endif
             processColumn();
         }
         return true;
@@ -537,7 +546,9 @@ private:
 
         if (m_metadataFlags & Pitch) {
             turbot_sample_t val = m_pitchCurve->process(mags, m_timebase.getHop());
+#ifdef DEBUG_AUDIO_STREAM_COLUMN_READER
             std::cerr << "AudioStreamColumnReader: calculating pitch: val = " << val << std::endl;
+#endif
             m_pitch.push_back(val);
             turbot_sample_t confidence = m_pitchCurve->getConfidence();
             m_pitchConfidence.push_back(confidence);
