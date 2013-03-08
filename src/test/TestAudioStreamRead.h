@@ -66,11 +66,28 @@ private slots:
             int refsize = tdata.getFrameCount() * channels;
 
             float *test = new float[refsize];
-            int read = stream->getInterleavedFrames(tdata.getFrameCount(), test);
-            
-            //!!! now compare
+
+            // The stream should give us exactly the expected number
+            // of frames -- so we ask for one more, just to check we
+            // don't get it!
+            int read = stream->getInterleavedFrames
+                (tdata.getFrameCount() + 1, test);
             
             QCOMPARE(read, tdata.getFrameCount());
+            
+            for (int c = 0; c < channels; ++c) {
+                float maxdiff = 0.f;
+                float totdiff = 0.f;
+                for (int i = 0; i < read; ++i) {
+                    float diff = fabsf(test[i * channels + c] -
+                                       reference[i * channels + c]);
+                    totdiff += diff;
+                    if (diff > maxdiff) maxdiff = diff;
+                }
+                float meandiff = totdiff / read;
+                std::cerr << "meandiff on channel " << c << ": " << meandiff << std::endl;
+                std::cerr << "maxdiff on channel " << c << ": " << maxdiff << std::endl;
+            }
 
         } catch (UnknownFileType &t) {
             QSKIP(strOf(QString("File format for \"%1\" not supported, skipping").arg(audiofile)), SkipSingle);

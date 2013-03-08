@@ -60,6 +60,8 @@ protected:
     size_t m_channelCount;
     size_t m_sampleRate;
     size_t m_retrievalRate;
+    size_t m_totalFileFrames;
+    size_t m_totalRetrievedFrames;
     Resampler *m_resampler;
     RingBuffer<float> *m_resampleBuffer;
 };
