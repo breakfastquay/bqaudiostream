@@ -31,9 +31,13 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    AudioWriteStream *stream = f->createFor(extension, target);
-    if (!stream) throw UnknownFileType(audioFileName);
-    return stream;
+    try {
+        AudioWriteStream *stream = f->createFor(extension, target);
+        if (!stream) throw UnknownFileType(audioFileName);
+        return stream;
+    } catch (UnknownTagException) {
+        throw UnknownFileType(audioFileName);
+    }
 }
 
 QStringList

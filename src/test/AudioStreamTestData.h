@@ -31,9 +31,9 @@ class AudioStreamTestData
 {
 public:
     AudioStreamTestData(float rate, int channels) :
+	m_channelCount(channels),
 	m_duration(2.0),
 	m_sampleRate(rate),
-	m_channelCount(channels),
 	m_sinFreq(600.0),
 	m_pulseFreq(2)
     {
@@ -111,8 +111,8 @@ private:
     float *m_data;
     int m_frameCount;
     int m_channelCount;
-    float m_sampleRate;
     float m_duration;
+    float m_sampleRate;
     float m_sinFreq;
     float m_pulseFreq;
     float m_pulseWidth;

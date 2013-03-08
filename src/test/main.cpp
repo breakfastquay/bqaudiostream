@@ -2,6 +2,7 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "TestSimpleWavRead.h"
+#include "TestAudioStreamRead.h"
 #include "TestAudioStreamColumnReader.h"
 #include "TestWavReadWrite.h"
 #include <QtTest>
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
     }
 
     {
-	Turbot::TestAudioStreamColumnReader t;
+	Turbot::TestAudioStreamRead t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
@@ -38,8 +39,18 @@ int main(int argc, char *argv[])
 	std::cerr << "\n********* " << bad << " test suite(s) failed!\n" << std::endl;
 	return 1;
     } else {
-        std::cerr << "All tests passed" << std::endl;
-        return 0;
+
+	Turbot::TestAudioStreamColumnReader t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+
+        if (bad > 0) {
+            std::cerr << "\n********* " << bad << " test suite(s) failed!\n" << std::endl;
+            return 1;
+        } else {
+            std::cerr << "All tests passed" << std::endl;
+            return 0;
+        }
     }
 }
 
