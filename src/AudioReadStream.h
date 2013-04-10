@@ -35,9 +35,10 @@ public:
     virtual QString getError() const { return ""; }
 
     size_t getChannelCount() const { return m_channelCount; }
-    size_t getSampleRate() const { return m_sampleRate; }
+    size_t getSampleRate() const { return m_sampleRate; } // source stream rate
     
     void setRetrievalSampleRate(size_t);
+    size_t getRetrievalSampleRate() const;
 
     /**
      * Retrieve \count frames of audio data (that is, \count *

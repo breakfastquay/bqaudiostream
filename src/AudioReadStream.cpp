@@ -45,6 +45,13 @@ AudioReadStream::setRetrievalSampleRate(size_t rate)
 }
 
 size_t
+AudioReadStream::getRetrievalSampleRate() const
+{
+    if (m_retrievalRate == 0) return m_sampleRate;
+    else return m_retrievalRate;
+}
+
+size_t
 AudioReadStream::getInterleavedFrames(size_t count, float *frames)
 {
     if (m_retrievalRate == 0 ||
