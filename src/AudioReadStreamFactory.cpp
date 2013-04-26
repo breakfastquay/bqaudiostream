@@ -22,10 +22,6 @@ namespace Turbot {
 typedef ThingFactory<AudioReadStream, QString>
 AudioReadStreamFactoryImpl;
 
-//template <>
-//AudioReadStreamFactoryImpl *
-//AudioReadStreamFactoryImpl::m_instance = 0;
-
 AudioReadStream *
 AudioReadStreamFactory::createReadStream(QString audioFileName)
 {
@@ -42,9 +38,13 @@ AudioReadStreamFactory::createReadStream(QString audioFileName)
     // more predictable always to use only the reader that has
     // registered the extension (if there is one).
 
-    AudioReadStream *stream = f->createFor(extension, audioFileName);
-    if (!stream) throw UnknownFileType(audioFileName);
-    return stream;
+    try {
+        AudioReadStream *stream = f->createFor(extension, audioFileName);
+        if (!stream) throw UnknownFileType(audioFileName);
+        return stream;
+    } catch (UnknownTagException) {
+        throw UnknownFileType(audioFileName);
+    }
 }
 
 QStringList
@@ -91,3 +91,4 @@ AudioReadStreamFactory::getFileFilter()
 #include "CoreAudioReadStream.cpp"
 #include "BasicMp3ReadStream.cpp"
 
+#include "AudioStreamColumnBuilders.cpp"

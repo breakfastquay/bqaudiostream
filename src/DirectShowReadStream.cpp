@@ -26,7 +26,7 @@ namespace Turbot
 static
 AudioReadStreamBuilder<DirectShowReadStream>
 directshowbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/fileio/DirectShowReadStream"),
+    QString("http://breakfastquay.com/rdf/turbot/audiostream/DirectShowReadStream"),
     QStringList() << "wav" << "mp3" << "wma"
     );
 

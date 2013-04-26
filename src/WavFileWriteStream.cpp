@@ -17,7 +17,7 @@ namespace Turbot
 static 
 AudioWriteStreamBuilder<WavFileWriteStream>
 wavbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/fileio/WavFileWriteStream"),
+    QString("http://breakfastquay.com/rdf/turbot/audiostream/WavFileWriteStream"),
     QStringList() << "wav" << "aiff"
     );
 
