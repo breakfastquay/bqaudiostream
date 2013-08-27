@@ -183,7 +183,11 @@ private slots:
             delete[] test;
 
         } catch (UnknownFileType &t) {
+#if (QT_VERSION >= 0x050000)
+            QSKIP(strOf(QString("File format for \"%1\" not supported, skipping").arg(audiofile)));
+#else
             QSKIP(strOf(QString("File format for \"%1\" not supported, skipping").arg(audiofile)), SkipSingle);
+#endif
         }
     }
 };
