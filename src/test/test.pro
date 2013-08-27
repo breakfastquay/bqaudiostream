@@ -14,7 +14,7 @@ DEPENDPATH += . ../.. ../../../..
     PRE_TARGETDEPS += ../../../out/libturbot.a 
 }
 
-load(../../../platform.prf)
+include(../../../platform.pri)
 TEMPLATE += platform
 
 OBJECTS_DIR = o
