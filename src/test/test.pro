@@ -1,6 +1,7 @@
 
 TEMPLATE = app
 TARGET = test-audiostream
+win*: TARGET = "TestAudiostream"
 
 QT += testlib
 
@@ -15,7 +16,6 @@ DEPENDPATH += . ../.. ../../../..
 }
 
 include(../../../platform.pri)
-TEMPLATE += platform
 
 OBJECTS_DIR = o
 MOC_DIR = o
@@ -32,5 +32,5 @@ SOURCES += main.cpp
     }
 }
 
-win32:QMAKE_POST_LINK=$${DESTDIR}$${TARGET}.exe
+win32-g++:QMAKE_POST_LINK=$${DESTDIR}$${TARGET}.exe
 
