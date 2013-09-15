@@ -4,14 +4,14 @@
 #ifndef _TURBOT_AUDIO_STREAM_COLUMN_READER_H_
 #define _TURBOT_AUDIO_STREAM_COLUMN_READER_H_
 
-#include "process/RegionColumnReader.h"
-#include "process/RegionMetadataReader.h"
+#include "process/ChunkColumnReader.h"
+#include "process/ChunkMetadataReader.h"
 
 namespace Turbot {
 
 /**
  * AudioStreamColumnReader is an adapter that provides data from an
- * AudioReadStream in the format expected by RegionColumnReader.
+ * AudioReadStream in the format expected by ChunkColumnReader.
  *
  * For performance reasons, neither getHumanOnset nor getPitchValue
  * are implemented.
@@ -19,8 +19,8 @@ namespace Turbot {
  * Reentrant. Not thread-safe; not RT-safe.
  */
 class AudioStreamColumnReader : public QObject,
-                                public RegionColumnReader,
-                                public RegionMetadataReader
+                                public ChunkColumnReader,
+                                public ChunkMetadataReader
 {
     Q_OBJECT
 
@@ -79,8 +79,8 @@ private:
     AudioStreamColumnReader(const AudioStreamColumnReader &); // not provided
     AudioStreamColumnReader &operator=(const AudioStreamColumnReader &); // not provided
 
-    static RegionColumnReaderBuilder<AudioStreamColumnReader> m_colBuilder;
-    static RegionMetadataReaderBuilder<AudioStreamColumnReader> m_metaBuilder;
+    static ChunkColumnReaderBuilder<AudioStreamColumnReader> m_colBuilder;
+    static ChunkMetadataReaderBuilder<AudioStreamColumnReader> m_metaBuilder;
 };
 
 }

@@ -8,13 +8,13 @@
 
 namespace Turbot {
 
-RegionColumnReaderBuilder<AudioStreamColumnReader>
+ChunkColumnReaderBuilder<AudioStreamColumnReader>
 AudioStreamColumnReader::m_colBuilder(
     "http://breakfastquay.com/rdf/turbot/regionreader/AudioStreamColumnReader",
     AudioReadStreamFactory::getSupportedFileExtensions()
 );
 
-RegionMetadataReaderBuilder<AudioStreamColumnReader>
+ChunkMetadataReaderBuilder<AudioStreamColumnReader>
 AudioStreamColumnReader::m_metaBuilder(
     "http://breakfastquay.com/rdf/turbot/regionreader/AudioStreamColumnReader",
     AudioReadStreamFactory::getSupportedFileExtensions()
