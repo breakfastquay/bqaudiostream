@@ -311,7 +311,7 @@ DirectShowReadStream::DirectShowReadStream(QString path) :
     WCHAR wpath[MAX_PATH+1];
     MultiByteToWideChar(CP_ACP, 0, path.toLocal8Bit().data(), -1, wpath, MAX_PATH);
 
-    IBaseFilter *src;
+    IBaseFilter *src = 0;
     m_d->err = m_d->graphBuilder->AddSourceFilter(wpath, L"Source", &src);
     if (FAILED(m_d->err)) {
         m_error = "DirectShowReadStream: Failed to open source file";
