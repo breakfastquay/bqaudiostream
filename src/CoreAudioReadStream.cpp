@@ -101,6 +101,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in getting basic description: code " + codestr(m_d->err);
+        ExtAudioFileDispose(m_d->file);
         throw FileOperationFailed(m_path, "get basic description", codestr(m_d->err));
     }
 	
