@@ -15,7 +15,7 @@
 #include "bqvec/Allocators.h"
 #include "base/AudioLevel.h"
 
-using namespace BreakfastQuay;
+using namespace breakfastquay;
 
 namespace Turbot {
 

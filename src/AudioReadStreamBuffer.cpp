@@ -11,7 +11,7 @@
 #include "bqvec/VectorOps.h"
 #include "system/Thread.h"
 
-using namespace BreakfastQuay;
+using namespace breakfastquay;
 
 namespace Turbot {
 
