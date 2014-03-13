@@ -15,6 +15,8 @@
 #include "bqvec/Allocators.h"
 #include "base/AudioLevel.h"
 
+using namespace BreakfastQuay;
+
 namespace Turbot {
 
 class TestWavReadWrite : public QObject

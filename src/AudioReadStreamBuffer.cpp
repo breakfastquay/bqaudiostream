@@ -11,6 +11,8 @@
 #include "bqvec/VectorOps.h"
 #include "system/Thread.h"
 
+using namespace BreakfastQuay;
+
 namespace Turbot {
 
 class AudioReadStreamBuffer::D

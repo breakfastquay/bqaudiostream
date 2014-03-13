@@ -5,6 +5,8 @@
 #include "system/Debug.h"
 #include "dsp/Resampler.h"
 
+using namespace BreakfastQuay;
+
 namespace Turbot
 {
 	

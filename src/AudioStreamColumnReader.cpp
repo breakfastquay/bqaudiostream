@@ -25,6 +25,8 @@
 
 #include <cassert>
 
+using namespace BreakfastQuay;
+
 #define DEBUG_AUDIO_STREAM_COLUMN_READER 1
 //#define DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS 1
 
