@@ -16,7 +16,7 @@
 #include "musicdb/MusicDatabase.h"
 
 #include "dsp/Window.h"
-#include "dsp/FFT.h"
+#include "bqfft/FFT.h"
 
 #include "audiocurves/CompoundAudioCurve.h"
 #include "audiocurves/CepstralPitchCurve.h"

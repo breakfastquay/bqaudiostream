@@ -8,7 +8,7 @@
 
 #include "base/RingBuffer.h"
 
-#include "system/VectorOps.h"
+#include "bqvec/VectorOps.h"
 #include "system/Thread.h"
 
 namespace Turbot {

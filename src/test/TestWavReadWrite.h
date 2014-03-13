@@ -12,7 +12,7 @@
 #include "AudioWriteStreamFactory.h"
 #include "AudioWriteStream.h"
 
-#include "system/Allocators.h"
+#include "bqvec/Allocators.h"
 #include "base/AudioLevel.h"
 
 namespace Turbot {
