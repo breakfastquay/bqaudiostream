@@ -12,7 +12,7 @@
 #include "AudioWriteStreamFactory.h"
 #include "AudioWriteStream.h"
 
-#include "bqvec/Allocators.h"
+#include "Allocators.h"
 #include "base/AudioLevel.h"
 
 using namespace breakfastquay;
