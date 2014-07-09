@@ -16,7 +16,7 @@
 #include "musicdb/MusicDatabase.h"
 
 #include "dsp/Window.h"
-#include "dsp/FFT.h"
+#include "bqfft/FFT.h"
 
 #include "audiocurves/CompoundAudioCurve.h"
 #include "audiocurves/CepstralPitchCurve.h"
@@ -24,6 +24,8 @@
 #include <vector>
 
 #include <cassert>
+
+using namespace breakfastquay;
 
 #define DEBUG_AUDIO_STREAM_COLUMN_READER 1
 //#define DEBUG_AUDIO_STREAM_COLUMN_READER_PROCESS 1

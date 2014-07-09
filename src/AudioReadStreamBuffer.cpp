@@ -8,8 +8,10 @@
 
 #include "base/RingBuffer.h"
 
-#include "system/VectorOps.h"
+#include "VectorOps.h"
 #include "system/Thread.h"
+
+using namespace breakfastquay;
 
 namespace Turbot {
 
