@@ -3,6 +3,8 @@
 
 #ifdef HAVE_MEDIAFOUNDATION
 
+#define WINVER 0x0601 // _WIN32_WINNT_WIN7, earliest version to define MF API
+
 #include "MediaFoundationReadStream.h"
 #include "base/RingBuffer.h"
 #include "system/Thread.h"
@@ -32,10 +34,11 @@ directshowbuilder(
 
 static const int maxBufferSize = 1048575;
 
-class MediaFoundationReadStream::D : public ISampleGrabberCB
+class MediaFoundationReadStream::D
 {
 public:
-    D() :
+    D(MediaFoundationReadStream *s) :
+        stream(s),
         refCount(0),
         channelCount(0),
         bitDepth(0),
@@ -50,7 +53,17 @@ public:
         { }
 
     ~D() {
-        delete buffer;
+        if (mediaBuffer) {
+            mediaBuffer->Release();
+        }
+
+        if (reader) {
+            reader->Release();
+        }
+
+        if (mediaType) {
+            mediaType->Release();
+        }  
     }
 
     ULONG APIENTRY AddRef() {
@@ -62,6 +75,8 @@ public:
     }
 
     ULONG refCount;
+
+    MediaFoundationReadStream *stream;
 
     int channelCount;
     int bitDepth;
@@ -86,7 +101,7 @@ public:
 
 MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
     m_path(path),
-    m_d(new D)
+    m_d(new D(this))
 {
     m_channelCount = 0;
     m_sampleRate = 0;
@@ -157,8 +172,32 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
         m_d->err = m_d->reader->SetStreamSelection
             ((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE);
     }
-    SafeRelease(&partialType);
-    
+    if (partialType) {
+        partialType->Release();
+        partialType = 0;
+    }
+
+    if (SUCCEEDED(m_d->err)) {
+        UINT32 depth;
+        m_d->err = m_d->mediaType->GetUINT32
+            (MF_MT_AUDIO_BITS_PER_SAMPLE, &depth);
+        m_d->bitDepth = depth;
+    }
+
+    if (SUCCEEDED(m_d->err)) {
+        UINT32 rate;
+        m_d->err = m_d->mediaType->GetUINT32
+            (MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate);
+        m_d->sampleRate = rate;
+    }
+
+    if (SUCCEEDED(m_d->err)) {
+        UINT32 chans;
+        m_d->err = m_d->mediaType->GetUINT32
+            (MF_MT_AUDIO_NUM_CHANNELS, &chans);
+        m_d->channelCount = chans;
+    }
+
     //!!! need to set channel count, bit depth, bytes per sample,
     //!!! sample rate -- can't decode without 'em (especially bit
     //!!! depth!)
@@ -196,8 +235,8 @@ MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
     err = mediaBuffer->Lock(&data, 0, &length);
 
     if (FAILED(err)) {
-        m_error = "MediaFoundationReadStream: Failed to lock media buffer?!";
-        throw FileOperationFailed(m_path, "Read from audio file");
+        stream->m_error = "MediaFoundationReadStream: Failed to lock media buffer?!";
+        throw FileOperationFailed(stream->m_path, "Read from audio file");
     }
 
     int bytesPerFrame = channelCount * (bitDepth / 8);
@@ -222,7 +261,7 @@ MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
     // otherwise, we ran out: this buffer has nothing left, release it
     // and call again for the next part
 
-    SafeRelease(mediaBuffer);
+    mediaBuffer->Release();
     mediaBuffer = 0;
     mediaBufferIndex = 0;
     
@@ -248,19 +287,19 @@ MediaFoundationReadStream::D::fillBuffer()
                                  0, 0, &flags, 0, &sample);
 
         if (FAILED(err)) {
-            m_error = "MediaFoundationReadStream: Failed to read sample from stream";
-            throw FileOperationFailed(m_path, "Read from audio file");
+            stream->m_error = "MediaFoundationReadStream: Failed to read sample from stream";
+            throw FileOperationFailed(stream->m_path, "Read from audio file");
         }
 
-        if (flags & MF_SOURCE_READERF_END_OF_STREAM) {
+        if (flags & MF_SOURCE_READERF_ENDOFSTREAM) {
             return;
         }
     }
 
     err = sample->ConvertToContiguousBuffer(&mediaBuffer);
     if (FAILED(err)) {
-        m_error = "MediaFoundationReadStream: Failed to convert sample to buffer";
-        throw FileOperationFailed(m_path, "Read from audio file");
+        stream->m_error = "MediaFoundationReadStream: Failed to convert sample to buffer";
+        throw FileOperationFailed(stream->m_path, "Read from audio file");
     }
 }
 
@@ -272,7 +311,7 @@ MediaFoundationReadStream::D::convertSamples(const unsigned char *inbuf,
     int inix = 0;
     int bytesPerSample = bitDepth / 8;
     while (inix < inbufbytes) {
-        *out = convertSample(inbuf[inix]);
+        *out = convertSample(inbuf + inix);
         out += 1;
         inix += bytesPerSample;
     }
@@ -322,19 +361,6 @@ MediaFoundationReadStream::D::convertSample(const unsigned char *c)
 MediaFoundationReadStream::~MediaFoundationReadStream()
 {
     cerr << "MediaFoundationReadStream::~MediaFoundationReadStream" << endl;
-
-    if (m_d->mediaBuffer) {
-        SafeRelease(m_d->mediaBuffer);
-    }
-
-    if (m_d->reader) {
-        SafeRelease(&m_d->reader);
-    }
-
-    if (m_d->mediaType) {
-        SafeRelease(&m_d->mediaType);
-    }
-
     delete m_d;
 }
 
