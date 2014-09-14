@@ -41,22 +41,15 @@ public:
         bitDepth(0),
         sampleRate(0),
         isFloat(false),
-        rdbuf(0),
-        rdbufsiz(0),
-        cvbuf(0),
-        cvbufsiz(0),
         reader(0),
         mediaType(0),
+        mediaBuffer(0),
+        mediaBufferIndex(0),
         err(S_OK),
-        complete(false),
-        buffer(0),
-        dataAvailable("MediaFoundationReadStream::dataAvailable"),
-        spaceAvailable("MediaFoundationReadStream::spaceAvailable")
+        complete(false)
         { }
 
     ~D() {
-        deallocate<char>(rdbuf);
-        deallocate<float>(cvbuf);
         delete buffer;
     }
 
@@ -70,29 +63,22 @@ public:
 
     ULONG refCount;
 
-    size_t channelCount;
-    size_t bitDepth;
-    size_t sampleRate;
+    int channelCount;
+    int bitDepth;
+    int sampleRate;
     bool isFloat;
-
-    char *rdbuf;
-    int rdbufsiz;
-    
-    float *cvbuf;
-    int cvbufsiz;
 
     IMFSourceReader *reader;
     IMFMediaType *mediaType;
+    IMFMediaBuffer *mediaBuffer;
+    int mediaBufferIndex;
 
     HRESULT err;
 
     bool complete;
 
-    RingBuffer<float> *buffer;
-    Mutex mutex;
-    Condition dataAvailable;
-    Condition spaceAvailable;
-
+    int getFrames(int count, float *frames);
+    void convertSamples(const unsigned char *in, int inbufsize, float *out);
     float convertSample(const unsigned char *);
     void fillBuffer();
 };
@@ -172,6 +158,11 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
             ((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE);
     }
     SafeRelease(&partialType);
+    
+    //!!! need to set channel count, bit depth, bytes per sample,
+    //!!! sample rate -- can't decode without 'em (especially bit
+    //!!! depth!)
+
 
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: File format could not be converted to PCM stream";
@@ -183,36 +174,108 @@ size_t
 MediaFoundationReadStream::getFrames(size_t count, float *frames)
 {
     cerr << "MediaFoundationReadStream::getFrames(" << count << ")" << endl;
-    m_d->mutex.lock();
+    return m_d->getFrames(count, frames);
+}
 
-    while (!m_d->buffer ||
-           m_d->buffer->getReadSpace() < count * m_channelCount) {
+int
+MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
+{
+    cerr << "D::getFrames(" << framesRequired << ")" << endl;
 
-        m_d->mutex.unlock();
-
-        if (m_d->complete) {
-            cerr << "(complete)" << endl;
-            if (!m_d->buffer) return 0;
-            else return m_d->buffer->read(frames, count * m_channelCount)
-                     / m_channelCount;
-        }   
-
-        m_d->dataAvailable.lock();
-        if (!m_d->complete &&
-            (!m_d->buffer ||
-             m_d->buffer->getReadSpace() < count * m_channelCount)) {
-            m_d->dataAvailable.wait(500000);
+    if (!mediaBuffer) {
+        fillBuffer();
+        if (!mediaBuffer) {
+            // legitimate end of file
+            return 0;
         }
-        m_d->dataAvailable.unlock();
-            
-        m_d->mutex.lock();
+    }
+        
+    BYTE *data = 0;
+    DWORD length = 0;
+
+    err = mediaBuffer->Lock(&data, 0, &length);
+
+    if (FAILED(err)) {
+        m_error = "MediaFoundationReadStream: Failed to lock media buffer?!";
+        throw FileOperationFailed(m_path, "Read from audio file");
+    }
+
+    int bytesPerFrame = channelCount * (bitDepth / 8);
+    int framesAvailable = (length - mediaBufferIndex) / bytesPerFrame;
+    int framesToGet = std::min(framesRequired, framesAvailable);
+
+    if (framesToGet > 0) {
+        // have something in the buffer, not necessarily all we need
+        convertSamples(data + mediaBufferIndex,
+                       framesToGet * bytesPerFrame,
+                       frames);
+        mediaBufferIndex += framesToGet * bytesPerFrame;
+    }
+
+    mediaBuffer->Unlock();
+    
+    if (framesToGet == framesRequired) {
+        // we got enough! rah
+        return framesToGet;
     }
     
-    size_t sz = m_d->buffer->read
-        (frames, count * m_channelCount) / m_channelCount;
+    // otherwise, we ran out: this buffer has nothing left, release it
+    // and call again for the next part
 
-    m_d->mutex.unlock();
-    return sz;
+    SafeRelease(mediaBuffer);
+    mediaBuffer = 0;
+    mediaBufferIndex = 0;
+    
+    return framesToGet +
+        getFrames(framesRequired - framesToGet, 
+                  frames + framesToGet * channelCount);
+}
+
+void
+MediaFoundationReadStream::D::fillBuffer()
+{
+    // assumes mediaBuffer is currently null
+    
+    DWORD flags = 0;
+    IMFSample *sample = 0;
+
+    while (!sample) {
+
+        // "In some cases a call to ReadSample does not generate data,
+        // in which case the IMFSample pointer is NULL" (hence the loop)
+
+        err = reader->ReadSample((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+                                 0, 0, &flags, 0, &sample);
+
+        if (FAILED(err)) {
+            m_error = "MediaFoundationReadStream: Failed to read sample from stream";
+            throw FileOperationFailed(m_path, "Read from audio file");
+        }
+
+        if (flags & MF_SOURCE_READERF_END_OF_STREAM) {
+            return;
+        }
+    }
+
+    err = sample->ConvertToContiguousBuffer(&mediaBuffer);
+    if (FAILED(err)) {
+        m_error = "MediaFoundationReadStream: Failed to convert sample to buffer";
+        throw FileOperationFailed(m_path, "Read from audio file");
+    }
+}
+
+void
+MediaFoundationReadStream::D::convertSamples(const unsigned char *inbuf,
+                                             int inbufbytes,
+                                             float *out)
+{
+    int inix = 0;
+    int bytesPerSample = bitDepth / 8;
+    while (inix < inbufbytes) {
+        *out = convertSample(inbuf[inix]);
+        out += 1;
+        inix += bytesPerSample;
+    }
 }
 
 float
@@ -256,108 +319,21 @@ MediaFoundationReadStream::D::convertSample(const unsigned char *c)
     }
 }
 
-HRESULT APIENTRY
-MediaFoundationReadStream::D::BufferCB(double sampleTime, BYTE *, long)
-{
-    //!!! This is still the DirectShow code. We need to replace it
-    //!!! with a read thread that fills the ring buffer, waiting each
-    //!!! time it becomes full
-
-    std::cerr << "BufferCB: sampleTime = " << sampleTime << std::endl;
-
-    long bufsiz = 0;
-    err = grabber->GetCurrentBuffer(&bufsiz, NULL);
-    if (FAILED(err)) {
-        cerr << "MediaFoundationReadStream: Failed to query sample grabber buffer size" << endl;
-        return err;
-    }
-
-    cerr << "bufsiz = " << bufsiz << endl;
-
-    if (!rdbuf || rdbufsiz < bufsiz) {
-        rdbuf = reallocate<char>(rdbuf, rdbufsiz, bufsiz);
-        rdbufsiz = bufsiz;
-    }
-
-    char *rdbuf = new char[bufsiz];
-    err = grabber->GetCurrentBuffer(&bufsiz, (long *)rdbuf);
-    if (FAILED(err)) {
-        cerr << "MediaFoundationReadStream: Failed to query sample grabber buffer" << endl;
-        return err; 
-    }
-
-    // We don't need to know channel count here, just total number of
-    // interleaved samples
-
-    int samples = (bufsiz / (bitDepth / 8));
-
-    cerr << "Have " << samples << " samples (across " << channelCount << " channels)" << endl;
-
-    if (!isFloat) {
-        if (!cvbuf || cvbufsiz < samples) {
-            cvbuf = reallocate<float>(cvbuf, cvbufsiz, samples);
-            cvbufsiz = samples;
-        }
-    }
-
-    mutex.lock();
-    if (!buffer) buffer = new RingBuffer<float>(samples);
-    else if (buffer->getWriteSpace() < samples) {
-        int resizeTo = buffer->getReadSpace() + samples;
-        if (resizeTo > maxBufferSize) {
-            resizeTo = maxBufferSize;
-        }
-        RingBuffer<float> *newbuf = buffer->resized(resizeTo);
-        cerr << "growing ring buffer to " << buffer->getReadSpace() + samples << endl;
-        delete buffer;
-        buffer = newbuf;
-        while (buffer->getWriteSpace() < samples) {
-            mutex.unlock();
-            spaceAvailable.lock();
-            if (buffer->getWriteSpace() < samples) {
-                spaceAvailable.wait(500000);
-            }
-            spaceAvailable.unlock();
-            mutex.lock();
-        }
-    }
-    mutex.unlock();
-
-    if (isFloat) {
-        buffer->write((float *)rdbuf, samples);
-    } else {
-        unsigned char *c = (unsigned char *)rdbuf;
-        for (int i = 0; i < samples; ++i) {
-            cvbuf[i] = convertSample(c);
-            c += (bitDepth / 8);
-        }
-        buffer->write(cvbuf, samples);
-    }
-
-    mutex.lock();
-    long ec = 0;
-    LONG_PTR p1, p2;
-    while ((err = mediaEvent->GetEvent(&ec, &p1, &p2, 0)) == S_OK) {
-        if (ec == EC_COMPLETE) {
-            cerr << "Setting complete to true" << endl;
-            complete = true;
-        }
-    }
-    mutex.unlock();
-
-    dataAvailable.lock();
-    dataAvailable.signal();
-    dataAvailable.unlock();
-    
-    return S_OK;
-}
-
 MediaFoundationReadStream::~MediaFoundationReadStream()
 {
     cerr << "MediaFoundationReadStream::~MediaFoundationReadStream" << endl;
 
-    if (m_d->reader) SafeRelease(&m_d->reader);
-    if (m_d->mediaType) SafeRelease(&m_d->mediaType);
+    if (m_d->mediaBuffer) {
+        SafeRelease(m_d->mediaBuffer);
+    }
+
+    if (m_d->reader) {
+        SafeRelease(&m_d->reader);
+    }
+
+    if (m_d->mediaType) {
+        SafeRelease(&m_d->mediaType);
+    }
 
     delete m_d;
 }
