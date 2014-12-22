@@ -188,14 +188,14 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
         UINT32 rate;
         m_d->err = m_d->mediaType->GetUINT32
             (MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate);
-        m_d->sampleRate = rate;
+        m_sampleRate = m_d->sampleRate = rate;
     }
 
     if (SUCCEEDED(m_d->err)) {
         UINT32 chans;
         m_d->err = m_d->mediaType->GetUINT32
             (MF_MT_AUDIO_NUM_CHANNELS, &chans);
-        m_d->channelCount = chans;
+        m_channelCount = m_d->channelCount = chans;
     }
 
     //!!! need to set channel count, bit depth, bytes per sample,
