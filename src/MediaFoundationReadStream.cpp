@@ -213,7 +213,16 @@ size_t
 MediaFoundationReadStream::getFrames(size_t count, float *frames)
 {
     cerr << "MediaFoundationReadStream::getFrames(" << count << ")" << endl;
-    return m_d->getFrames(count, frames);
+    size_t s = m_d->getFrames(count, frames);
+    float rms = 0.f;
+    for (size_t i = 0; i < s * m_channelCount; ++i) {
+        float v = frames[i];
+        rms += v*v;
+    }
+    rms /= s * m_channelCount;
+    rms = sqrtf(rms);
+    cerr << "rms = " << rms << endl;
+    return s;
 }
 
 int
