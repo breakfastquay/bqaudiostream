@@ -5,6 +5,7 @@
 
 #include "DirectShowReadStream.h"
 #include "base/RingBuffer.h"
+#include "bqvec/src/Allocators.h"
 #include "system/Thread.h"
 
 #include <windows.h>
@@ -19,6 +20,8 @@
 
 using std::cerr;
 using std::endl;
+
+using namespace breakfastquay;
 
 namespace Turbot
 {
