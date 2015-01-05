@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+#include <QUrl>
+
 using std::cerr;
 using std::endl;
 
@@ -112,9 +114,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
     cerr << "MediaFoundationReadStream(" << path << ")" << endl;
 
     if (!QFile(m_path).exists()) throw FileNotFound(m_path);
-
-    HANDLE hFile = INVALID_HANDLE_VALUE;
-
+    
     // Note: CoInitializeEx(NULL, COINIT_MULTITHREADED) must
     // presumably already have been called
     //!!! nb MF docs say COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE
@@ -126,8 +126,18 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
         throw FileOperationFailed(m_path, "MediaFoundation initialise");
     }
 
+    // We are not expected to handle non-local URLs here, I think --
+    // convert to file:// URL so as to avoid confusion with path
+    // separators & format
+    QString url = m_path;
+    if (!m_path.startsWith("file:") && !m_path.startsWith("FILE:")) {
+        url = QUrl::fromLocalFile(QFileInfo(m_path).absoluteFilePath()).toString();
+    }
+
+    cerr << "url = <" << url << ">" << endl;
+
     WCHAR wpath[MAX_PATH+1];
-    MultiByteToWideChar(CP_ACP, 0, path.toLocal8Bit().data(), -1, wpath, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, url.toLocal8Bit().data(), -1, wpath, MAX_PATH);
 
     //!!! URL or path?
 
@@ -198,11 +208,6 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
         m_channelCount = m_d->channelCount = chans;
     }
 
-    //!!! need to set channel count, bit depth, bytes per sample,
-    //!!! sample rate -- can't decode without 'em (especially bit
-    //!!! depth!)
-
-
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: File format could not be converted to PCM stream";
         throw FileOperationFailed(m_path, "MediaFoundation media type selection");
@@ -212,8 +217,9 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
 size_t
 MediaFoundationReadStream::getFrames(size_t count, float *frames)
 {
-    cerr << "MediaFoundationReadStream::getFrames(" << count << ")" << endl;
+//    cerr << "MediaFoundationReadStream::getFrames(" << count << ")" << endl;
     size_t s = m_d->getFrames(count, frames);
+/*
     float rms = 0.f;
     for (size_t i = 0; i < s * m_channelCount; ++i) {
         float v = frames[i];
@@ -222,13 +228,14 @@ MediaFoundationReadStream::getFrames(size_t count, float *frames)
     rms /= s * m_channelCount;
     rms = sqrtf(rms);
     cerr << "rms = " << rms << endl;
+*/
     return s;
 }
 
 int
 MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
 {
-    cerr << "D::getFrames(" << framesRequired << ")" << endl;
+//    cerr << "D::getFrames(" << framesRequired << ")" << endl;
 
     if (!mediaBuffer) {
         fillBuffer();
