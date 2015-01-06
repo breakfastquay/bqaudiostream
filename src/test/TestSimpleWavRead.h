@@ -72,7 +72,7 @@ private slots:
 	QCOMPARE(frames[19], -1.f);
 	delete s;
     }
-/*!!! currently fails! returns nothing
+
     void resampledLength() {
 	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound());
 	QVERIFY(s);
@@ -82,8 +82,6 @@ private slots:
 	QCOMPARE(n, size_t(10));
 	delete s;
     }
-*/  
-
 };
 
 }
