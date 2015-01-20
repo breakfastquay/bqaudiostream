@@ -88,7 +88,7 @@ public:
 	    QString filePath = dir.absoluteFilePath(entry);
 	    QFileInfo fi(filePath);
 	    if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
-		DEBUG << "AudioDirectoryIndex::index: Note: entry " << entry
+		TEBUG << "AudioDirectoryIndex::index: Note: entry " << entry
 		      << " in dir " << dir
 		      << " is nonexistent, not a file, or not readable"
 		      << endl;
@@ -114,7 +114,7 @@ public:
 		good = false;
 	    } else if (stream->getChannelCount() == 0 ||
 		       stream->getSampleRate() == 0) {
-		DEBUG << "AudioDirectoryIndex::indexEntry: Note: file "
+		TEBUG << "AudioDirectoryIndex::indexEntry: Note: file "
 		      << filePath << " has null channel count or sample rate"
 		      << endl;
 		good = false;
