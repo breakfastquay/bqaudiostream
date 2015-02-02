@@ -40,6 +40,9 @@ public:
     void setRetrievalSampleRate(size_t);
     size_t getRetrievalSampleRate() const;
 
+    virtual QString getTrackName() const { return ""; }
+    virtual QString getArtistName() const { return ""; }
+    
     /**
      * Retrieve \count frames of audio data (that is, \count *
      * getChannelCount() samples) from the source and store in
