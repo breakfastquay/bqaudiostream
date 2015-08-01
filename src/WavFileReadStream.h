@@ -1,8 +1,8 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_WAV_FILE_READ_STREAM_H_
-#define _TURBOT_WAV_FILE_READ_STREAM_H_
+#ifndef BQ_WAV_FILE_READ_STREAM_H_
+#define BQ_WAV_FILE_READ_STREAM_H_
 
 #include "AudioReadStream.h"
 
@@ -10,16 +10,16 @@
 
 #include <sndfile.h>
 
-namespace Turbot
+namespace breakfastquay
 {
     
 class WavFileReadStream : public AudioReadStream
 {
 public:
-    WavFileReadStream(QString path);
+    WavFileReadStream(std::string path);
     virtual ~WavFileReadStream();
 
-    virtual QString getError() const { return m_error; }
+    virtual std::string getError() const { return m_error; }
 
 protected:
     virtual size_t getFrames(size_t count, float *frames);
@@ -27,8 +27,8 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
-    QString m_path;
-    QString m_error;
+    std::string m_path;
+    std::string m_error;
 
     size_t m_offset;
 };

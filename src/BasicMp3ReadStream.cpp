@@ -15,14 +15,14 @@
 
 //#define DEBUG_BASIC_MP3_READ_STREAM 1
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static
 AudioReadStreamBuilder<BasicMP3ReadStream>
 oggbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/BasicMP3ReadStream"),
-    QStringList() << "mp3"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/BasicMP3ReadStream"),
+    vector<string>() << "mp3"
     );
 
 class BasicMP3ReadStream::D : public MP3DecoderCallback
@@ -47,7 +47,7 @@ public:
 
     void changeState(State s) {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "changeState: " << s << std::endl;
+        cerr << "changeState: " << s << std::endl;
 #endif
         if (s == Finished || s == Failed) {
             m_finished = true;
@@ -56,14 +56,14 @@ public:
 
     void setChannelCount(int c) {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "setChannelCount: " << c << std::endl;
+        cerr << "setChannelCount: " << c << std::endl;
 #endif
         m_rs->setChannelCount(c);
     }
 
     void setSampleRate(int r) {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "setSampleRate: " << r << std::endl;
+        cerr << "setSampleRate: " << r << std::endl;
 #endif
         m_rs->setSampleRate(r);
     }
@@ -74,7 +74,7 @@ public:
         int n = total / channels;
 
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "acceptFrames: " << n << std::endl;
+        cerr << "acceptFrames: " << n << std::endl;
 #endif
 
         sizeBuffer(getAvailableFrameCount() + n);
@@ -95,7 +95,7 @@ public:
 
     bool isFinished() const {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "isFinished?: " << m_finished << std::endl;
+        cerr << "isFinished?: " << m_finished << std::endl;
 #endif
         return m_finished;
     }
@@ -103,20 +103,20 @@ public:
     int getAvailableFrameCount() const {
         if (!m_buffer) {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-            std::cerr << "getAvailableFrameCount: no buffer" << std::endl;
+            cerr << "getAvailableFrameCount: no buffer" << std::endl;
 #endif
             return 0;
         }
         int n = m_buffer->getReadSpace() / m_rs->getChannelCount();
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "getAvailableFrameCount: " << n << std::endl;
+        cerr << "getAvailableFrameCount: " << n << std::endl;
 #endif
         return n;
     }
 
     void process() {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "process: m_finished = " << m_finished << std::endl;
+        cerr << "process: m_finished = " << m_finished << std::endl;
 #endif
         if (m_finished) return;
         m_decoder->processBlock();
@@ -124,7 +124,7 @@ public:
 
     void sizeBuffer(int minFrames) {
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-        std::cerr << "sizeBuffer: " << minFrames << std::endl;
+        cerr << "sizeBuffer: " << minFrames << std::endl;
 #endif
         int samples = minFrames * m_rs->getChannelCount();
         if (!m_buffer) {
@@ -135,7 +135,7 @@ public:
     }
 };
 
-BasicMP3ReadStream::BasicMP3ReadStream(QString path) :
+BasicMP3ReadStream::BasicMP3ReadStream(string path) :
     m_path(path),
     m_d(new D(this))
 {
@@ -188,7 +188,7 @@ BasicMP3ReadStream::getFrames(size_t count, float *frames)
     int fgot = got / m_channelCount;
 
 #ifdef DEBUG_BASIC_MP3_READ_STREAM
-    std::cerr << "getFrames: " << fgot << std::endl;
+    cerr << "getFrames: " << fgot << std::endl;
 #endif
 
     return fgot;

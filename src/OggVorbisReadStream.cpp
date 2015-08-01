@@ -15,14 +15,14 @@
 #include <alloca.h>
 #endif
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static
 AudioReadStreamBuilder<OggVorbisReadStream>
 oggbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/OggVorbisReadStream"),
-    QStringList() << "ogg" << "oga"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/OggVorbisReadStream"),
+    vector<string>() << "ogg" << "oga"
     );
 
 class OggVorbisReadStream::D
@@ -114,7 +114,7 @@ public:
     }
 };
 
-OggVorbisReadStream::OggVorbisReadStream(QString path) :
+OggVorbisReadStream::OggVorbisReadStream(string path) :
     m_path(path),
     m_d(new D(this))
 {
@@ -124,7 +124,7 @@ OggVorbisReadStream::OggVorbisReadStream(QString path) :
     if (!QFile(m_path).exists()) throw FileNotFound(m_path);
 
     if (!(m_d->m_oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
-	m_error = QString("File \"%1\" is not an OGG file.").arg(path);
+	m_error = string("File \"%1\" is not an OGG file.").arg(path);
         throw InvalidFileFormat(m_path);
     }
 

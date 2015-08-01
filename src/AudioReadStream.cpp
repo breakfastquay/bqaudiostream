@@ -5,21 +5,21 @@
 #include "system/Debug.h"
 #include "dsp/Resampler.h"
 
-using namespace breakfastquay;
+using namespace std;
 
-namespace Turbot
+namespace breakfastquay
 {
 	
-AudioReadStream::FileDRMProtected::FileDRMProtected(QString file) throw() :
+AudioReadStream::FileDRMProtected::FileDRMProtected(string file) throw() :
     m_file(file)
 {
-    std::cerr << "ERROR: File is DRM protected: " << file << std::endl;
+    cerr << "ERROR: File is DRM protected: " << file << std::endl;
 }
 
 const char *
 AudioReadStream::FileDRMProtected::what() const throw()
 {
-    return QString("File \"%1\" is protected by DRM")
+    return string("File \"%1\" is protected by DRM")
         .arg(m_file).toLocal8Bit().data();
 }
 

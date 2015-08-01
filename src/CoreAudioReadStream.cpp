@@ -18,14 +18,14 @@
 
 #include "CoreAudioReadStream.h"
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static
 AudioReadStreamBuilder<CoreAudioReadStream>
 coreaudiobuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioReadStream"),
-    QStringList() << "aiff" << "aif" << "au" << "avi" << "m4a" << "m4b" << "m4p" << "m4v" << "mov" << "mp3" << "mp4" << "wav"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioReadStream"),
+    vector<string>() << "aiff" << "aif" << "au" << "avi" << "m4a" << "m4b" << "m4p" << "m4v" << "mov" << "mp3" << "mp4" << "wav"
     );
 
 class CoreAudioReadStream::D
@@ -39,7 +39,7 @@ public:
     AudioStreamBasicDescription  asbd;
 };
 
-static QString
+static string
 codestr(OSStatus err)
 {
     char text[5];
@@ -49,10 +49,10 @@ codestr(OSStatus err)
     text[2] = (uerr >> 8) & 0xff;
     text[3] = (uerr) & 0xff;
     text[4] = '\0';
-    return QString("%1 (%2)").arg(err).arg(QString::fromLatin1(text));
+    return string("%1 (%2)").arg(err).arg(QString::fromLatin1(text));
 }
 
-CoreAudioReadStream::CoreAudioReadStream(QString path) :
+CoreAudioReadStream::CoreAudioReadStream(string path) :
     m_path(path),
     m_d(new D)
 {
@@ -108,7 +108,7 @@ CoreAudioReadStream::CoreAudioReadStream(QString path) :
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_sampleRate = m_d->asbd.mSampleRate;
 
-    std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
+    cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
 
 
     m_d->asbd.mSampleRate = getSampleRate();
@@ -157,14 +157,14 @@ CoreAudioReadStream::getFrames(size_t count, float *frames)
         throw InvalidFileFormat(m_path, "error in decoder");
     }
 
- //   std::cerr << "CoreAudioReadStream::getFrames: " << count << " frames requested across " << m_channelCount << " channel(s), " << framesRead << " frames actually read" << std::endl;
+ //   cerr << "CoreAudioReadStream::getFrames: " << count << " frames requested across " << m_channelCount << " channel(s), " << framesRead << " frames actually read" << std::endl;
 
     return framesRead;
 }
 
 CoreAudioReadStream::~CoreAudioReadStream()
 {
-//    std::cerr << "CoreAudioReadStream::~CoreAudioReadStream" << std::endl;
+//    cerr << "CoreAudioReadStream::~CoreAudioReadStream" << std::endl;
 
     if (m_channelCount) {
 	ExtAudioFileDispose(m_d->file);

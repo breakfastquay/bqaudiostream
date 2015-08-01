@@ -1,12 +1,12 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_AUDIO_WRITE_STREAM_FACTORY_H_
-#define _TURBOT_AUDIO_WRITE_STREAM_FACTORY_H_
+#ifndef BQ_AUDIO_WRITE_STREAM_FACTORY_H_
+#define BQ_AUDIO_WRITE_STREAM_FACTORY_H_
 
-#include <QString>
+#include <string>
 
-namespace Turbot {
+namespace breakfastquay {
 
 class AudioWriteStream;
 
@@ -27,13 +27,13 @@ public:
      * registered for the file extension, it will throw
      * UnknownFileType.)
      */
-    static AudioWriteStream *createWriteStream(QString fileName,
+    static AudioWriteStream *createWriteStream(std::string fileName,
                                                size_t channelCount,
                                                size_t sampleRate);
 
-    static QStringList getSupportedFileExtensions();
+    static std::vector<std::string> getSupportedFileExtensions();
 
-    static bool isExtensionSupportedFor(QString fileName);
+    static bool isExtensionSupportedFor(std::string fileName);
 
     /**
      * Return a "preferred" and definitely supported file extension
@@ -42,7 +42,7 @@ public:
      * Returns an empty string if no sufficiently mainstream
      * uncompressed format is supported.
      */
-    static QString getDefaultUncompressedFileExtension();
+    static std::string getDefaultUncompressedFileExtension();
 
     /**
      * Return a "preferred" and definitely supported file extension
@@ -51,7 +51,7 @@ public:
      * Returns an empty string if no sufficiently mainstream lossy
      * format is supported.
      */
-    static QString getDefaultLossyFileExtension();
+    static std::string getDefaultLossyFileExtension();
 };
 
 }

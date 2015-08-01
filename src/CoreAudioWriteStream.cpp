@@ -22,17 +22,16 @@
 
 #include <QDir>
 
-using std::cerr;
-using std::endl;
+using namespace std;
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static 
 AudioWriteStreamBuilder<CoreAudioWriteStream>
 coreaudiowritebuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioWriteStream"),
-    QStringList() << "m4a"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioWriteStream"),
+    vector<string>() << "m4a"
     );
 
 class CoreAudioWriteStream::D
@@ -46,7 +45,7 @@ public:
     OSStatus                     err; 
 };
 
-static QString
+static string
 codestr(OSStatus err)
 {
     char text[5];
@@ -56,7 +55,7 @@ codestr(OSStatus err)
     text[2] = (uerr >> 8) & 0xff;
     text[3] = (uerr) & 0xff;
     text[4] = '\0';
-    return QString("%1 (%2)").arg(err).arg(QString::fromLatin1(text));
+    return string("%1 (%2)").arg(err).arg(QString::fromLatin1(text));
 }
 
 CoreAudioWriteStream::CoreAudioWriteStream(Target target) :

@@ -17,17 +17,19 @@
 
 #define DEBUG_AUDIO_READ_STREAM_FACTORY 1
 
-namespace Turbot {
+using namespace std;
 
-typedef ThingFactory<AudioReadStream, QString>
+namespace breakfastquay {
+
+typedef ThingFactory<AudioReadStream, string>
 AudioReadStreamFactoryImpl;
 
 AudioReadStream *
-AudioReadStreamFactory::createReadStream(QString audioFileName)
+AudioReadStreamFactory::createReadStream(string audioFileName)
 {
     AudioReadStream *s = 0;
 
-    QString extension = QFileInfo(audioFileName).suffix().toLower();
+    string extension = QFileInfo(audioFileName).suffix().toLower();
 
     AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
 
@@ -47,25 +49,25 @@ AudioReadStreamFactory::createReadStream(QString audioFileName)
     }
 }
 
-QStringList
+vector<string>
 AudioReadStreamFactory::getSupportedFileExtensions()
 {
     return AudioReadStreamFactoryImpl::getInstance()->getTags();
 }
 
 bool
-AudioReadStreamFactory::isExtensionSupportedFor(QString fileName)
+AudioReadStreamFactory::isExtensionSupportedFor(string fileName)
 {
     return getSupportedFileExtensions().contains
         (QFileInfo(fileName).suffix().toLower());
 }
 
-QString
+string
 AudioReadStreamFactory::getFileFilter()
 {
-    QStringList extensions = getSupportedFileExtensions();
-    QString filter;
-    foreach (QString ext, extensions) {
+    vector<string> extensions = getSupportedFileExtensions();
+    string filter;
+    foreach (string ext, extensions) {
         if (filter != "") filter += " ";
         filter += "*." + ext;
     }

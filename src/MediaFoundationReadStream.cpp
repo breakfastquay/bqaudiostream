@@ -20,17 +20,16 @@
 
 #include <QUrl>
 
-using std::cerr;
-using std::endl;
+using namespace std;
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static
 AudioReadStreamBuilder<MediaFoundationReadStream>
 directshowbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/MediaFoundationReadStream"),
-    QStringList() << "wav" << "mp3" << "wma"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/MediaFoundationReadStream"),
+    vector<string>() << "wav" << "mp3" << "wma"
     );
 
 
@@ -101,7 +100,7 @@ public:
 };
 
 
-MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
+MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     m_path(path),
     m_d(new D(this))
 {
@@ -129,7 +128,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(QString path) :
     // We are not expected to handle non-local URLs here, I think --
     // convert to file:// URL so as to avoid confusion with path
     // separators & format
-    QString url = m_path;
+    string url = m_path;
     if (!m_path.startsWith("file:") && !m_path.startsWith("FILE:")) {
         url = QUrl::fromLocalFile(QFileInfo(m_path).absoluteFilePath()).toString();
     }
@@ -257,7 +256,7 @@ MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
 
     int bytesPerFrame = channelCount * (bitDepth / 8);
     int framesAvailable = (length - mediaBufferIndex) / bytesPerFrame;
-    int framesToGet = std::min(framesRequired, framesAvailable);
+    int framesToGet = min(framesRequired, framesAvailable);
 
     if (framesToGet > 0) {
         // have something in the buffer, not necessarily all we need

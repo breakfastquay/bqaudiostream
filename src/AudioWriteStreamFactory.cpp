@@ -9,7 +9,9 @@
 
 #include <QFileInfo>
 
-namespace Turbot {
+using namespace std;
+
+namespace breakfastquay {
 
 typedef ThingFactory<AudioWriteStream, AudioWriteStream::Target>
 AudioWriteStreamFactoryImpl;
@@ -19,13 +21,13 @@ AudioWriteStreamFactoryImpl;
 //AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *
-AudioWriteStreamFactory::createWriteStream(QString audioFileName,
+AudioWriteStreamFactory::createWriteStream(string audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {
     AudioWriteStream *s = 0;
 
-    QString extension = QFileInfo(audioFileName).suffix().toLower();
+    string extension = QFileInfo(audioFileName).suffix().toLower();
 
     AudioWriteStream::Target target(audioFileName, channelCount, sampleRate);
 
@@ -40,38 +42,38 @@ AudioWriteStreamFactory::createWriteStream(QString audioFileName,
     }
 }
 
-QStringList
+vector<string>
 AudioWriteStreamFactory::getSupportedFileExtensions()
 {
     return AudioWriteStreamFactoryImpl::getInstance()->getTags();
 }
 
-QString
+string
 AudioWriteStreamFactory::getDefaultUncompressedFileExtension()
 {
-    QStringList candidates;
+    vector<string> candidates;
     candidates << "wav" << "aiff";
-    QStringList supported = getSupportedFileExtensions();
-    foreach (QString ext, candidates) {
+    vector<string> supported = getSupportedFileExtensions();
+    foreach (string ext, candidates) {
         if (supported.contains(ext)) return ext;
     }
     return "";
 }
 
-QString
+string
 AudioWriteStreamFactory::getDefaultLossyFileExtension()
 {
-    QStringList candidates;
+    vector<string> candidates;
     candidates << "mp3" << "m4a" << "ogg" << "oga";
-    QStringList supported = getSupportedFileExtensions();
-    foreach (QString ext, candidates) {
+    vector<string> supported = getSupportedFileExtensions();
+    foreach (string ext, candidates) {
         if (supported.contains(ext)) return ext;
     }
     return "";
 }
 
 bool
-AudioWriteStreamFactory::isExtensionSupportedFor(QString fileName)
+AudioWriteStreamFactory::isExtensionSupportedFor(string fileName)
 {
     return getSupportedFileExtensions().contains
         (QFileInfo(fileName).suffix().toLower());

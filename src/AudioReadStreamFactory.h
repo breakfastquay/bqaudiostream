@@ -1,13 +1,13 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_AUDIO_READ_STREAM_FACTORY_H_
-#define _TURBOT_AUDIO_READ_STREAM_FACTORY_H_
+#ifndef BQ_AUDIO_READ_STREAM_FACTORY_H_
+#define BQ_AUDIO_READ_STREAM_FACTORY_H_
 
-#include <QString>
-#include <QStringList>
+#include <string>
 
-namespace Turbot {
+
+namespace breakfastquay {
 
 class AudioReadStream;
 
@@ -28,26 +28,26 @@ public:
      * registered for the file extension, it will throw
      * UnknownFileType.)
      */
-    static AudioReadStream *createReadStream(QString fileName);
+    static AudioReadStream *createReadStream(std::string fileName);
 
     /**
      * Return a list of the file extensions supported by registered
      * readers (e.g. "wav", "aiff", "mp3").
      */
-    static QStringList getSupportedFileExtensions();
+    static std::vector<std::string> getSupportedFileExtensions();
 
     /**
      * Return true if the given extension (e.g. "wav") is supported by
      * a registered reader.
      */
-    static bool isExtensionSupportedFor(QString fileName);
+    static bool isExtensionSupportedFor(std::string fileName);
 
     /**
      * Return a string containing the file extensions supported by
      * registered readers, in a format suitable for use as a file
      * dialog filter (e.g. "*.wav *.aiff *.mp3").
      */
-    static QString getFileFilter();
+    static std::string getFileFilter();
 };
 
 }

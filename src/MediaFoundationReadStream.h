@@ -8,22 +8,22 @@
 
 #ifdef HAVE_MEDIAFOUNDATION
  
-namespace Turbot
+namespace breakfastquay
 {
     
 class MediaFoundationReadStream : public AudioReadStream
 {
 public:
-    MediaFoundationReadStream(QString path);
+    MediaFoundationReadStream(std::string path);
     virtual ~MediaFoundationReadStream();
 
-    virtual QString getError() const { return m_error; }
+    virtual std::string getError() const { return m_error; }
 
 protected:
     virtual size_t getFrames(size_t count, float *frames);
     
-    QString m_path;
-    QString m_error;
+    std::string m_path;
+    std::string m_error;
 
     class D;
     D *m_d;

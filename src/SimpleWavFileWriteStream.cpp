@@ -7,17 +7,16 @@
 
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+using namespace std;
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static 
 AudioWriteStreamBuilder<SimpleWavFileWriteStream>
 simplewavbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
-    QStringList() << "wav"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
+    vector<string>() << "wav"
     );
 
 SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
@@ -25,14 +24,14 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     m_bitDepth(24),
     m_file(0)
 {
-    m_file = new std::ofstream(getPath().toLocal8Bit().data(),
-                               std::ios::out | std::ios::binary);
+    m_file = new ofstream(getPath().toLocal8Bit().data(),
+                               ios::out | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;
         m_file = 0;
         cerr << "SimpleWavFileWriteStream: Failed to open output file for writing" << endl;
-        m_error = QString("Failed to open audio file '") +
+        m_error = string("Failed to open audio file '") +
             getPath() + "' for writing";
         throw FailedToWriteFile(getPath());
     }
@@ -46,17 +45,17 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
         return;
     }
 
-    m_file->seekp(0, std::ios::end);
+    m_file->seekp(0, ios::end);
     unsigned int totalSize = m_file->tellp();
 
     // seek to first length position
-    m_file->seekp(4, std::ios::beg);
+    m_file->seekp(4, ios::beg);
 
     // write complete file size minus 8 bytes to here
     putBytes(int2le(totalSize - 8, 4));
 
     // reseek from start forward 40
-    m_file->seekp(40, std::ios::beg);
+    m_file->seekp(40, ios::beg);
 
     // write the data chunk size to end
     putBytes(int2le(totalSize - 44, 4));
@@ -68,7 +67,7 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
 }
 
 void
-SimpleWavFileWriteStream::putBytes(std::string s)
+SimpleWavFileWriteStream::putBytes(string s)
 {
     if (!m_file) return;
     for (unsigned int i = 0; i < s.length(); i++) {
@@ -83,10 +82,10 @@ SimpleWavFileWriteStream::putBytes(const unsigned char *buffer, size_t n)
     m_file->write((const char *)buffer, n);
 }
 
-std::string
+string
 SimpleWavFileWriteStream::int2le(unsigned int value, unsigned int length)
 {
-    std::string r;
+    string r;
 
     do {
         r += (unsigned char)((long)((value >> (8 * r.length())) & 0xff));
@@ -100,7 +99,7 @@ SimpleWavFileWriteStream::writeFormatChunk()
 {
     if (!m_file) return;
 
-    std::string outString;
+    string outString;
 
     outString += "RIFF";
     outString += "0000";

@@ -1,8 +1,8 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_AUDIO_READ_STREAM_H_
-#define _TURBOT_AUDIO_READ_STREAM_H_
+#ifndef BQ_AUDIO_READ_STREAM_H_
+#define BQ_AUDIO_READ_STREAM_H_
 
 #include "base/TurbotTypes.h"
 #include "base/ThingFactory.h"
@@ -10,7 +10,7 @@
 
 #include "system/Debug.h"
 
-namespace Turbot {
+namespace breakfastquay {
 
 class Resampler;
 
@@ -22,17 +22,17 @@ public:
     class FileDRMProtected : virtual public std::exception
     {
     public:
-        FileDRMProtected(QString file) throw();
+        FileDRMProtected(std::string file) throw();
         virtual ~FileDRMProtected() throw() { }
         virtual const char *what() const throw();
 
     protected:
-        QString m_file;
+        std::string m_file;
     };
 
     virtual ~AudioReadStream();
 
-    virtual QString getError() const { return ""; }
+    virtual std::string getError() const { return ""; }
 
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; } // source stream rate
@@ -40,8 +40,8 @@ public:
     void setRetrievalSampleRate(size_t);
     size_t getRetrievalSampleRate() const;
 
-    virtual QString getTrackName() const { return ""; }
-    virtual QString getArtistName() const { return ""; }
+    virtual std::string getTrackName() const { return ""; }
+    virtual std::string getArtistName() const { return ""; }
     
     /**
      * Retrieve \count frames of audio data (that is, \count *
@@ -72,11 +72,11 @@ protected:
 
 template <typename T>
 class AudioReadStreamBuilder :
-    public ConcreteThingBuilder<T, AudioReadStream, QString>
+    public ConcreteThingBuilder<T, AudioReadStream, std::string>
 {
 public:
-    AudioReadStreamBuilder(QString uri, QStringList extensions) :
-        ConcreteThingBuilder<T, AudioReadStream, QString>(uri, extensions) {
+    AudioReadStreamBuilder(std::string uri, std::vector<std::string> extensions) :
+        ConcreteThingBuilder<T, AudioReadStream, std::string>(uri, extensions) {
         std::cerr << "Registering stream builder: " << uri << std::endl;
     }
 };

@@ -9,13 +9,13 @@
 
 #include "system/Debug.h"
 
-namespace Turbot
+namespace breakfastquay
 {
 
-static QStringList
+static vector<string>
 getSupportedExtensions()
 {
-    QStringList extensions;
+    vector<string> extensions;
     int count;
     
     if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
@@ -30,7 +30,7 @@ getSupportedExtensions()
     for (int i = 0; i < count; ++i) {
         info.format = i;
         if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.push_back(QString(info.extension).toLower());
+            extensions.push_back(string(info.extension).toLower());
         }
     }
 
@@ -40,11 +40,11 @@ getSupportedExtensions()
 static
 AudioReadStreamBuilder<WavFileReadStream>
 wavbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/WavFileReadStream"),
+    string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileReadStream"),
     getSupportedExtensions()
     );
 
-WavFileReadStream::WavFileReadStream(QString path) :
+WavFileReadStream::WavFileReadStream(string path) :
     m_file(0),
     m_path(path),
     m_offset(0)
@@ -61,15 +61,15 @@ WavFileReadStream::WavFileReadStream(QString path) :
     m_file = sf_open(m_path.toLocal8Bit().data(), SFM_READ, &m_fileInfo);
 
     if (!m_file || m_fileInfo.frames <= 0 || m_fileInfo.channels <= 0) {
-	std::cerr << "WavFileReadStream::initialize: Failed to open file \""
+	cerr << "WavFileReadStream::initialize: Failed to open file \""
                   << path << "\" ("
-		  << sf_strerror(m_file) << ")" << std::endl;
+		  << sf_strerror(m_file) << ")" << endl;
 
 	if (m_file) {
-	    m_error = QString("Couldn't load audio file '") +
+	    m_error = string("Couldn't load audio file '") +
                 m_path + "':\n" + sf_strerror(m_file);
 	} else {
-	    m_error = QString("Failed to open audio file '") +
+	    m_error = string("Failed to open audio file '") +
 		m_path + "'";
 	}
         throw InvalidFileFormat(m_path, m_error);

@@ -1,8 +1,8 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifndef _TURBOT_WAV_FILE_WRITE_STREAM_H_
-#define _TURBOT_WAV_FILE_WRITE_STREAM_H_
+#ifndef BQ_WAV_FILE_WRITE_STREAM_H_
+#define BQ_WAV_FILE_WRITE_STREAM_H_
 
 #include "AudioWriteStream.h"
 
@@ -10,7 +10,7 @@
 
 #include <sndfile.h>
 
-namespace Turbot
+namespace breakfastquay
 {
     
 class WavFileWriteStream : public AudioWriteStream
@@ -19,7 +19,7 @@ public:
     WavFileWriteStream(Target target);
     virtual ~WavFileWriteStream();
 
-    virtual QString getError() const { return m_error; }
+    virtual std::string getError() const { return m_error; }
 
     virtual void putInterleavedFrames(size_t count, float *frames);
     
@@ -27,7 +27,7 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
-    QString m_error;
+    std::string m_error;
 };
 
 }

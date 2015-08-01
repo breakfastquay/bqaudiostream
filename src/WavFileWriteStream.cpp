@@ -11,14 +11,14 @@
 
 #include <cstring>
 
-namespace Turbot
+namespace breakfastquay
 {
 
 static 
 AudioWriteStreamBuilder<WavFileWriteStream>
 wavbuilder(
-    QString("http://breakfastquay.com/rdf/turbot/audiostream/WavFileWriteStream"),
-    QStringList() << "wav" << "aiff"
+    string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileWriteStream"),
+    vector<string>() << "wav" << "aiff"
     );
 
 WavFileWriteStream::WavFileWriteStream(Target target) :
@@ -33,10 +33,10 @@ WavFileWriteStream::WavFileWriteStream(Target target) :
     m_file = sf_open(getPath().toLocal8Bit().data(), SFM_WRITE, &m_fileInfo);
 
     if (!m_file) {
-	std::cerr << "WavFileWriteStream::initialize: Failed to open output file for writing ("
-		  << sf_strerror(m_file) << ")" << std::endl;
+	cerr << "WavFileWriteStream::initialize: Failed to open output file for writing ("
+		  << sf_strerror(m_file) << ")" << endl;
 
-        m_error = QString("Failed to open audio file '") +
+        m_error = string("Failed to open audio file '") +
             getPath() + "' for writing";
         throw FailedToWriteFile(getPath());
     }
