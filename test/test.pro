@@ -4,28 +4,22 @@ TARGET = test-audiostream
 win*: TARGET = "TestAudiostream"
 
 QT += testlib
+QT -= gui
 
-DESTDIR = ../../../out
-QMAKE_LIBDIR += ../../../out ../../../../dataquay
+DESTDIR = .
+QMAKE_LIBDIR += . ..
 
-INCLUDEPATH += . ../.. ../../../..
-DEPENDPATH += . ../.. ../../../..
+LIBS += -L.. -lbqaudiostream -L../../bqresample -lbqresample -L../../bqvec -lbqvec -lsndfile
 
-!win32-* {
-    PRE_TARGETDEPS += ../../../out/libturbot.a 
-}
+INCLUDEPATH += . .. ../../bqvec ../../bqresample ../../bqthingfactory
+DEPENDPATH += . .. ../../bqvec ../../bqresample ../../bqthingfactory
 
-include(../../../platform.pri)
-
-OBJECTS_DIR = o
-MOC_DIR = o
-
-HEADERS += AudioStreamTestData.h TestAudioStreamRead.h TestSimpleWavRead.h TestAudioStreamColumnReader.h TestWavReadWrite.h
+HEADERS += AudioStreamTestData.h TestAudioStreamRead.h TestSimpleWavRead.h TestWavReadWrite.h
 SOURCES += main.cpp
 
 !win32 {
     !macx* {
-        QMAKE_POST_LINK=$${DESTDIR}/$${TARGET}
+        QMAKE_POST_LINK=valgrind $${DESTDIR}/$${TARGET}
     }
     macx* {
         QMAKE_POST_LINK=$${DESTDIR}/$${TARGET}.app/Contents/MacOS/$${TARGET}

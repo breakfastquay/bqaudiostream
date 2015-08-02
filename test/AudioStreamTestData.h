@@ -4,14 +4,14 @@
 #ifndef AUDIOSTREAM_TEST_DATA_H
 #define AUDIOSTREAM_TEST_DATA_H
 
-#include "audiostream/AudioWriteStreamFactory.h"
-#include "audiostream/AudioWriteStream.h"
+#include "bqaudiostream/AudioWriteStreamFactory.h"
+#include "bqaudiostream/AudioWriteStream.h"
 
 #include <cmath>
 
 #include <iostream>
 
-namespace Turbot {
+namespace breakfastquay {
 
 /**
  * Class that generates a single fixed test pattern to a given sample
@@ -100,7 +100,7 @@ public:
 	return m_duration;
     }
 
-    void writeToFile(QString filename) {
+    void writeToFile(std::string filename) {
 	AudioWriteStream *ws = AudioWriteStreamFactory::createWriteStream
 	    (filename, m_channelCount, lrint(m_sampleRate));
 	ws->putInterleavedFrames(m_frameCount, m_data);

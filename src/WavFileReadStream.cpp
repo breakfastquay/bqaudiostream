@@ -4,10 +4,11 @@
 #ifdef HAVE_LIBSNDFILE
 
 #include "WavFileReadStream.h"
+#include "Exceptions.h"
 
 #include <iostream>
 
-#include "system/Debug.h"
+using namespace std;
 
 namespace breakfastquay
 {
@@ -30,7 +31,7 @@ getSupportedExtensions()
     for (int i = 0; i < count; ++i) {
         info.format = i;
         if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.push_back(string(info.extension).toLower());
+            extensions.push_back(string(info.extension));
         }
     }
 
@@ -52,19 +53,13 @@ WavFileReadStream::WavFileReadStream(string path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
-    if (!QFile(m_path).exists()) {
-        throw FileNotFound(m_path);
-    }
-
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
-    m_file = sf_open(m_path.toLocal8Bit().data(), SFM_READ, &m_fileInfo);
+    m_file = sf_open(m_path.c_str(), SFM_READ, &m_fileInfo);
 
     if (!m_file || m_fileInfo.frames <= 0 || m_fileInfo.channels <= 0) {
 	cerr << "WavFileReadStream::initialize: Failed to open file \""
-                  << path << "\" ("
-		  << sf_strerror(m_file) << ")" << endl;
-
+                  << path << "\" (" << sf_strerror(m_file) << ")" << endl;
 	if (m_file) {
 	    m_error = string("Couldn't load audio file '") +
                 m_path + "':\n" + sf_strerror(m_file);

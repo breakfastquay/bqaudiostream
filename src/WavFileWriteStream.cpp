@@ -4,21 +4,27 @@
 #ifdef HAVE_LIBSNDFILE
 
 #include "WavFileWriteStream.h"
-
-#include "base/Exceptions.h"
-
-#include "system/Debug.h"
+#include "Exceptions.h"
 
 #include <cstring>
 
+using namespace std;
+
 namespace breakfastquay
 {
+
+static vector<string> extensions() {
+    vector<string> ee;
+    ee.push_back("wav");
+    ee.push_back("aiff");
+    return ee;
+}
 
 static 
 AudioWriteStreamBuilder<WavFileWriteStream>
 wavbuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileWriteStream"),
-    vector<string>() << "wav" << "aiff"
+    extensions()
     );
 
 WavFileWriteStream::WavFileWriteStream(Target target) :
@@ -30,7 +36,7 @@ WavFileWriteStream::WavFileWriteStream(Target target) :
     m_fileInfo.channels = getChannelCount();
     m_fileInfo.samplerate = getSampleRate();
 
-    m_file = sf_open(getPath().toLocal8Bit().data(), SFM_WRITE, &m_fileInfo);
+    m_file = sf_open(getPath().c_str(), SFM_WRITE, &m_fileInfo);
 
     if (!m_file) {
 	cerr << "WavFileWriteStream::initialize: Failed to open output file for writing ("

@@ -69,8 +69,9 @@ public:
     static std::vector<std::string> getSupportedFileExtensions();
 
     /**
-     * Return true if the given extension (e.g. "wav") is supported by
-     * a registered reader.
+     * Return true if the extension of the given filename (e.g. "wav"
+     * extension for filename "A.WAV") is supported by a registered
+     * reader.
      */
     static bool isExtensionSupportedFor(std::string fileName);
 

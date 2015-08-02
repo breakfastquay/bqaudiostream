@@ -7,10 +7,10 @@
 #include <QObject>
 #include <QtTest>
 
-#include "AudioReadStreamFactory.h"
-#include "AudioReadStream.h"
+#include "bqaudiostream/AudioReadStreamFactory.h"
+#include "bqaudiostream/AudioReadStream.h"
 
-namespace Turbot {
+namespace breakfastquay {
 
 class TestSimpleWavRead : public QObject
 {
@@ -19,7 +19,7 @@ class TestSimpleWavRead : public QObject
     // This is a 44.1KHz 16-bit mono WAV file with 20 samples in it,
     // with a 1 at the start, -1 at the end and 0 elsewhere
     static const char *testsound() { 
-	static const char *f = "../../../resources/testfiles/20samples.wav";
+	static const char *f = "testfiles/20samples.wav";
 	return f;
     }
 
@@ -33,7 +33,7 @@ private slots:
     void open() {
 	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound());
 	QVERIFY(s);
-	QCOMPARE(s->getError(), QString());
+	QCOMPARE(s->getError(), std::string());
 	QCOMPARE(s->getChannelCount(), size_t(1));
 	QCOMPARE(s->getSampleRate(), size_t(44100));
 	delete s;

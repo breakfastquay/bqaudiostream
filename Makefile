@@ -4,12 +4,12 @@ HEADERS	:= $(wildcard src/*.h)
 OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
 LIBRARY	:= libbqaudiostream.a
 
-CXXFLAGS := -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream
+CXXFLAGS := -DHAVE_LIBSNDFILE -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream
 
 all:	$(LIBRARY)
 
 $(LIBRARY):	$(OBJECTS)
-	ar cr $@ $<
+	ar cr $@ $^
 
 clean:		
 	rm -f $(OBJECTS)

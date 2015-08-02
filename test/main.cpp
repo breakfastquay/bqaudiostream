@@ -3,7 +3,6 @@
 
 #include "TestSimpleWavRead.h"
 #include "TestAudioStreamRead.h"
-#include "TestAudioStreamColumnReader.h"
 #include "TestWavReadWrite.h"
 #include <QtTest>
 
@@ -18,19 +17,19 @@ int main(int argc, char *argv[])
     app.setApplicationName("test-audiostream");
 
     {
-	Turbot::TestSimpleWavRead t;
+	breakfastquay::TestSimpleWavRead t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
 
     {
-	Turbot::TestAudioStreamRead t;
+	breakfastquay::TestAudioStreamRead t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
 
     {
-	Turbot::TestWavReadWrite t;
+	breakfastquay::TestWavReadWrite t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
@@ -39,18 +38,8 @@ int main(int argc, char *argv[])
 	std::cerr << "\n********* " << bad << " test suite(s) failed!\n" << std::endl;
 	return 1;
     } else {
-
-	Turbot::TestAudioStreamColumnReader t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
-
-        if (bad > 0) {
-            std::cerr << "\n********* " << bad << " test suite(s) failed!\n" << std::endl;
-            return 1;
-        } else {
-            std::cerr << "All tests passed" << std::endl;
-            return 0;
-        }
+        std::cerr << "All tests passed" << std::endl;
+        return 0;
     }
 }
 

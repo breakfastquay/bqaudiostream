@@ -22,7 +22,7 @@ AudioReadStreamFactory::extensionOf(string audioFileName)
     string::size_type pos = audioFileName.rfind('.');
     if (pos == string::npos) return "";
     string ext;
-    for (string::size_type i = pos; i < audioFileName.size(); ++i) {
+    for (string::size_type i = pos + 1; i < audioFileName.size(); ++i) {
         ext += tolower(audioFileName[i]);
     }
     return ext;

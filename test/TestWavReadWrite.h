@@ -7,17 +7,30 @@
 #include <QObject>
 #include <QtTest>
 
-#include "AudioReadStreamFactory.h"
-#include "AudioReadStream.h"
-#include "AudioWriteStreamFactory.h"
-#include "AudioWriteStream.h"
+#include "bqaudiostream/AudioReadStreamFactory.h"
+#include "bqaudiostream/AudioReadStream.h"
+#include "bqaudiostream/AudioWriteStreamFactory.h"
+#include "bqaudiostream/AudioWriteStream.h"
 
-#include "Allocators.h"
-#include "base/AudioLevel.h"
+#include "bqvec/Allocators.h"
 
-using namespace breakfastquay;
+namespace breakfastquay {
 
-namespace Turbot {
+static const float DB_FLOOR = -1000.0;
+
+static float to_dB(float ratio)
+{
+    if (ratio == 0.0) return DB_FLOOR;
+    float dB = 10 * log10f(ratio);
+    return dB;
+}
+
+static float from_dB(float dB)
+{
+    if (dB == DB_FLOOR) return 0.0;
+    float m = powf(10.0, dB / 10.0);
+    return m;
+}
 
 class TestWavReadWrite : public QObject
 {
@@ -109,15 +122,13 @@ private slots:
 
         QVERIFY(ws);
     
-        float error = AudioLevel::dB_to_ratio(-10);
-        float warning = AudioLevel::dB_to_ratio(-25);
+        float error = from_dB(-10);
+        float warning = from_dB(-25);
         float maxdiff = 0.f;
         float mda = 0.f, mdb = 0.f;
         int maxdiffindex = -1;
 
         count = 0;
-
-        bool bad = false;
 
         while (1) {
             int got = rs->getInterleavedFrames(bs / cc, block);
@@ -145,14 +156,14 @@ private slots:
 
         QString message = QString("Max diff is %1 (%2 dB) at index %3 (a = %4, b = %5) [error threshold %6 (%7 dB), warning threshold %8 (%9 dB)]")
             .arg(maxdiff)
-            .arg(AudioLevel::ratio_to_dB(maxdiff))
+            .arg(to_dB(maxdiff))
             .arg(maxdiffindex)
             .arg(mda)
             .arg(mdb)
             .arg(error)
-            .arg(AudioLevel::ratio_to_dB(error))
+            .arg(to_dB(error))
             .arg(warning)
-            .arg(AudioLevel::ratio_to_dB(warning));
+            .arg(to_dB(warning));
 
         QVERIFY2(maxdiff < error, message.toLocal8Bit().data());
 
