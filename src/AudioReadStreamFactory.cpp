@@ -3,6 +3,7 @@
 
 #include "AudioReadStreamFactory.h"
 #include "AudioReadStream.h"
+#include "Exceptions.h"
 
 #include <bqthingfactory/ThingFactory.h>
 
@@ -61,7 +62,9 @@ AudioReadStreamFactory::getSupportedFileExtensions()
 bool
 AudioReadStreamFactory::isExtensionSupportedFor(string fileName)
 {
-    return getSupportedFileExtensions().contains(extensionOf(fileName));
+    vector<string> supported = getSupportedFileExtensions();
+    set<string> sset(supported.begin(), supported.end());
+    return sset.find(extensionOf(fileName)) != sset.end();
 }
 
 string
@@ -69,7 +72,8 @@ AudioReadStreamFactory::getFileFilter()
 {
     vector<string> extensions = getSupportedFileExtensions();
     string filter;
-    foreach (string ext, extensions) {
+    for (size_t i = 0; i < extensions.size(); ++i) {
+        string ext = extensions[i];
         if (filter != "") filter += " ";
         filter += "*." + ext;
     }

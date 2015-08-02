@@ -2,8 +2,10 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "AudioReadStream.h"
-#include "system/Debug.h"
-#include "dsp/Resampler.h"
+
+#include "bqresample/Resampler.h"
+
+#include <cmath>
 
 using namespace std;
 
@@ -13,14 +15,13 @@ namespace breakfastquay
 AudioReadStream::FileDRMProtected::FileDRMProtected(string file) throw() :
     m_file(file)
 {
-    cerr << "ERROR: File is DRM protected: " << file << std::endl;
+    m_what = "File \"" + m_file + "\" is protected by DRM";
 }
 
 const char *
 AudioReadStream::FileDRMProtected::what() const throw()
 {
-    return string("File \"%1\" is protected by DRM")
-        .arg(m_file).toLocal8Bit().data();
+    return m_what.c_str();
 }
 
 AudioReadStream::AudioReadStream() :

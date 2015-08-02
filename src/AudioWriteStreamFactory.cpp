@@ -4,10 +4,10 @@
 #include "AudioWriteStreamFactory.h"
 #include "AudioWriteStream.h"
 
-#include "base/ThingFactory.h"
-#include "base/Exceptions.h"
+#include "bqthingfactory/ThingFactory.h"
+#include "Exceptions.h"
 
-#include <QFileInfo>
+#include "AudioReadStreamFactory.h"
 
 using namespace std;
 
@@ -27,8 +27,8 @@ AudioWriteStreamFactory::createWriteStream(string audioFileName,
 {
     AudioWriteStream *s = 0;
 
-    string extension = QFileInfo(audioFileName).suffix().toLower();
-
+    string extension = AudioReadStreamFactory::extensionOf(audioFileName);
+    
     AudioWriteStream::Target target(audioFileName, channelCount, sampleRate);
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
@@ -52,10 +52,14 @@ string
 AudioWriteStreamFactory::getDefaultUncompressedFileExtension()
 {
     vector<string> candidates;
-    candidates << "wav" << "aiff";
+    candidates.push_back("wav");
+    candidates.push_back("aiff");
     vector<string> supported = getSupportedFileExtensions();
-    foreach (string ext, candidates) {
-        if (supported.contains(ext)) return ext;
+    set<string> sset(supported.begin(), supported.end());
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        if (sset.find(candidates[i]) != sset.end()) {
+            return candidates[i];
+        }
     }
     return "";
 }
@@ -64,10 +68,16 @@ string
 AudioWriteStreamFactory::getDefaultLossyFileExtension()
 {
     vector<string> candidates;
-    candidates << "mp3" << "m4a" << "ogg" << "oga";
+    candidates.push_back("mp3");
+    candidates.push_back("m4a");
+    candidates.push_back("ogg");
+    candidates.push_back("oga");
     vector<string> supported = getSupportedFileExtensions();
-    foreach (string ext, candidates) {
-        if (supported.contains(ext)) return ext;
+    set<string> sset(supported.begin(), supported.end());
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        if (sset.find(candidates[i]) != sset.end()) {
+            return candidates[i];
+        }
     }
     return "";
 }
@@ -75,8 +85,10 @@ AudioWriteStreamFactory::getDefaultLossyFileExtension()
 bool
 AudioWriteStreamFactory::isExtensionSupportedFor(string fileName)
 {
-    return getSupportedFileExtensions().contains
-        (QFileInfo(fileName).suffix().toLower());
+    vector<string> supported = getSupportedFileExtensions();
+    set<string> sset(supported.begin(), supported.end());
+    string ext = AudioReadStreamFactory::extensionOf(fileName);
+    return sset.find(ext) != sset.end();
 }
 
 }

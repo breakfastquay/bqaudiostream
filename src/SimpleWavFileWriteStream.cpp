@@ -5,6 +5,7 @@
 
 #ifndef HAVE_LIBSNDFILE
 
+#include "Exceptions.h"
 #include <iostream>
 
 using namespace std;
@@ -12,11 +13,17 @@ using namespace std;
 namespace breakfastquay
 {
 
+static vector<string> extensions() {
+    vector<string> ee;
+    ee.push_back("wav");
+    return ee;
+}
+
 static 
 AudioWriteStreamBuilder<SimpleWavFileWriteStream>
 simplewavbuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
-    vector<string>() << "wav"
+    extensions()
     );
 
 SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
@@ -24,8 +31,7 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     m_bitDepth(24),
     m_file(0)
 {
-    m_file = new ofstream(getPath().toLocal8Bit().data(),
-                               ios::out | std::ios::binary);
+    m_file = new ofstream(getPath().c_str(), ios::out | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;

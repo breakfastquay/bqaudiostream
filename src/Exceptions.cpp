@@ -33,60 +33,56 @@
     Software without prior written authorization.
 */
 
-#ifndef BQ_AUDIO_READ_STREAM_FACTORY_H
-#define BQ_AUDIO_READ_STREAM_FACTORY_H
+#include "Exceptions.h"
 
-#include <string>
-#include <vector>
+using std::string;
 
 namespace breakfastquay {
 
-class AudioReadStream;
-
-class AudioReadStreamFactory
+FileNotFound::FileNotFound(string file) throw() :
+    m_file(file)
 {
-public:
-    /**
-     * Create and return a read stream object for the given audio file
-     * name, if possible. The audio format will be deduced from the
-     * file extension.
-     *
-     * May throw FileNotFound, FileOpenFailed,
-     * AudioReadStream::FileDRMProtected, InvalidFileFormat,
-     * FileOperationFailed, or UnknownFileType.
-     *
-     * This function never returns NULL; it will always throw an
-     * exception instead. (If there is simply no read stream
-     * registered for the file extension, it will throw
-     * UnknownFileType.)
-     */
-    static AudioReadStream *createReadStream(std::string fileName);
+    m_what = "File \"" + file + "\" not found";
+}
 
-    /**
-     * Return a list of the file extensions supported by registered
-     * readers (e.g. "wav", "aiff", "mp3").
-     */
-    static std::vector<std::string> getSupportedFileExtensions();
+FailedToWriteFile::FailedToWriteFile(string file) throw() :
+    m_file(file)
+{
+    m_what = "Failed to write file \"" + file + "\"";
+}
 
-    /**
-     * Return true if the given extension (e.g. "wav") is supported by
-     * a registered reader.
-     */
-    static bool isExtensionSupportedFor(std::string fileName);
+FileReadFailed::FileReadFailed(string file) throw() :
+    m_file(file)
+{
+    m_what = "Failed to read file \"" + file + "\"";
+}
 
-    /**
-     * Return a string containing the file extensions supported by
-     * registered readers, in a format suitable for use as a file
-     * dialog filter (e.g. "*.wav *.aiff *.mp3").
-     */
-    static std::string getFileFilter();
+FileOperationFailed::FileOperationFailed(string file, string op) throw() :
+    m_file(file),
+    m_operation(op),
+    m_explanation("")
+{
+    m_what = "File operation \"" + op + "\" failed for file \"" + file + "\"";
+}
 
-    /**
-     * Return the extension of a given filename (e.g. "wav" for "A.WAV").
-     */
-    static std::string extensionOf(std::string fileName);
-};
+FileOperationFailed::FileOperationFailed(string file, string op, string exp) throw() :
+    m_file(file),
+    m_operation(op),
+    m_explanation(exp)
+{
+    m_what = "File operation \"" + op + "\" failed for file \"" + file + "\"";
+    if (m_explanation != "") m_what += ": " + m_explanation;
+}
+
+InvalidFileFormat::InvalidFileFormat(string file, string how) throw()
+{
+    m_what = "Invalid file format for file \"" + file + "\": " + how;
+}
+
+UnknownFileType::UnknownFileType(string file) throw()
+{
+    m_what = "Unknown file type for file \"" + file + "\"";
+}
 
 }
 
-#endif
