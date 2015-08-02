@@ -4,11 +4,11 @@
 #ifndef BQ_AUDIO_READ_STREAM_H_
 #define BQ_AUDIO_READ_STREAM_H_
 
-#include "base/TurbotTypes.h"
-#include "base/ThingFactory.h"
-#include "base/RingBuffer.h"
+#include <bqthingfactory/ThingFactory.h>
+#include <bqvec/RingBuffer.h>
 
-#include "system/Debug.h"
+#include <string>
+#include <vector>
 
 namespace breakfastquay {
 

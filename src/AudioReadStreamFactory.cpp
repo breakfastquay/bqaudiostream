@@ -1,19 +1,10 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 /* Copyright Chris Cannam - All Rights Reserved */
 
-#ifdef HAVE_QUICKTIME
-// Annoyingly, this doesn't like being included further down
-#include <QuickTime/QuickTime.h>
-#endif
-
 #include "AudioReadStreamFactory.h"
 #include "AudioReadStream.h"
 
-#include "base/ThingFactory.h"
-#include "base/Exceptions.h"
-#include "system/Debug.h"
-
-#include <QFileInfo>
+#include <bqthingfactory/ThingFactory.h>
 
 #define DEBUG_AUDIO_READ_STREAM_FACTORY 1
 
@@ -24,12 +15,24 @@ namespace breakfastquay {
 typedef ThingFactory<AudioReadStream, string>
 AudioReadStreamFactoryImpl;
 
+string
+AudioReadStreamFactory::extensionOf(string audioFileName)
+{
+    string::size_type pos = audioFileName.rfind('.');
+    if (pos == string::npos) return "";
+    string ext;
+    for (string::size_type i = pos; i < audioFileName.size(); ++i) {
+        ext += tolower(audioFileName[i]);
+    }
+    return ext;
+}
+
 AudioReadStream *
 AudioReadStreamFactory::createReadStream(string audioFileName)
 {
     AudioReadStream *s = 0;
 
-    string extension = QFileInfo(audioFileName).suffix().toLower();
+    string extension = extensionOf(audioFileName);
 
     AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
 
@@ -58,8 +61,7 @@ AudioReadStreamFactory::getSupportedFileExtensions()
 bool
 AudioReadStreamFactory::isExtensionSupportedFor(string fileName)
 {
-    return getSupportedFileExtensions().contains
-        (QFileInfo(fileName).suffix().toLower());
+    return getSupportedFileExtensions().contains(extensionOf(fileName));
 }
 
 string
@@ -87,11 +89,8 @@ AudioReadStreamFactory::getFileFilter()
 // separately in the project.
 
 #include "WavFileReadStream.cpp"
-#include "QuickTimeReadStream.cpp"
 #include "OggVorbisReadStream.cpp"
-#include "DirectShowReadStream.cpp"
 #include "MediaFoundationReadStream.cpp"
 #include "CoreAudioReadStream.cpp"
 #include "BasicMp3ReadStream.cpp"
 
-#include "AudioStreamColumnBuilders.cpp"

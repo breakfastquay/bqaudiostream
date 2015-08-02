@@ -5,7 +5,7 @@
 #define BQ_AUDIO_READ_STREAM_FACTORY_H_
 
 #include <string>
-
+#include <vector>
 
 namespace breakfastquay {
 
@@ -48,6 +48,11 @@ public:
      * dialog filter (e.g. "*.wav *.aiff *.mp3").
      */
     static std::string getFileFilter();
+
+    /**
+     * Return the extension of a given filename (e.g. "wav" for "A.WAV").
+     */
+    static std::string extensionOf(std::string fileName);
 };
 
 }
