@@ -1,5 +1,6 @@
 
 TEMPLATE = app
+CONFIG += debug
 TARGET = test-audiostream
 win*: TARGET = "TestAudiostream"
 

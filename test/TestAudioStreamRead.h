@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 namespace breakfastquay {
 
 static QString audioDir = "testfiles";
@@ -34,7 +36,7 @@ private slots:
     void init()
     {
         if (!QDir(audioDir).exists()) {
-            std::cerr << "ERROR: Audio test file directory \"" << audioDir.toLocal8Bit().data() << "\" does not exist" << std::endl;
+            cerr << "ERROR: Audio test file directory \"" << audioDir.toLocal8Bit().data() << "\" does not exist" << endl;
             QVERIFY2(QDir(audioDir).exists(), "Audio test file directory not found");
         }
     }
@@ -52,15 +54,15 @@ private slots:
     {
         QFETCH(QString, audiofile);
 
-        std::cerr << "\n\n*** audiofile = " << audiofile.toLocal8Bit().data() << "\n\n" << std::endl;
+        cerr << "\n\n*** audiofile = " << audiofile.toLocal8Bit().data() << "\n\n" << endl;
 
         try {
 
             int readRate = 48000;
 
+            string filename = (audioDir + "/" + audiofile).toLocal8Bit().data();
             AudioReadStream *stream =
-                AudioReadStreamFactory::createReadStream
-                ((audioDir + "/" + audiofile).toLocal8Bit().data());
+                AudioReadStreamFactory::createReadStream(filename);
 
             stream->setRetrievalSampleRate(readRate);
             int channels = stream->getChannelCount();
@@ -170,11 +172,11 @@ private slots:
                 }
                 float meandiff = totdiff / read;
                 if (meandiff >= limit) {
-                    std::cerr << "ERROR: for audiofile " << audiofile.toLocal8Bit().data() << ": mean diff = " << meandiff << " for channel " << c << std::endl;
+                    cerr << "ERROR: for audiofile " << audiofile.toLocal8Bit().data() << ": mean diff = " << meandiff << " for channel " << c << endl;
                     QVERIFY(meandiff < limit);
                 }
                 if (maxdiff >= limit) {
-                    std::cerr << "ERROR: for audiofile " << audiofile.toLocal8Bit().data() << ": max diff = " << maxdiff << " at frame " << maxAt << " of " << read << " on channel " << c << " (mean diff = " << meandiff << ")" << std::endl;
+                    cerr << "ERROR: for audiofile " << audiofile.toLocal8Bit().data() << ": max diff = " << maxdiff << " at frame " << maxAt << " of " << read << " on channel " << c << " (mean diff = " << meandiff << ")" << endl;
                     QVERIFY(maxdiff < limit);
                 }
             }
