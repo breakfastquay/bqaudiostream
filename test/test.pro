@@ -20,7 +20,7 @@ SOURCES += main.cpp
 
 !win32 {
     !macx* {
-        QMAKE_POST_LINK=valgrind $${DESTDIR}/$${TARGET}
+        QMAKE_POST_LINK=$${DESTDIR}/$${TARGET}
     }
     macx* {
         QMAKE_POST_LINK=$${DESTDIR}/$${TARGET}.app/Contents/MacOS/$${TARGET}

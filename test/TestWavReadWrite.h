@@ -36,9 +36,10 @@ class TestWavReadWrite : public QObject
 {
     Q_OBJECT
 
-    // This is a 44.1KHz, 32-bit float WAV, about 13 seconds of music
+    // This is a 44.1KHz, 16-bit, 2-channel PCM WAV containing our
+    // 2-second test signal
     static const char *testfile() { 
-	static const char *f = "../../../resources/testfiles/clip.wav";
+	static const char *f = "testfiles/44100-2-16.wav";
 	return f;
     }
     static const char *outfile() { 
