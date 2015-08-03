@@ -1,6 +1,6 @@
 
 SOURCES	:= src/AudioReadStream.cpp src/AudioReadStreamFactory.cpp src/AudioWriteStreamFactory.cpp src/Exceptions.cpp
-HEADERS	:= $(wildcard src/*.h)
+HEADERS	:= $(wildcard src/*.h) $(wildcard bqaudiostream/*.h)
 OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
 LIBRARY	:= libbqaudiostream.a
 
@@ -41,6 +41,7 @@ src/AudioWriteStreamFactory.o: src/SimpleWavFileWriteStream.cpp
 src/AudioWriteStreamFactory.o: src/SimpleWavFileWriteStream.h
 src/AudioWriteStreamFactory.o: src/CoreAudioWriteStream.cpp
 src/AudioWriteStreamFactory.o: src/CoreAudioWriteStream.h
+src/Exceptions.o: ./bqaudiostream/Exceptions.h
 src/MediaFoundationReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/WavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
 src/SimpleWavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
