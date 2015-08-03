@@ -46,10 +46,12 @@ private slots:
         QTest::addColumn<QString>("audiofile");
         QStringList files = QDir(audioDir).entryList(QDir::Files);
         foreach (QString filename, files) {
-            // Our test audio files are all named RATE-CHANNELS-BITDEPTH.wav
+            // Our test audio files are all named
+            // RATE-CHANNELS-BITDEPTH.ext (for PCM data) or
+            // RATE-CHANNELS.ext (for lossy data)
             QStringList fileAndExt = filename.split(".");
             QStringList bits = fileAndExt[0].split("-");
-            if (bits.size() != 3) continue;
+            if (bits.size() < 2 || bits.size() > 3) continue;
             QTest::newRow(strOf(filename)) << filename;
         }
     }
@@ -72,7 +74,9 @@ private slots:
             int channels = stream->getChannelCount();
             AudioStreamTestData tdata(readRate, channels);
 
-            // Our test audio files are all named RATE-CHANNELS-BITDEPTH.wav
+            // Our test audio files are all named
+            // RATE-CHANNELS-BITDEPTH.ext (for PCM data) or
+            // RATE-CHANNELS.ext (for lossy data)
             QStringList fileAndExt = audiofile.split(".");
             QStringList bits = fileAndExt[0].split("-");
             QString extension = fileAndExt[1];

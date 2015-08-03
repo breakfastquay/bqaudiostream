@@ -74,7 +74,7 @@ public:
     /**
      * May throw FileOperationFailed if encoding fails.
      */
-    virtual void putInterleavedFrames(size_t count, float *frames) = 0;
+    virtual void putInterleavedFrames(size_t frameCount, float *frames) = 0;
     
 protected:
     AudioWriteStream(Target t) : m_target(t) { }

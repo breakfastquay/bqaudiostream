@@ -60,6 +60,7 @@ public:
 
     protected:
         std::string m_file;
+        std::string m_what;
     };
 
     virtual ~AudioReadStream();

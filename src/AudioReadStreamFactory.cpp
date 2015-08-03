@@ -90,7 +90,9 @@ AudioReadStreamFactory::getFileFilter()
 // directly to the stream implementations (they are self-registering),
 // this means they will not be linked in.  So we include them directly
 // into this object file instead, and it's not necessary to build them
-// separately in the project.
+// separately in the project. In each case the code is completely
+// #ifdef'd out if the implementation is not selected, so there is no
+// overhead.
 
 #include "WavFileReadStream.cpp"
 #include "OggVorbisReadStream.cpp"
