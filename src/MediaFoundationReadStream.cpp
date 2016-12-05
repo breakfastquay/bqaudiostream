@@ -58,7 +58,7 @@ namespace breakfastquay
 
 static
 AudioReadStreamBuilder<MediaFoundationReadStream>
-directshowbuilder(
+mediafoundationbuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/MediaFoundationReadStream"),
     vector<string>() << "wav" << "mp3" << "wma"
     );
