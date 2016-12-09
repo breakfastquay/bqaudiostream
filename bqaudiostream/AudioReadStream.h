@@ -81,6 +81,8 @@ public:
      * getChannelCount() samples) from the source and store in
      * \frames.  Return the number of frames actually retrieved; this
      * will differ from \count only when the end of stream is reached.
+     * The region pointed to by \frames must contain enough space for
+     * \count * getChannelCount() values.
      *
      * If a retrieval sample rate has been set, the audio will be
      * resampled to that rate (and \count refers to the number of

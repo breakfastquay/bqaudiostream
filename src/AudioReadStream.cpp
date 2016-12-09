@@ -129,7 +129,7 @@ AudioReadStream::getInterleavedFrames(size_t count, float *frames)
 
         if (got > 0) {
             int resampled = m_resampler->resampleInterleaved
-                (in, out, got, ratio, finished);
+                (out, count + 1, in, got, ratio, finished);
 
             if (m_resampleBuffer->getWriteSpace() < resampled * m_channelCount) {
                 m_resampleBuffer = m_resampleBuffer->resized
