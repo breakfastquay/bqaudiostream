@@ -97,7 +97,10 @@ AudioReadStream::getInterleavedFrames(size_t count, float *frames)
     int samples = count * m_channelCount;
 
     if (!m_resampler) {
-        m_resampler = new Resampler(Resampler::Best, m_channelCount);
+        Resampler::Parameters params;
+        params.quality = Resampler::Best;
+        params.initialSampleRate = m_sampleRate;
+        m_resampler = new Resampler(params, m_channelCount);
         m_resampleBuffer = new RingBuffer<float>(samples * 2);
     }
 
