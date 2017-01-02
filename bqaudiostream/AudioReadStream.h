@@ -112,7 +112,7 @@ class AudioReadStreamBuilder :
 public:
     AudioReadStreamBuilder(std::string uri, std::vector<std::string> extensions) :
         ConcreteThingBuilder<T, AudioReadStream, std::string>(uri, extensions) {
-        std::cerr << "Registering stream builder: " << uri << std::endl;
+//        std::cerr << "Registering stream builder: " << uri << std::endl;
     }
 };
 

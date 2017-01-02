@@ -89,7 +89,7 @@ public:
     AudioWriteStreamBuilder(std::string uri, std::vector<std::string> extensions) :
         ConcreteThingBuilder<T, AudioWriteStream, AudioWriteStream::Target>
         (uri, extensions) {
-        std::cerr << "Registering stream builder: " << uri << std::endl;
+//        std::cerr << "Registering stream builder: " << uri << std::endl;
     }
 };
 
