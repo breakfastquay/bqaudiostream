@@ -37,7 +37,7 @@
 
 #include "OggVorbisReadStream.h"
 
-#include "base/RingBuffer.h"
+#include <bqvec/RingBuffer.h>
 
 #include <oggz/oggz.h>
 #include <fishsound/fishsound.h>
@@ -49,11 +49,20 @@
 namespace breakfastquay
 {
 
+static vector<string>
+getOggExtensions()
+{
+    vector<string> extensions;
+    extensions.push_back("ogg");
+    extensions.push_back("oga");
+    return extensions;
+}
+
 static
 AudioReadStreamBuilder<OggVorbisReadStream>
 oggbuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/OggVorbisReadStream"),
-    vector<string>() << "ogg" << "oga"
+    getOggExtensions()
     );
 
 class OggVorbisReadStream::D
@@ -152,18 +161,19 @@ OggVorbisReadStream::OggVorbisReadStream(string path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
-    if (!QFile(m_path).exists()) throw FileNotFound(m_path);
-
-    if (!(m_d->m_oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
-	m_error = string("File \"%1\" is not an OGG file.").arg(path);
-        throw InvalidFileFormat(m_path);
+    //!!! todo: accommodate Windows UTF16
+    
+    if (!(m_d->m_oggz = oggz_open(m_path.c_str(), OGGZ_READ))) {
+	m_error = string("File \"") + m_path + "\" is not an Ogg file.";
+        throw InvalidFileFormat(m_path, m_error);
     }
 
     FishSoundInfo fsinfo;
     m_d->m_fishSound = fish_sound_new(FISH_SOUND_DECODE, &fsinfo);
 
     fish_sound_set_decoded_callback(m_d->m_fishSound, D::acceptFramesStatic, m_d);
-    oggz_set_read_callback(m_d->m_oggz, -1, D::acceptPacketStatic, m_d);
+    oggz_set_read_callback
+        (m_d->m_oggz, -1, (OggzReadPacket)D::acceptPacketStatic, m_d);
 
     // initialise m_channelCount
     while (m_channelCount == 0 && !m_d->m_finished) {

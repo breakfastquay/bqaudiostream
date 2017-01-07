@@ -39,6 +39,11 @@
 
 #ifdef HAVE_LIBSNDFILE
 
+#ifdef _WIN32
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
+
 #include <sndfile.h>
 
 namespace breakfastquay

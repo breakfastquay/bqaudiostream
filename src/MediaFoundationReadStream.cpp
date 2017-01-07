@@ -56,11 +56,21 @@ using namespace std;
 namespace breakfastquay
 {
 
+static vector<string>
+getMediaFoundationExtensions()
+{
+    vector<string> extensions;
+    extensions.push_back("mp3");
+    extensions.push_back("wav");
+    extensions.push_back("wma");
+    return extensions;
+}
+
 static
 AudioReadStreamBuilder<MediaFoundationReadStream>
 mediafoundationbuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/MediaFoundationReadStream"),
-    vector<string>() << "wav" << "mp3" << "wma"
+    getMediaFoundationExtensions()
     );
 
 

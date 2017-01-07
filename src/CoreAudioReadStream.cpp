@@ -52,11 +52,30 @@
 namespace breakfastquay
 {
 
+static vector<string>
+getCoreAudioExtensions()
+{
+    vector<string> extensions;
+    extensions.push_back("aiff");
+    extensions.push_back("aif");
+    extensions.push_back("au");
+    extensions.push_back("avi");
+    extensions.push_back("m4a");
+    extensions.push_back("m4b");
+    extensions.push_back("m4p");
+    extensions.push_back("m4v");
+    extensions.push_back("mov");
+    extensions.push_back("mp3");
+    extensions.push_back("mp4");
+    extensions.push_back("wav");
+    return extensions;
+}
+
 static
 AudioReadStreamBuilder<CoreAudioReadStream>
 coreaudiobuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioReadStream"),
-    vector<string>() << "aiff" << "aif" << "au" << "avi" << "m4a" << "m4b" << "m4p" << "m4v" << "mov" << "mp3" << "mp4" << "wav"
+    getCoreAudioExtensions()
     );
 
 class CoreAudioReadStream::D

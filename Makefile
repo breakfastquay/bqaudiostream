@@ -4,7 +4,7 @@ HEADERS	:= $(wildcard src/*.h) $(wildcard bqaudiostream/*.h)
 OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
 LIBRARY	:= libbqaudiostream.a
 
-CXXFLAGS := -DHAVE_LIBSNDFILE -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic
+CXXFLAGS := -std=c++98 -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic
 
 all:	$(LIBRARY)
 
@@ -31,7 +31,6 @@ src/AudioReadStreamFactory.o: src/WavFileReadStream.cpp
 src/AudioReadStreamFactory.o: src/OggVorbisReadStream.cpp
 src/AudioReadStreamFactory.o: src/MediaFoundationReadStream.cpp
 src/AudioReadStreamFactory.o: src/CoreAudioReadStream.cpp
-src/AudioReadStreamFactory.o: src/BasicMp3ReadStream.cpp
 src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioWriteStreamFactory.h
 src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioWriteStream.h
 src/AudioWriteStreamFactory.o: ./bqaudiostream/Exceptions.h
@@ -48,5 +47,4 @@ src/SimpleWavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
 src/WavFileReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/CoreAudioWriteStream.o: ./bqaudiostream/AudioWriteStream.h
 src/CoreAudioReadStream.o: ./bqaudiostream/AudioReadStream.h
-src/BasicMp3ReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/OggVorbisReadStream.o: ./bqaudiostream/AudioReadStream.h

@@ -45,7 +45,7 @@ namespace breakfastquay
 {
 
 static vector<string>
-getSupportedExtensions()
+getWavReaderExtensions()
 {
     vector<string> extensions;
     int count;
@@ -73,7 +73,7 @@ static
 AudioReadStreamBuilder<WavFileReadStream>
 wavbuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileReadStream"),
-    getSupportedExtensions()
+    getWavReaderExtensions()
     );
 
 WavFileReadStream::WavFileReadStream(string path) :
@@ -86,7 +86,21 @@ WavFileReadStream::WavFileReadStream(string path) :
 
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
+
+#ifdef _WIN32
+    int wlen = MultiByteToWideChar
+        (CP_UTF8, 0, m_path.c_str(), m_path.length(), 0, 0);
+    if (wlen > 0) {
+        wchar_t *buf = new wchar_t[wlen+1];
+        (void)MultiByteToWideChar
+            (CP_UTF8, 0, m_path.c_str(), m_path.length(), buf, wlen);
+        buffer[wlen] = L'\0';
+        m_file = sf_wchar_open(buffer, SFM_READ, &m_fileInfo);
+        delete[] buffer;
+    }
+#else
     m_file = sf_open(m_path.c_str(), SFM_READ, &m_fileInfo);
+#endif
 
     if (!m_file || m_fileInfo.frames <= 0 || m_fileInfo.channels <= 0) {
 	cerr << "WavFileReadStream::initialize: Failed to open file \""

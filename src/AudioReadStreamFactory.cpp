@@ -129,5 +129,4 @@ AudioReadStreamFactory::getFileFilter()
 #include "OggVorbisReadStream.cpp"
 #include "MediaFoundationReadStream.cpp"
 #include "CoreAudioReadStream.cpp"
-#include "BasicMp3ReadStream.cpp"
 
