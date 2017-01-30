@@ -141,9 +141,9 @@ WavFileReadStream::getFrames(size_t count, float *frames)
 	return 0;
     }
 
-    sf_count_t readCount = 0;
-
-    if ((readCount = sf_readf_float(m_file, frames, count)) < 0) {
+    sf_count_t readCount = sf_readf_float(m_file, frames, count);
+    
+    if (readCount < 0) {
         return 0;
     }
 
