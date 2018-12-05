@@ -54,7 +54,7 @@ AudioReadStreamFactory::extensionOf(string audioFileName)
     if (pos == string::npos) return "";
     string ext;
     for (string::size_type i = pos + 1; i < audioFileName.size(); ++i) {
-        ext += (unsigned char)tolower((unsigned char)audioFileName[i]);
+        ext += (char)tolower((unsigned char)audioFileName[i]);
     }
     return ext;
 }
