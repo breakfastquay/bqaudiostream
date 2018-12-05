@@ -81,8 +81,8 @@ public:
     }
 
     OggVorbisReadStream *m_rs;
-    FishSound *m_fishSound;
     OGGZ *m_oggz;
+    FishSound *m_fishSound;
     RingBuffer<float> *m_buffer;
     bool m_finished;
 
@@ -90,7 +90,7 @@ public:
         return m_finished;
     }
 
-    int getAvailableFrameCount() const {
+    size_t getAvailableFrameCount() const {
         if (!m_buffer) return 0;
         return m_buffer->getReadSpace() / m_rs->getChannelCount();
     }
@@ -103,7 +103,7 @@ public:
     }
 
     void sizeBuffer(int minFrames) {
-        int samples = minFrames * m_rs->getChannelCount();
+        int samples = minFrames * int(m_rs->getChannelCount());
         if (!m_buffer) {
             m_buffer = new RingBuffer<float>(samples);
         } else if (m_buffer->getSize() < samples) {

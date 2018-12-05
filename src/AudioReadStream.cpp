@@ -75,6 +75,12 @@ AudioReadStream::~AudioReadStream()
 void
 AudioReadStream::setRetrievalSampleRate(size_t rate)
 {
+    static size_t max = 1536000;
+    if (rate > max) {
+        cerr << "WARNING: unsupported sample rate " << rate
+             << ", clamping to " << max << endl;
+        rate = max;
+    }
     m_retrievalRate = rate;
 }
 
@@ -93,24 +99,59 @@ AudioReadStream::getInterleavedFrames(size_t count, float *frames)
         m_channelCount == 0) {
         return getFrames(count, frames);
     }
+    
+    // The resampler API works in ints - so we may have to do this in
+    // chunks if count is very large. But that's not an unreasonable
+    // way to do it anyway. 
+    static size_t chunkSizeSamples = 1000000;
 
-    int samples = count * m_channelCount;
+    size_t chunkFrames = chunkSizeSamples / m_channelCount;
+    size_t frameOffset = 0;
+
+    while (frameOffset < count) {
+
+        size_t n = count - frameOffset;
+        if (n > chunkFrames) n = chunkFrames;
+        
+        int framesObtained = getResampledChunk
+            (int(n), frames + m_channelCount * frameOffset);
+        
+        if (framesObtained <= 0) {
+            return frameOffset;
+        }
+        
+        frameOffset += size_t(framesObtained);
+        
+        if (size_t(framesObtained) < n) {
+            return frameOffset;
+        }
+    }
+
+    return count;
+}
+
+int
+AudioReadStream::getResampledChunk(int frameCount, float *frames)
+{
+    int channels = int(m_channelCount);
 
     if (!m_resampler) {
         Resampler::Parameters params;
         params.quality = Resampler::FastestTolerable;
-        params.initialSampleRate = m_sampleRate;
-        m_resampler = new Resampler(params, m_channelCount);
-        m_resampleBuffer = new RingBuffer<float>(samples * 2);
+        params.initialSampleRate = int(m_sampleRate);
+        m_resampler = new Resampler(params, channels);
+        m_resampleBuffer = new RingBuffer<float>(frameCount * channels);
     }
 
-    float ratio = float(m_retrievalRate) / float(m_sampleRate);
-    int fileFrames = int(ceil(count / ratio));
+    double ratio = float(m_retrievalRate) / float(m_sampleRate);
+    int fileFrames = int(ceil(frameCount / ratio));
+    
+    float *in  = allocate<float>(fileFrames * channels);
+    float *out = allocate<float>((frameCount + 1) * channels);
+
+    int samples = frameCount * channels;
     bool finished = false;
-
-    float *in  = allocate<float>(fileFrames * m_channelCount);
-    float *out = allocate<float>((count + 1) * m_channelCount);
-
+    
     while (m_resampleBuffer->getReadSpace() < samples) {
 
         if (finished) {
@@ -125,30 +166,30 @@ AudioReadStream::getInterleavedFrames(size_t count, float *frames)
         
         int fileFramesToGet =
             int(ceil((samples - m_resampleBuffer->getReadSpace())
-                     / (m_channelCount * ratio)));
+                     / (channels * ratio)));
 
         int got = 0;
 
         if (!finished) {
-            got = getFrames(fileFramesToGet, in);
+            got = int(getFrames(fileFramesToGet, in));
             m_totalFileFrames += got;
             if (got < fileFramesToGet) {
                 finished = true;
             }
         } else {
-            v_zero(in, fileFramesToGet * m_channelCount);
+            v_zero(in, fileFramesToGet * channels);
             got = fileFramesToGet;
         }
         
         if (got > 0) {
             int resampled = m_resampler->resampleInterleaved
-                (out, count + 1, in, got, ratio, finished);
-            if (m_resampleBuffer->getWriteSpace() < resampled * m_channelCount) {
+                (out, frameCount + 1, in, got, ratio, finished);
+            if (m_resampleBuffer->getWriteSpace() < resampled * channels) {
                 int resizeTo = (m_resampleBuffer->getSize() +
-                                resampled * m_channelCount);
+                                resampled * channels);
                 m_resampleBuffer = m_resampleBuffer->resized(resizeTo);
             }
-            m_resampleBuffer->write(out, resampled * m_channelCount);
+            m_resampleBuffer->write(out, resampled * channels);
         }
     }
 
@@ -156,10 +197,10 @@ AudioReadStream::getInterleavedFrames(size_t count, float *frames)
     deallocate(out);
 
     int toReturn = samples;
-    int available = (int(m_totalFileFrames * ratio) - m_totalRetrievedFrames) *
-        m_channelCount;
+    int available = int(double(m_totalFileFrames) * ratio -
+                        double(m_totalRetrievedFrames)) * channels;
     if (toReturn > available) toReturn = available;
-    int actual = m_resampleBuffer->read(frames, toReturn) / m_channelCount;
+    int actual = m_resampleBuffer->read(frames, toReturn) / channels;
     m_totalRetrievedFrames += actual;
     return actual;
 }

@@ -54,7 +54,7 @@ AudioReadStreamFactory::extensionOf(string audioFileName)
     if (pos == string::npos) return "";
     string ext;
     for (string::size_type i = pos + 1; i < audioFileName.size(); ++i) {
-        ext += tolower(audioFileName[i]);
+        ext += (unsigned char)tolower((unsigned char)audioFileName[i]);
     }
     return ext;
 }
@@ -62,8 +62,6 @@ AudioReadStreamFactory::extensionOf(string audioFileName)
 AudioReadStream *
 AudioReadStreamFactory::createReadStream(string audioFileName)
 {
-    AudioReadStream *s = 0;
-
     string extension = extensionOf(audioFileName);
 
     AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
@@ -79,7 +77,7 @@ AudioReadStreamFactory::createReadStream(string audioFileName)
         AudioReadStream *stream = f->createFor(extension, audioFileName);
         if (!stream) throw UnknownFileType(audioFileName);
         return stream;
-    } catch (UnknownTagException) {
+    } catch (const UnknownTagException &) {
         throw UnknownFileType(audioFileName);
     }
 }

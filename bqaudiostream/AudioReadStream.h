@@ -96,6 +96,7 @@ public:
 protected:
     AudioReadStream();
     virtual size_t getFrames(size_t count, float *frames) = 0;
+    int getResampledChunk(int count, float *frames);
     size_t m_channelCount;
     size_t m_sampleRate;
     size_t m_retrievalRate;
