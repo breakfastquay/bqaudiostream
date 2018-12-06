@@ -90,9 +90,9 @@ public:
         return m_finished;
     }
 
-    size_t getAvailableFrameCount() const {
+    int getAvailableFrameCount() const {
         if (!m_buffer) return 0;
-        return m_buffer->getReadSpace() / m_rs->getChannelCount();
+        return m_buffer->getReadSpace() / int(m_rs->getChannelCount());
     }
 
     void readNextBlock() {
@@ -112,7 +112,8 @@ public:
     }
 
     int acceptPacket(ogg_packet *p) {
-        fish_sound_prepare_truncation(m_fishSound, p->granulepos, p->e_o_s);
+        fish_sound_prepare_truncation
+            (m_fishSound, p->granulepos, int(p->e_o_s));
         fish_sound_decode(m_fishSound, p->packet, p->bytes);
         return 0;
     }
@@ -127,8 +128,9 @@ public:
             m_rs->m_sampleRate = fsinfo.samplerate;
         }
 
-        sizeBuffer(getAvailableFrameCount() + n);
-        int channels = m_rs->getChannelCount();
+        sizeBuffer(getAvailableFrameCount() + int(n));
+        int channels = int(m_rs->getChannelCount());
+        //!!! rework to avoid stack allocation here
 #ifdef __GNUC__
         float interleaved[n * channels];
 #else
@@ -139,7 +141,7 @@ public:
                 interleaved[i * channels + c] = frames[c][i];
             }
         }
-        m_buffer->write(interleaved, n * channels);
+        m_buffer->write(interleaved, int(n) * channels);
         return 0;
     }
 
@@ -192,12 +194,13 @@ OggVorbisReadStream::getFrames(size_t count, float *frames)
     if (!m_channelCount) return 0;
     if (count == 0) return 0;
 
-    while (m_d->getAvailableFrameCount() < count) {
+    while (size_t(m_d->getAvailableFrameCount()) < count) {
         if (m_d->isFinished()) break;
         m_d->readNextBlock();
     }
 
-    int n = m_d->m_buffer->read(frames, count * m_channelCount);
+    //!!! handle (count * m_channelCount) > INT_MAX
+    int n = m_d->m_buffer->read(frames, int(count * m_channelCount));
     return n / m_channelCount;
 }
 
