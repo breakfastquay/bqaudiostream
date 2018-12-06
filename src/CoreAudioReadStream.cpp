@@ -49,6 +49,8 @@
 
 #include "CoreAudioReadStream.h"
 
+#include <sstream>
+
 namespace breakfastquay
 {
 
@@ -99,7 +101,9 @@ codestr(OSStatus err)
     text[2] = (uerr >> 8) & 0xff;
     text[3] = (uerr) & 0xff;
     text[4] = '\0';
-    return string("%1 (%2)").arg(err).arg(QString::fromLatin1(text));
+    ostringstream os;
+    os << err << " (" << text << ")";
+    return os.str();
 }
 
 CoreAudioReadStream::CoreAudioReadStream(string path) :
@@ -109,32 +113,19 @@ CoreAudioReadStream::CoreAudioReadStream(string path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
-    if (!QFile(m_path).exists()) {
-        throw FileNotFound(m_path);
-    }
-
-    QByteArray ba = m_path.toLocal8Bit();
-
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
-         (const UInt8 *)ba.data(),
-         (CFIndex)ba.length(),
+         (const UInt8 *)path.c_str(),
+         (CFIndex)path.size(),
          false);
 
-    //!!! how do we find out if the file open fails because of DRM protection?
-
-#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
-    FSRef fsref;
-    if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
-        m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
-        throw FileReadFailed(m_path);
-    }
-    m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
-#else
     m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
-#endif
 
     CFRelease(url);
+
+    if (m_d->err == kAudio_FileNotFoundError) {
+        throw FileNotFound(m_path);
+    }
 
     if (m_d->err) { 
         m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);

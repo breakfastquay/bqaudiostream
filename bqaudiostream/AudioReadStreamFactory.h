@@ -48,8 +48,8 @@ class AudioReadStreamFactory
 public:
     /**
      * Create and return a read stream object for the given audio file
-     * name, if possible. The audio format will be deduced from the
-     * file extension.
+     * name, if possible. The file name should be UTF-8 encoded. The
+     * audio format will be deduced from the file extension.
      *
      * May throw FileNotFound, FileOpenFailed,
      * AudioReadStream::FileDRMProtected, InvalidFileFormat,
