@@ -73,6 +73,7 @@ public:
         m_oggz(0),
         m_fishSound(0),
         m_buffer(0),
+        m_namesRead(false),
         m_finished(false) { }
     ~D() {
 	if (m_fishSound) fish_sound_delete(m_fishSound);
@@ -84,10 +85,23 @@ public:
     OGGZ *m_oggz;
     FishSound *m_fishSound;
     RingBuffer<float> *m_buffer;
+    bool m_namesRead;
     bool m_finished;
+
+    string m_trackName;
+    string m_artistName;
 
     bool isFinished() const {
         return m_finished;
+    }
+
+    string getTrackName() const {
+        cerr << "getTrackName: " << m_trackName << endl;
+        return m_trackName;
+    }
+
+    string getArtistName() const {
+        return m_artistName;
     }
 
     int getAvailableFrameCount() const {
@@ -120,6 +134,19 @@ public:
 
     int acceptFrames(float **frames, long n) {
 
+        if (!m_namesRead) {
+            const FishSoundComment *c;
+            c = fish_sound_comment_first_byname(m_fishSound, (char *)"TITLE");
+            if (c && c->value) {
+                m_trackName = string(c->value);
+            }
+            c = fish_sound_comment_first_byname(m_fishSound, (char *)"ARTIST");
+            if (c && c->value) {
+                m_artistName = string(c->value);
+            }
+            m_namesRead = true;
+        }
+        
         if (m_rs->getChannelCount() == 0) {
             FishSoundInfo fsinfo;
             fish_sound_command(m_fishSound, FISH_SOUND_GET_INFO,
@@ -130,18 +157,10 @@ public:
 
         sizeBuffer(getAvailableFrameCount() + int(n));
         int channels = int(m_rs->getChannelCount());
-        //!!! rework to avoid stack allocation here
-#ifdef __GNUC__
-        float interleaved[n * channels];
-#else
-        float *interleaved = (float *)alloca(n * channels * sizeof(float));
-#endif
-	for (long i = 0; i < n; ++i) {
-	    for (int c = 0; c < channels; ++c) {
-                interleaved[i * channels + c] = frames[c][i];
-            }
-        }
+        float *interleaved = allocate<float>(n * channels);
+        v_interleave(interleaved, frames, channels, int(n));
         m_buffer->write(interleaved, int(n) * channels);
+        deallocate(interleaved);
         return 0;
     }
 
@@ -186,6 +205,18 @@ OggVorbisReadStream::OggVorbisReadStream(string path) :
 OggVorbisReadStream::~OggVorbisReadStream()
 {
     delete m_d;
+}
+
+string
+OggVorbisReadStream::getTrackName() const
+{
+    return m_d->getTrackName();
+}
+
+string
+OggVorbisReadStream::getArtistName() const
+{
+    return m_d->getArtistName();
 }
 
 size_t
