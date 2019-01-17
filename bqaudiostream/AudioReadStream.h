@@ -51,18 +51,6 @@ class Resampler;
 class AudioReadStream
 {
 public:
-    class FileDRMProtected : virtual public std::exception
-    {
-    public:
-        FileDRMProtected(std::string file) throw();
-        virtual ~FileDRMProtected() throw() { }
-        virtual const char *what() const throw();
-
-    protected:
-        std::string m_file;
-        std::string m_what;
-    };
-
     virtual ~AudioReadStream();
 
     virtual std::string getError() const { return ""; }
@@ -73,8 +61,8 @@ public:
     void setRetrievalSampleRate(size_t);
     size_t getRetrievalSampleRate() const;
 
-    virtual std::string getTrackName() const { return ""; }
-    virtual std::string getArtistName() const { return ""; }
+    virtual std::string getTrackName() const = 0;
+    virtual std::string getArtistName() const = 0;
     
     /**
      * Retrieve \count frames of audio data (that is, \count *

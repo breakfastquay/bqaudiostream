@@ -96,7 +96,6 @@ public:
     }
 
     string getTrackName() const {
-        cerr << "getTrackName: " << m_trackName << endl;
         return m_trackName;
     }
 

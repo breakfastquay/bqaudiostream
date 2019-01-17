@@ -48,6 +48,9 @@ public:
     MediaFoundationReadStream(std::string path);
     virtual ~MediaFoundationReadStream();
 
+    virtual std::string getTrackName() const;
+    virtual std::string getArtistName() const;
+
     virtual std::string getError() const { return m_error; }
 
 protected:

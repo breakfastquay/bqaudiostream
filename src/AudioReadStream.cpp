@@ -43,18 +43,6 @@ using namespace std;
 namespace breakfastquay
 {
 	
-AudioReadStream::FileDRMProtected::FileDRMProtected(string file) throw() :
-    m_file(file)
-{
-    m_what = "File \"" + m_file + "\" is protected by DRM";
-}
-
-const char *
-AudioReadStream::FileDRMProtected::what() const throw()
-{
-    return m_what.c_str();
-}
-
 AudioReadStream::AudioReadStream() :
     m_channelCount(0),
     m_sampleRate(0),

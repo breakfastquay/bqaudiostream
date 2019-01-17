@@ -1,5 +1,5 @@
 
-SOURCES	:= src/AudioReadStream.cpp src/AudioReadStreamFactory.cpp src/AudioWriteStreamFactory.cpp src/Exceptions.cpp
+SOURCES	:= src/AudioReadStream.cpp src/AudioReadStreamFactory.cpp src/AudioWriteStreamFactory.cpp src/AudioStreamExceptions.cpp
 HEADERS	:= $(wildcard src/*.h) $(wildcard bqaudiostream/*.h)
 OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
 LIBRARY	:= libbqaudiostream.a

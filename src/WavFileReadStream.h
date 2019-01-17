@@ -55,6 +55,9 @@ public:
     WavFileReadStream(std::string path);
     virtual ~WavFileReadStream();
 
+    virtual std::string getTrackName() const { return m_track; }
+    virtual std::string getArtistName() const { return m_artist; }
+
     virtual std::string getError() const { return m_error; }
 
 protected:
@@ -65,6 +68,8 @@ protected:
 
     std::string m_path;
     std::string m_error;
+    std::string m_track;
+    std::string m_artist;
 
     size_t m_offset;
 };

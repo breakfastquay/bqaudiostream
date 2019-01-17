@@ -46,10 +46,11 @@
 #include <mfreadwrite.h>
 #include <stdio.h>
 #include <mferror.h>
+#include <propvarutil.h>
+#include <propkey.h>
+#include <shobjidl_core.h>
 
 #include <iostream>
-
-#include <QUrl>
 
 using namespace std;
 
@@ -63,6 +64,12 @@ getMediaFoundationExtensions()
     extensions.push_back("mp3");
     extensions.push_back("wav");
     extensions.push_back("wma");
+    extensions.push_back("avi");
+    extensions.push_back("m4a");
+    extensions.push_back("m4v");
+    extensions.push_back("mov");
+    extensions.push_back("mp4");
+    extensions.push_back("aac");
     return extensions;
 }
 
@@ -134,12 +141,29 @@ public:
 
     bool complete;
 
+    string trackName;
+    string artistName;
+
     int getFrames(int count, float *frames);
     void convertSamples(const unsigned char *in, int inbufsize, float *out);
     float convertSample(const unsigned char *);
     void fillBuffer();
 };
 
+static string
+wideStringToString(LPWSTR wstr)
+{
+    if (!wstr) return "";
+    int wlen = wcslen(wstr);
+    int len = WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, 0, 0, 0, 0);
+    if (len < 0) return "";
+    char *conv = new char[len + 1];
+    (void)WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, conv, len, 0, 0);
+    conv[len] = '\0';
+    string s = string(conv, len);
+    delete[] conv;
+    return s;
+}
 
 MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     m_path(path),
@@ -148,43 +172,60 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
-    // Reference: 
+    // References: 
     // http://msdn.microsoft.com/en-gb/library/windows/desktop/dd757929%28v=vs.85%29.aspx
 
-    cerr << "MediaFoundationReadStream(" << path << ")" << endl;
+    // Note: CoInitializeEx must already have been called
 
-    if (!QFile(m_path).exists()) throw FileNotFound(m_path);
+    HRESULT noncritical = S_OK; // in contrast to m_d->err, which is
+                                // used for any result that affects
+                                // our ability to proceed
+    IPropertyStore *store = NULL;
     
-    // Note: CoInitializeEx(NULL, COINIT_MULTITHREADED) must
-    // presumably already have been called
-    //!!! nb MF docs say COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE
-
-    //!!! do this only once?
+    int wlen = 0;
+    wchar_t *wpath = NULL;
+    string errorLocation;
+    
     m_d->err = MFStartup(MF_VERSION);
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: Failed to initialise MediaFoundation";
-        throw FileOperationFailed(m_path, "MediaFoundation initialise");
+        errorLocation = "initialise";
+        goto fail;
     }
 
-    // We are not expected to handle non-local URLs here, I think --
-    // convert to file:// URL so as to avoid confusion with path
-    // separators & format
-    string url = m_path;
-    if (!m_path.startsWith("file:") && !m_path.startsWith("FILE:")) {
-        url = QUrl::fromLocalFile(QFileInfo(m_path).absoluteFilePath()).toString();
+    wlen = MultiByteToWideChar(CP_UTF8, 0, path.c_str(), int(path.size()), 0, 0);
+    if (wlen < 0) {
+        m_error = "MediaFoundationReadStream: Failed to convert path to wide chars";
+        errorLocation = "convert path";
+        goto fail;
     }
+    wpath = new wchar_t[wlen+1];
+    (void)MultiByteToWideChar(CP_UTF8, 0, path.c_str(), int(path.size()), wpath, wlen);
+    wpath[wlen] = L'\0';
 
-    cerr << "url = <" << url << ">" << endl;
-
-    WCHAR wpath[MAX_PATH+1];
-    MultiByteToWideChar(CP_ACP, 0, url.toLocal8Bit().data(), -1, wpath, MAX_PATH);
-
-    //!!! URL or path?
-
+    noncritical = SHGetPropertyStoreFromParsingName
+        (wpath, NULL, GPS_DEFAULT, __uuidof(IPropertyStore), (void**)&store);
+    
+    if (SUCCEEDED(noncritical)) {
+        PROPVARIANT v;
+        noncritical = store->GetValue(PKEY_Music_Artist, &v);
+        if (SUCCEEDED(noncritical)) {
+            m_d->trackName = wideStringToString(v.pwszVal);
+        }
+        noncritical = store->GetValue(PKEY_Title, &v);
+        if (SUCCEEDED(noncritical)) {
+            m_d->artistName = wideStringToString(v.pwszVal);
+        }
+        store->Release();
+    }        
+    
     m_d->err = MFCreateSourceReaderFromURL(wpath, NULL, &m_d->reader);
+    delete[] wpath;
+    
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: Failed to create source reader";
-        throw FileOperationFailed(m_path, "MediaFoundation create source reader");
+        errorLocation = "create source reader";
+        goto fail;
     }
 
     m_d->err = m_d->reader->SetStreamSelection
@@ -195,7 +236,8 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     }
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: Failed to select first audio stream";
-        throw FileOperationFailed(m_path, "MediaFoundation stream selection");
+        errorLocation = "select stream";
+        goto fail;
     }
 
     // Create a partial media type that specifies uncompressed PCM audio
@@ -218,7 +260,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     }
     if (SUCCEEDED(m_d->err)) {
         // surely this is redundant, as we did it already? but they do
-        // it twice in the example... well, presumably no harm anyway
+        // it twice in the MS example... well, presumably no harm anyway
         m_d->err = m_d->reader->SetStreamSelection
             ((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE);
     }
@@ -250,33 +292,46 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
 
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: File format could not be converted to PCM stream";
-        throw FileOperationFailed(m_path, "MediaFoundation media type selection");
+        errorLocation = "media type selection";
+        goto fail;
     }
+
+    return;
+
+fail:
+    delete m_d;
+    MFShutdown();
+    throw FileOperationFailed(m_path, string("MediaFoundation ") + errorLocation);
+}
+
+MediaFoundationReadStream::~MediaFoundationReadStream()
+{
+    delete m_d;
+    MFShutdown(); // "Call this function once for every call to MFStartup"
+                  // - i.e. they are allowed to nest
 }
 
 size_t
 MediaFoundationReadStream::getFrames(size_t count, float *frames)
 {
-//    cerr << "MediaFoundationReadStream::getFrames(" << count << ")" << endl;
-    size_t s = m_d->getFrames(count, frames);
-/*
-    float rms = 0.f;
-    for (size_t i = 0; i < s * m_channelCount; ++i) {
-        float v = frames[i];
-        rms += v*v;
-    }
-    rms /= s * m_channelCount;
-    rms = sqrtf(rms);
-    cerr << "rms = " << rms << endl;
-*/
-    return s;
+    return m_d->getFrames(int(count), frames);
+}
+
+string
+MediaFoundationReadStream::getTrackName() const
+{
+    return m_d->trackName;
+}
+
+string
+MediaFoundationReadStream::getArtistName() const
+{
+    return m_d->artistName;
 }
 
 int
 MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
 {
-//    cerr << "D::getFrames(" << framesRequired << ")" << endl;
-
     if (!mediaBuffer) {
         fillBuffer();
         if (!mediaBuffer) {
@@ -412,12 +467,6 @@ MediaFoundationReadStream::D::convertSample(const unsigned char *c)
     default:
         return 0.0f;
     }
-}
-
-MediaFoundationReadStream::~MediaFoundationReadStream()
-{
-    cerr << "MediaFoundationReadStream::~MediaFoundationReadStream" << endl;
-    delete m_d;
 }
 
 }
