@@ -44,11 +44,12 @@
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mfreadwrite.h>
-#include <stdio.h>
 #include <mferror.h>
 #include <propvarutil.h>
 #include <propkey.h>
 #include <shobjidl_core.h>
+#include <stdio.h>
+#include <VersionHelpers.h>
 
 #include <iostream>
 
@@ -61,6 +62,7 @@ static vector<string>
 getMediaFoundationExtensions()
 {
     vector<string> extensions;
+
     extensions.push_back("mp3");
     extensions.push_back("wav");
     extensions.push_back("wma");
@@ -70,6 +72,28 @@ getMediaFoundationExtensions()
     extensions.push_back("mov");
     extensions.push_back("mp4");
     extensions.push_back("aac");
+
+    // Some codecs were added in Windows 10. To query whether we're
+    // running on Windows 10, we can't use the official functions
+    // (e.g. IsWindows10OrGreater()) because they return No unless the
+    // app is manifested for Windows 10, which is completely begging
+    // the question. Instead use a different API which hasn't been
+    // "manifested" yet:
+
+    NTSTATUS(WINAPI *RtlGetVersion)(LPOSVERSIONINFOEXW);
+    *(FARPROC*)&RtlGetVersion = GetProcAddress
+        (GetModuleHandleA("ntdll"), "RtlGetVersion");
+
+    if (RtlGetVersion) {
+        OSVERSIONINFOEXW osInfo;
+        osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+        RtlGetVersion(&osInfo);
+        if (osInfo.dwMajorVersion >= 10) {
+            extensions.push_back("opus");
+            extensions.push_back("flac");
+        }
+    }
+        
     return extensions;
 }
 
@@ -165,6 +189,14 @@ wideStringToString(LPWSTR wstr)
     return s;
 }
 
+static string
+guidToString(GUID g)
+{
+    char buf[1000];
+    sprintf(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}", g.Data1, g.Data2, g.Data3, g.Data4[0], g.Data4[1], g.Data4[2], g.Data4[3], g.Data4[4], g.Data4[5], g.Data4[6], g.Data4[7]);
+    return string(buf);
+}
+
 MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     m_path(path),
     m_d(new D(this))
@@ -177,13 +209,9 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
 
     // Note: CoInitializeEx must already have been called
 
-    HRESULT noncritical = S_OK; // in contrast to m_d->err, which is
-                                // used for any result that affects
-                                // our ability to proceed
     IPropertyStore *store = NULL;
-    
     int wlen = 0;
-    wchar_t *wpath = NULL;
+    wchar_t *wpath = NULL, *wfullpath = NULL;
     string errorLocation;
     
     m_d->err = MFStartup(MF_VERSION);
@@ -203,24 +231,53 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     (void)MultiByteToWideChar(CP_UTF8, 0, path.c_str(), int(path.size()), wpath, wlen);
     wpath[wlen] = L'\0';
 
-    noncritical = SHGetPropertyStoreFromParsingName
-        (wpath, NULL, GPS_DEFAULT, __uuidof(IPropertyStore), (void**)&store);
+    wfullpath = _wfullpath(NULL, wpath, 0);
     
-    if (SUCCEEDED(noncritical)) {
+    if (SUCCEEDED(SHGetPropertyStoreFromParsingName
+                  (wfullpath, NULL, GPS_BESTEFFORT, IID_PPV_ARGS(&store)))) {
+        vector<wchar_t> buf(10000, L'\0'); 
         PROPVARIANT v;
-        noncritical = store->GetValue(PKEY_Music_Artist, &v);
-        if (SUCCEEDED(noncritical)) {
-            m_d->trackName = wideStringToString(v.pwszVal);
+        if (SUCCEEDED(store->GetValue(PKEY_Title, &v)) &&
+            SUCCEEDED(PropVariantToString(v, buf.data(), buf.size()-1))) {
+            m_d->trackName = wideStringToString(buf.data());
         }
-        noncritical = store->GetValue(PKEY_Title, &v);
-        if (SUCCEEDED(noncritical)) {
-            m_d->artistName = wideStringToString(v.pwszVal);
+        if (SUCCEEDED(store->GetValue(PKEY_Music_Artist, &v)) &&
+            SUCCEEDED(PropVariantToString(v, buf.data(), buf.size()-1))) {
+            m_d->artistName = wideStringToString(buf.data());
         }
+/*
+        DWORD count = 0;
+        if (SUCCEEDED(store->GetCount(&count))) {
+            std::cerr << "Store has " << count << " properties" << std::endl;
+            for (int i = 0; i < count; ++i) {
+                PROPERTYKEY k;
+                if (SUCCEEDED(store->GetAt(i, &k))) {
+                    std::cerr << "Property " << i << " has GUID " << guidToString(k.fmtid) << ", pid " << k.pid << std::endl;
+                    if (SUCCEEDED(store->GetValue(k, &v))) {
+                        std::cerr << "Property " << i << " has type " << v.vt << std::endl;
+                        wchar_t buf[1000];
+                        if (SUCCEEDED(PropVariantToString(v, buf, 1000))) {
+                            std::cerr << "Property " << i << " has value \""
+                                      << wideStringToString(buf)
+                                      << "\"" << std::endl;
+                        } else {
+                            std::cerr << "Failed to extract value" << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+*/        
         store->Release();
-    }        
-    
-    m_d->err = MFCreateSourceReaderFromURL(wpath, NULL, &m_d->reader);
+    }
+
+    m_d->err = MFCreateSourceReaderFromURL(wfullpath, NULL, &m_d->reader);
+
     delete[] wpath;
+    wpath = NULL;
+
+    free(wfullpath);
+    wfullpath = NULL;
     
     if (FAILED(m_d->err)) {
         m_error = "MediaFoundationReadStream: Failed to create source reader";
@@ -240,6 +297,31 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
         goto fail;
     }
 
+/*
+    IMFMediaType *originalType = 0;
+    std::cerr << "For " << path << ":" << std::endl;
+    if (SUCCEEDED(m_d->reader->GetCurrentMediaType
+                  ((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, &originalType))) {
+        GUID g;
+        if (SUCCEEDED(originalType->GetGUID(MF_MT_AM_FORMAT_TYPE, &g))) {
+            std::cerr << "Original format type = " << guidToString(g) << std::endl;
+        }
+        if (SUCCEEDED(originalType->GetGUID(MF_MT_MAJOR_TYPE, &g))) {
+            std::cerr << "Original major type = " << guidToString(g) << std::endl;
+        }
+        if (SUCCEEDED(originalType->GetGUID(MF_MT_SUBTYPE, &g))) {
+            std::cerr << "Original subtype = " << guidToString(g) << std::endl;
+            if (g == MFAudioFormat_AAC) {
+                std::cerr << "It's an AAC stream!" << std::endl;
+            }
+        }
+        UINT32 u;
+        if (SUCCEEDED(originalType->GetUINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, &u))) {
+            std::cerr << "Original block alignment = " << u << std::endl;
+        }
+    }
+*/
+    
     // Create a partial media type that specifies uncompressed PCM audio
 
     IMFMediaType *partialType = 0;
@@ -407,6 +489,10 @@ MediaFoundationReadStream::D::fillBuffer()
         }
     }
 
+    DWORD len = 0;
+    sample->GetTotalLength(&len);
+//    cerr << "Total sample length = " << len << std::endl;
+    
     err = sample->ConvertToContiguousBuffer(&mediaBuffer);
     if (FAILED(err)) {
         stream->m_error = "MediaFoundationReadStream: Failed to convert sample to buffer";
