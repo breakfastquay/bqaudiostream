@@ -111,8 +111,8 @@ class MediaFoundationReadStream::D
 {
 public:
     D(MediaFoundationReadStream *s) :
-        stream(s),
         refCount(0),
+        stream(s),
         channelCount(0),
         bitDepth(0),
         sampleRate(0),
@@ -202,6 +202,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     // Note: CoInitializeEx must already have been called
 
     IPropertyStore *store = NULL;
+    IMFMediaType *partialType = 0;
     int wlen = 0;
     wchar_t *wpath = NULL, *wfullpath = NULL;
     string errorLocation;
@@ -268,7 +269,6 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
 
     // Create a partial media type that specifies uncompressed PCM audio
 
-    IMFMediaType *partialType = 0;
     m_d->err = MFCreateMediaType(&partialType);
     if (SUCCEEDED(m_d->err)) {
         m_d->err = partialType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
