@@ -189,14 +189,6 @@ wideStringToString(LPWSTR wstr)
     return s;
 }
 
-static string
-guidToString(GUID g)
-{
-    char buf[1000];
-    sprintf(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}", g.Data1, g.Data2, g.Data3, g.Data4[0], g.Data4[1], g.Data4[2], g.Data4[3], g.Data4[4], g.Data4[5], g.Data4[6], g.Data4[7]);
-    return string(buf);
-}
-
 MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     m_path(path),
     m_d(new D(this))
@@ -245,29 +237,6 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
             SUCCEEDED(PropVariantToString(v, buf.data(), buf.size()-1))) {
             m_d->artistName = wideStringToString(buf.data());
         }
-/*
-        DWORD count = 0;
-        if (SUCCEEDED(store->GetCount(&count))) {
-            std::cerr << "Store has " << count << " properties" << std::endl;
-            for (int i = 0; i < count; ++i) {
-                PROPERTYKEY k;
-                if (SUCCEEDED(store->GetAt(i, &k))) {
-                    std::cerr << "Property " << i << " has GUID " << guidToString(k.fmtid) << ", pid " << k.pid << std::endl;
-                    if (SUCCEEDED(store->GetValue(k, &v))) {
-                        std::cerr << "Property " << i << " has type " << v.vt << std::endl;
-                        wchar_t buf[1000];
-                        if (SUCCEEDED(PropVariantToString(v, buf, 1000))) {
-                            std::cerr << "Property " << i << " has value \""
-                                      << wideStringToString(buf)
-                                      << "\"" << std::endl;
-                        } else {
-                            std::cerr << "Failed to extract value" << std::endl;
-                        }
-                    }
-                }
-            }
-        }
-*/        
         store->Release();
     }
 
@@ -297,31 +266,6 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
         goto fail;
     }
 
-/*
-    IMFMediaType *originalType = 0;
-    std::cerr << "For " << path << ":" << std::endl;
-    if (SUCCEEDED(m_d->reader->GetCurrentMediaType
-                  ((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, &originalType))) {
-        GUID g;
-        if (SUCCEEDED(originalType->GetGUID(MF_MT_AM_FORMAT_TYPE, &g))) {
-            std::cerr << "Original format type = " << guidToString(g) << std::endl;
-        }
-        if (SUCCEEDED(originalType->GetGUID(MF_MT_MAJOR_TYPE, &g))) {
-            std::cerr << "Original major type = " << guidToString(g) << std::endl;
-        }
-        if (SUCCEEDED(originalType->GetGUID(MF_MT_SUBTYPE, &g))) {
-            std::cerr << "Original subtype = " << guidToString(g) << std::endl;
-            if (g == MFAudioFormat_AAC) {
-                std::cerr << "It's an AAC stream!" << std::endl;
-            }
-        }
-        UINT32 u;
-        if (SUCCEEDED(originalType->GetUINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, &u))) {
-            std::cerr << "Original block alignment = " << u << std::endl;
-        }
-    }
-*/
-    
     // Create a partial media type that specifies uncompressed PCM audio
 
     IMFMediaType *partialType = 0;
@@ -489,10 +433,6 @@ MediaFoundationReadStream::D::fillBuffer()
         }
     }
 
-    DWORD len = 0;
-    sample->GetTotalLength(&len);
-//    cerr << "Total sample length = " << len << std::endl;
-    
     err = sample->ConvertToContiguousBuffer(&mediaBuffer);
     if (FAILED(err)) {
         stream->m_error = "MediaFoundationReadStream: Failed to convert sample to buffer";
