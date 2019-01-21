@@ -229,6 +229,11 @@ OggVorbisReadStream::getFrames(size_t count, float *frames)
         m_d->readNextBlock();
     }
 
+    int available = m_d->getAvailableFrameCount();
+    if (size_t(available) < count) {
+        count = available;
+    }
+
     //!!! handle (count * m_channelCount) > INT_MAX
     int n = m_d->m_buffer->read(frames, int(count * m_channelCount));
     return n / m_channelCount;
