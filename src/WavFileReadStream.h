@@ -37,7 +37,7 @@
 
 #include "AudioReadStream.h"
 
-#ifdef HAVE_LIBSNDFILE
+#if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 
 #ifdef _WIN32
 #include <windows.h>

@@ -32,7 +32,7 @@
     Software without prior written authorization.
 */
 
-#ifdef HAVE_LIBSNDFILE
+#if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 
 #include "WavFileWriteStream.h"
 #include "Exceptions.h"

@@ -32,7 +32,7 @@
     Software without prior written authorization.
 */
 
-#ifdef HAVE_LIBSNDFILE
+#if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 
 #include "WavFileReadStream.h"
 #include "Exceptions.h"
@@ -125,7 +125,7 @@ WavFileReadStream::WavFileReadStream(string path) :
 
     const char *str = sf_get_string(m_file, SF_STR_TITLE);
     if (str) {
-        m_title = str;
+        m_track = str;
     }
     str = sf_get_string(m_file, SF_STR_ARTIST);
     if (str) {

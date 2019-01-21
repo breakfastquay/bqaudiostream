@@ -34,7 +34,7 @@
 
 #include "SimpleWavFileWriteStream.h"
 
-#ifndef HAVE_LIBSNDFILE
+#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
 
 #include "Exceptions.h"
 #include <iostream>

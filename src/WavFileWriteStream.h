@@ -37,7 +37,7 @@
 
 #include "AudioWriteStream.h"
 
-#ifdef HAVE_LIBSNDFILE
+#if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 
 #include <sndfile.h>
 

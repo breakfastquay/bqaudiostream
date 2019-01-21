@@ -38,7 +38,7 @@
 #include "AudioWriteStream.h"
 
 // If we have libsndfile, we shouldn't be using this class
-#ifndef HAVE_LIBSNDFILE
+#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
 
 #include <fstream>
 #include <string>
