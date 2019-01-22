@@ -73,6 +73,10 @@ getMediaFoundationExtensions()
     extensions.push_back("mp4");
     extensions.push_back("aac");
 
+    /*!!! gah - looks like these codecs *weren't* added in Win 10. The
+          audio format types were just added to the MFAudioFormat enum
+          in Windows 10. They don't actually appear to work.
+
     // Some codecs were added in Windows 10. To query whether we're
     // running on Windows 10, we can't use the official functions
     // (e.g. IsWindows10OrGreater()) because they return No unless the
@@ -88,12 +92,14 @@ getMediaFoundationExtensions()
         OSVERSIONINFOEXW osInfo;
         osInfo.dwOSVersionInfoSize = sizeof(osInfo);
         RtlGetVersion(&osInfo);
+        cerr << "osInfo.dwMajorVersion = " << osInfo.dwMajorVersion << std::endl;
         if (osInfo.dwMajorVersion >= 10) {
             extensions.push_back("opus");
             extensions.push_back("flac");
         }
     }
-        
+    */
+    
     return extensions;
 }
 
