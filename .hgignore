@@ -4,3 +4,4 @@ moc_*
 *~
 *.a
 *.bak
+*.orig
