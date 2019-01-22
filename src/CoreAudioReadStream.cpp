@@ -119,6 +119,9 @@ CoreAudioReadStream::CoreAudioReadStream(string path) :
          (CFIndex)path.size(),
          false);
 
+    UInt32 propsize;
+    OSStatus noncritical;
+
     m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
 
     CFRelease(url);
@@ -135,8 +138,60 @@ CoreAudioReadStream::CoreAudioReadStream(string path) :
         m_error = "CoreAudioReadStream: Failed to open file, but no error reported!";
         throw InvalidFileFormat(path, "failed to open audio file");
     }
-    
-    UInt32 propsize = sizeof(AudioStreamBasicDescription);
+
+    // Retrieve metadata through the underlying AudioFile API if possible
+
+    AudioFileID audioFile = 0;
+    propsize = sizeof(AudioFileID);
+    noncritical = ExtAudioFileGetProperty
+        (m_d->file, kExtAudioFileProperty_AudioFile, &propsize, &audioFile);
+
+    if (noncritical == noErr) {
+
+        CFDictionaryRef dict = nil;
+        UInt32 dataSize = sizeof(dict);
+        noncritical = AudioFileGetProperty
+            (audioFile, kAudioFilePropertyInfoDictionary, &dataSize, &dict);
+
+        if (noncritical == noErr) {
+
+            CFIndex count = CFDictionaryGetCount(dict);
+            const void **kk = new const void *[count];
+            const void **vv = new const void *[count];
+            CFDictionaryGetKeysAndValues(dict, kk, vv);
+
+            int bufsize = 10240;
+            char *buffer = new char[bufsize];
+
+            for (int i = 0; i < count; ++i) {
+                if (CFGetTypeID(kk[i]) == CFStringGetTypeID() &&
+                    CFGetTypeID(vv[i]) == CFStringGetTypeID()) {
+                    CFStringRef key = reinterpret_cast<CFStringRef>(kk[i]);
+                    CFStringRef value = reinterpret_cast<CFStringRef>(vv[i]);
+                    if (CFStringGetCString(key, buffer, bufsize,
+                                           kCFStringEncodingUTF8)) {
+                        string kstr = buffer;
+                        if (CFStringGetCString(value, buffer, bufsize,
+                                               kCFStringEncodingUTF8)) {
+                            if (kstr == kAFInfoDictionary_Title) {
+                                m_track = buffer;
+                            } else if (kstr == kAFInfoDictionary_Artist) {
+                                m_artist = buffer;
+                            }
+                        }
+                    }
+                }
+            }
+
+            delete[] buffer;
+            delete[] kk;
+            delete[] vv;
+
+            CFRelease(dict);
+        }
+    }
+
+    propsize = sizeof(AudioStreamBasicDescription);
     m_d->err = ExtAudioFileGetProperty
 	(m_d->file, kExtAudioFileProperty_FileDataFormat, &propsize, &m_d->asbd);
     
@@ -149,11 +204,7 @@ CoreAudioReadStream::CoreAudioReadStream(string path) :
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_sampleRate = m_d->asbd.mSampleRate;
 
-    cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
-
-
     m_d->asbd.mSampleRate = getSampleRate();
-
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |

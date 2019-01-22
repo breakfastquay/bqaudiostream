@@ -48,13 +48,18 @@ public:
     CoreAudioReadStream(std::string path);
     virtual ~CoreAudioReadStream();
 
+    virtual std::string getTrackName() const { return m_track; }
+    virtual std::string getArtistName() const { return m_artist; }
+
     virtual std::string getError() const { return m_error; }
 
 protected:
     virtual size_t getFrames(size_t count, float *frames);
-    
+
     std::string m_path;
     std::string m_error;
+    std::string m_track;
+    std::string m_artist;
 
     class D;
     D *m_d;
