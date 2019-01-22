@@ -94,9 +94,9 @@ WavFileReadStream::WavFileReadStream(string path) :
         wchar_t *buf = new wchar_t[wlen+1];
         (void)MultiByteToWideChar
             (CP_UTF8, 0, m_path.c_str(), m_path.length(), buf, wlen);
-        buffer[wlen] = L'\0';
-        m_file = sf_wchar_open(buffer, SFM_READ, &m_fileInfo);
-        delete[] buffer;
+        buf[wlen] = L'\0';
+        m_file = sf_wchar_open(buf, SFM_READ, &m_fileInfo);
+        delete[] buf;
     }
 #else
     m_file = sf_open(m_path.c_str(), SFM_READ, &m_fileInfo);
