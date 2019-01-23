@@ -131,7 +131,7 @@ AudioReadStream::getResampledChunk(int frameCount, float *frames)
         m_resampleBuffer = new RingBuffer<float>(frameCount * channels);
     }
 
-    double ratio = float(m_retrievalRate) / float(m_sampleRate);
+    double ratio = double(m_retrievalRate) / double(m_sampleRate);
     int fileFrames = int(ceil(frameCount / ratio));
     
     float *in  = allocate<float>(fileFrames * channels);
