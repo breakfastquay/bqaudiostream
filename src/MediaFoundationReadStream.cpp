@@ -37,8 +37,6 @@
 #define WINVER 0x0601 // _WIN32_WINNT_WIN7, earliest version to define MF API
 
 #include "MediaFoundationReadStream.h"
-#include "base/RingBuffer.h"
-#include "system/Thread.h"
 
 #include <windows.h>
 #include <mfapi.h>
@@ -52,6 +50,7 @@
 #include <VersionHelpers.h>
 
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -357,7 +356,7 @@ MediaFoundationReadStream::D::getFrames(int framesRequired, float *frames)
 
     int bytesPerFrame = channelCount * (bitDepth / 8);
     int framesAvailable = (length - mediaBufferIndex) / bytesPerFrame;
-    int framesToGet = min(framesRequired, framesAvailable);
+    int framesToGet = std::min(framesRequired, framesAvailable);
 
     if (framesToGet > 0) {
         // have something in the buffer, not necessarily all we need
