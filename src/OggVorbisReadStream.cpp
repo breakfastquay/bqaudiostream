@@ -190,7 +190,7 @@ OggVorbisReadStream::OggVorbisReadStream(string path) :
 
     FishSoundInfo fsinfo;
     m_d->m_fishSound = fish_sound_new(FISH_SOUND_DECODE, &fsinfo);
-
+    
     fish_sound_set_decoded_callback(m_d->m_fishSound, D::acceptFramesStatic, m_d);
     oggz_set_read_callback
         (m_d->m_oggz, -1, (OggzReadPacket)D::acceptPacketStatic, m_d);
@@ -198,6 +198,11 @@ OggVorbisReadStream::OggVorbisReadStream(string path) :
     // initialise m_channelCount
     while (m_channelCount == 0 && !m_d->m_finished) {
         m_d->readNextBlock(); 
+    }
+
+    if (m_channelCount == 0) {
+	m_error = string("File \"") + m_path + "\" is not a valid Ogg Vorbis file.";
+        throw InvalidFileFormat(m_path, m_error);
     }
 }
 
