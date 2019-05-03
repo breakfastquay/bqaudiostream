@@ -103,8 +103,8 @@ WavFileReadStream::WavFileReadStream(string path) :
 #endif
 
     if (!m_file || m_fileInfo.frames <= 0 || m_fileInfo.channels <= 0) {
-	cerr << "WavFileReadStream::initialize: Failed to open file \""
-                  << path << "\" (" << sf_strerror(m_file) << ")" << endl;
+//	cerr << "WavFileReadStream::initialize: Failed to open file \""
+//                  << path << "\" (" << sf_strerror(m_file) << ")" << endl;
         if (sf_error(m_file) == SF_ERR_SYSTEM) {
 	    m_error = string("Couldn't load audio file '") +
                 m_path + "':\n" + sf_strerror(m_file);
