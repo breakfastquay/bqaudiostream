@@ -124,7 +124,8 @@ private slots:
                 limit = 0.02;
             }
             if (extension == "ogg" || extension == "mp3" ||
-                extension == "aac" || extension == "m4a") {
+                extension == "aac" || extension == "m4a" ||
+                extension == "opus") {
                 limit = 0.2;
                 edgeLimit = limit * 3;
             }

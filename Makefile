@@ -6,6 +6,8 @@ LIBRARY	:= libbqaudiostream.a
 
 CXXFLAGS := -std=c++98 -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic
 
+CXXFLAGS += -DHAVE_OPUS -I/usr/include/opus
+
 all:	$(LIBRARY)
 
 $(LIBRARY):	$(OBJECTS)
