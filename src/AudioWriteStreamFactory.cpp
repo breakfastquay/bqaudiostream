@@ -56,8 +56,6 @@ AudioWriteStreamFactory::createWriteStream(string audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {
-    AudioWriteStream *s = 0;
-
     string extension = AudioReadStreamFactory::extensionOf(audioFileName);
     
     AudioWriteStream::Target target(audioFileName, channelCount, sampleRate);
@@ -68,7 +66,7 @@ AudioWriteStreamFactory::createWriteStream(string audioFileName,
         AudioWriteStream *stream = f->createFor(extension, target);
         if (!stream) throw UnknownFileType(audioFileName);
         return stream;
-    } catch (UnknownTagException) {
+    } catch (const UnknownTagException &) {
         throw UnknownFileType(audioFileName);
     }
 }
