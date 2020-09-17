@@ -91,7 +91,7 @@ WavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
 
     sf_count_t written = sf_writef_float(m_file, frames, count);
 
-    if (written != count) {
+    if (written != sf_count_t(count)) {
         throw FileOperationFailed(getPath(), "write sf data");
     }
 }
