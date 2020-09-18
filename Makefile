@@ -1,52 +1,40 @@
 
-SOURCES	:= src/AudioReadStream.cpp src/AudioReadStreamFactory.cpp src/AudioWriteStreamFactory.cpp src/AudioStreamExceptions.cpp
-HEADERS	:= $(wildcard src/*.h) $(wildcard bqaudiostream/*.h)
-OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
-LIBRARY	:= libbqaudiostream.a
+# Place in AUDIOSTREAM_DEFINES the relevant options for the audio file
+# I/O libraries you have.
+#
+# Available options are
+#
+#  -DHAVE_LIBSNDFILE   * Read various formats (wav, aiff, ogg etc)
+#                      * Write wav files
+#  -DHAVE_OGGZ -DHAVE_FISHSOUND
+#                      * Read Ogg/Vorbis files using oggz
+#  -DHAVE_OPUS         * Read Opus files using libopus
+#  -DHAVE_MEDIAFOUNDATION
+#                      * Read various formats using MediaFoundation on Windows
+#  -DHAVE_COREAUDIO    * Read various formats using CoreAudio on macOS/iOS
+#
+# If HAVE_LIBSNDFILE is not defined, a simple built-in Wav file writer
+# will also be provided, as none of the other libraries have write
+# support included here.
 
-CXXFLAGS := -std=c++98 -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic
-
-CXXFLAGS += -DHAVE_OPUS -I/usr/include/opus
-
-all:	$(LIBRARY)
-
-$(LIBRARY):	$(OBJECTS)
-	ar cr $@ $^
-
-clean:		
-	rm -f $(OBJECTS)
-
-distclean:	clean
-	rm -f $(LIBRARY)
-
-depend:
-	makedepend -Y -fMakefile -I./bqaudiostream $(SOURCES) $(HEADERS)
+AUDIOSTREAM_DEFINES := -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -DHAVE_OPUS
 
 
-# DO NOT DELETE
+# Add any related includes and libraries here
+#
+THIRD_PARTY_INCLUDES	:= -I/usr/include/opus
+THIRD_PARTY_LIBS	:=
 
-src/AudioReadStream.o: ./bqaudiostream/AudioReadStream.h
-src/AudioReadStreamFactory.o: ./bqaudiostream/AudioReadStreamFactory.h
-src/AudioReadStreamFactory.o: ./bqaudiostream/AudioReadStream.h
-src/AudioReadStreamFactory.o: ./bqaudiostream/Exceptions.h
-src/AudioReadStreamFactory.o: src/WavFileReadStream.cpp
-src/AudioReadStreamFactory.o: src/OggVorbisReadStream.cpp
-src/AudioReadStreamFactory.o: src/MediaFoundationReadStream.cpp
-src/AudioReadStreamFactory.o: src/CoreAudioReadStream.cpp
-src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioWriteStreamFactory.h
-src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioWriteStream.h
-src/AudioWriteStreamFactory.o: ./bqaudiostream/Exceptions.h
-src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioReadStreamFactory.h
-src/AudioWriteStreamFactory.o: src/WavFileWriteStream.cpp
-src/AudioWriteStreamFactory.o: src/SimpleWavFileWriteStream.cpp
-src/AudioWriteStreamFactory.o: src/SimpleWavFileWriteStream.h
-src/AudioWriteStreamFactory.o: src/CoreAudioWriteStream.cpp
-src/AudioWriteStreamFactory.o: src/CoreAudioWriteStream.h
-src/Exceptions.o: ./bqaudiostream/Exceptions.h
-src/MediaFoundationReadStream.o: ./bqaudiostream/AudioReadStream.h
-src/WavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
-src/SimpleWavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
-src/WavFileReadStream.o: ./bqaudiostream/AudioReadStream.h
-src/CoreAudioWriteStream.o: ./bqaudiostream/AudioWriteStream.h
-src/CoreAudioReadStream.o: ./bqaudiostream/AudioReadStream.h
-src/OggVorbisReadStream.o: ./bqaudiostream/AudioReadStream.h
+
+# If you are including a set of bq libraries into a project, you can
+# override variables for all of them (including all of the above) in
+# the following file, which all bq* Makefiles will include if found
+
+-include ../Makefile.inc-bq
+
+
+# This project-local Makefile describes the source files and contains
+# no routinely user-modifiable parts
+
+include build/Makefile.inc
+
