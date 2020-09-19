@@ -4,7 +4,7 @@ HEADERS	:= $(wildcard src/*.h) $(wildcard bqaudiostream/*.h)
 OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
 LIBRARY	:= libbqaudiostream.a
 
-CXXFLAGS := -std=c++98 $(AUDIOSTREAM_DEFINES) -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic -I$(THIRD_PARTY_INCLUDES)
+CXXFLAGS := -std=c++98 $(AUDIOSTREAM_DEFINES) -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic $(THIRD_PARTY_INCLUDES)
 
 all:	$(LIBRARY)
 
