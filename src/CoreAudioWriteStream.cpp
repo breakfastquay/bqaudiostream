@@ -50,19 +50,26 @@
 #endif
 
 #include <iostream>
-
-#include <QDir>
+#include <sstream>
 
 using namespace std;
 
 namespace breakfastquay
 {
 
+static vector<string>
+getCoreAudioWriteExtensions()
+{
+    vector<string> extensions;
+    extensions.push_back("m4a");
+    return extensions;
+}
+
 static 
 AudioWriteStreamBuilder<CoreAudioWriteStream>
 coreaudiowritebuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioWriteStream"),
-    vector<string>() << "m4a"
+    getCoreAudioWriteExtensions()
     );
 
 class CoreAudioWriteStream::D
@@ -86,7 +93,9 @@ codestr(OSStatus err)
     text[2] = (uerr >> 8) & 0xff;
     text[3] = (uerr) & 0xff;
     text[4] = '\0';
-    return string("%1 (%2)").arg(err).arg(QString::fromLatin1(text));
+    ostringstream os;
+    os << err << " (" << text << ")";
+    return os.str();
 }
 
 CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
@@ -104,54 +113,12 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     m_d->err = AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, 0, 0,
                                       &propsize, &m_d->asbd);
 
-#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
 
-    // Unlike ExtAudioFileCreateWithURL, ExtAudioFileCreateNew
-    // apparently cannot be told to overwrite an existing file
-    QFile qfi(getPath());
-    if (qfi.exists()) qfi.remove();
-
-    QDir dir = QFileInfo(getPath()).dir();
-    QByteArray dba = dir.absolutePath().toLocal8Bit();
-
-    CFURLRef durl = CFURLCreateFromFileSystemRepresentation
-        (kCFAllocatorDefault,
-         (const UInt8 *)dba.data(),
-         (CFIndex)dba.length(),
-         false);
-
-    FSRef dref;
-    if (!CFURLGetFSRef(durl, &dref)) { // returns Boolean, not error code
-        m_error = "CoreAudioReadStream: Error looking up FS ref (directory not found?)";
-        cerr << m_error << endl;
-        throw FailedToWriteFile(getPath());
-    }
-
-    QByteArray fba = QFileInfo(getPath()).fileName().toUtf8();
-    CFStringRef filename = CFStringCreateWithBytes
-	(kCFAllocatorDefault,
-	 (const UInt8 *)fba.data(),
-         (CFIndex)fba.length(),
-	 kCFStringEncodingUTF8,
-	 false);
-
-    m_d->err = ExtAudioFileCreateNew
-	(&dref,
-	 filename,
-	 kAudioFileM4AType,
-	 &m_d->asbd,
-	 0,
-	 &m_d->file);
-
-    CFRelease(durl);
-    CFRelease(filename);
-#else
-    QByteArray ba = getPath().toLocal8Bit();
-
+    string path = getPath();
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
-         (const UInt8 *)ba.data(),
-         (CFIndex)ba.length(),
+         (const UInt8 *)path.c_str(),
+         (CFIndex)path.size(),
          false);
 
     UInt32 flags = kAudioFileFlags_EraseFile;
@@ -165,7 +132,6 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 	 &m_d->file);
     
     CFRelease(url);
-#endif
 
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Failed to create file: code " + codestr(m_d->err);
