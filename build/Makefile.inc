@@ -31,6 +31,8 @@ src/AudioReadStreamFactory.o: src/WavFileReadStream.cpp
 src/AudioReadStreamFactory.o: src/OggVorbisReadStream.cpp
 src/AudioReadStreamFactory.o: src/MediaFoundationReadStream.cpp
 src/AudioReadStreamFactory.o: src/CoreAudioReadStream.cpp
+src/AudioReadStreamFactory.o: src/OpusReadStream.cpp
+src/AudioReadStreamFactory.o: src/MiniMP3ReadStream.cpp
 src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioWriteStreamFactory.h
 src/AudioWriteStreamFactory.o: ./bqaudiostream/AudioWriteStream.h
 src/AudioWriteStreamFactory.o: ./bqaudiostream/Exceptions.h
@@ -48,3 +50,5 @@ src/WavFileReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/CoreAudioWriteStream.o: ./bqaudiostream/AudioWriteStream.h
 src/CoreAudioReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/OggVorbisReadStream.o: ./bqaudiostream/AudioReadStream.h
+src/OpusReadStream.o: ./bqaudiostream/AudioReadStream.h
+src/MiniMP3ReadStream.o: ./bqaudiostream/AudioReadStream.h

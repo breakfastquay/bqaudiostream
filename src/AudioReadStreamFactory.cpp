@@ -125,6 +125,7 @@ AudioReadStreamFactory::getFileFilter()
 
 #include "WavFileReadStream.cpp"
 #include "OggVorbisReadStream.cpp"
+#include "MiniMP3ReadStream.cpp"
 #include "MediaFoundationReadStream.cpp"
 #include "CoreAudioReadStream.cpp"
 #include "OpusReadStream.cpp"

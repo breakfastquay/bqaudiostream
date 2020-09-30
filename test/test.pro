@@ -10,7 +10,7 @@ QT -= gui
 DESTDIR = .
 QMAKE_LIBDIR += . ..
 
-LIBS += -L.. -lbqaudiostream -L../../bqresample -lbqresample -L../../bqvec -lbqvec -lsndfile -loggz -lfishsound -lopusfile -lopus -logg
+LIBS += -L.. -lbqaudiostream -L../../bqresample -lbqresample -L../../bqvec -lbqvec -lsndfile -loggz -lfishsound -lopusfile -lopus -logg -lsamplerate
 
 INCLUDEPATH += . .. ../../bqvec ../../bqresample ../../bqthingfactory
 DEPENDPATH += . .. ../../bqvec ../../bqresample ../../bqthingfactory
