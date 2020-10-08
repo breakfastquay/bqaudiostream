@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2015 Particular Programs Ltd.
+    Copyright 2007-2020 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,39 +32,62 @@
     Software without prior written authorization.
 */
 
-#ifndef BQ_SIMPLE_WAV_FILE_WRITE_STREAM_H
-#define BQ_SIMPLE_WAV_FILE_WRITE_STREAM_H
+#ifndef BQ_SIMPLE_WAV_FILE_READ_STREAM_H
+#define BQ_SIMPLE_WAV_FILE_READ_STREAM_H
 
-#include "AudioWriteStream.h"
+#include "AudioReadStream.h"
 
 // If we have libsndfile, we shouldn't be using this class
 #if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
 
 #include <fstream>
 #include <string>
+#include <vector>
 
 namespace breakfastquay
 {
-    
-class SimpleWavFileWriteStream : public AudioWriteStream
+
+class SimpleWavFileReadStream : public AudioReadStream
 {
 public:
-    SimpleWavFileWriteStream(Target target);
-    virtual ~SimpleWavFileWriteStream();
+    SimpleWavFileReadStream(std::string path);
+    virtual ~SimpleWavFileReadStream();
+
+    virtual std::string getTrackName() const { return m_track; }
+    virtual std::string getArtistName() const { return m_artist; }
 
     virtual std::string getError() const { return m_error; }
 
-    virtual void putInterleavedFrames(size_t count, float *frames);
-    
 protected:
-    int m_bitDepth;
+    virtual size_t getFrames(size_t count, float *frames);
+    
+private:
+    std::string m_path;
     std::string m_error;
-    std::ofstream *m_file;
+    std::string m_track;
+    std::string m_artist;
+    
+    int m_channels;
+    int m_rate;
+    int m_bitDepth;
+    size_t m_startPos;
+    size_t m_index;
 
-    void writeFormatChunk();
-    std::string int2le(uint32_t value, uint32_t length);
-    void putBytes(std::string);
-    void putBytes(const unsigned char *, size_t);
+    std::ifstream *m_file;
+
+    void readHeader();
+    uint32_t readExpectedChunkSize(std::string tag);
+    void readExpectedTag(std::string tag);
+    std::string readTag();
+    uint32_t readChunkSizeAfterTag();
+    uint32_t readMandatoryNumber(int length);
+
+    float convertSample8(const vector<uint8_t> &);
+    float convertSample16(const vector<uint8_t> &);
+    float convertSample24(const vector<uint8_t> &);
+    
+    int getBytes(int n, std::vector<uint8_t> &);
+    static uint32_t le2int(const std::vector<uint8_t> &le);
 };
 
 }
@@ -72,3 +95,4 @@ protected:
 #endif
 
 #endif
+
