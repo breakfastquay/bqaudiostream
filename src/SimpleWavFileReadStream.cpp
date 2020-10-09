@@ -125,10 +125,10 @@ SimpleWavFileReadStream::readHeader()
         if (tag == "") {
             throw InvalidFileFormat(m_path, "tag expected");
         }
+        uint32_t chunkSize = readChunkSizeAfterTag();
         if (tag == "data") {
             break;
         } else {
-            uint32_t chunkSize = readChunkSizeAfterTag();
             m_file->ignore(chunkSize);
             if (!m_file->good()) {
                 throw InvalidFileFormat(m_path, "incomplete chunk");
@@ -188,14 +188,16 @@ SimpleWavFileReadStream::readChunkSizeAfterTag()
 size_t
 SimpleWavFileReadStream::getFrames(size_t count, float *frames)
 {
-    size_t got = 0;
     int sampleSize = m_bitDepth / 8;
     vector<uint8_t> buf(sampleSize);
-
-    while (got < count) {
+    
+    size_t requested = count * m_channelCount;
+    size_t got = 0;
+    
+    while (got < requested) {
         int gotHere = getBytes(sampleSize, buf);
         if (gotHere < sampleSize) {
-            return got;
+            return got / m_channelCount;
         }
         switch (m_bitDepth) {
         case 8: frames[got] = convertSample8(buf); break;
@@ -205,7 +207,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         ++got;
     }
 
-    return got;
+    return got / m_channelCount;
 }
 
 float
@@ -223,16 +225,6 @@ SimpleWavFileReadStream::convertSample16(const vector<uint8_t> &v)
     int32_t i(bb);
 
     return float(i) / 2147483647.f;
-/*
-    uint32_t b10 = (b0 | (b1 << 8));
-
-    if (b1 & 0x80) { // negative
-        b10 |= 0xffff0000;
-    }
-
-    int32_t i(b10);
-*/
-    return float(i) / 32768.f;
 }
 
 float
@@ -273,8 +265,6 @@ SimpleWavFileReadStream::le2int(const vector<uint8_t> &le)
     for (int i = 0; i < len; ++i) {
         n += (uint32_t(le[i]) << (8 * i));
     }
-
-    cout << "got n = " << n << endl;
 
     return n;
 }
