@@ -58,8 +58,6 @@ simplewavbuilder(
 
 SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_path(filename),
-    m_channels(0),
-    m_rate(0),
     m_bitDepth(0),
     m_startPos(0),
     m_index(0),
@@ -116,10 +114,12 @@ SimpleWavFileReadStream::readHeader()
         throw InvalidFileFormat(m_path, "unsupported bit depth");
     }
 
-    m_channels = channels;
-    m_rate = sampleRate;
+    m_channelCount = channels;
+    m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
 
+    cerr << "bit depth = " << m_bitDepth << endl;
+    
     while (true) {
         string tag = readTag();
         if (tag == "") {
@@ -219,13 +219,20 @@ SimpleWavFileReadStream::convertSample16(const vector<uint8_t> &v)
 {
     uint32_t b0 = v[0], b1 = v[1];
 
+    uint32_t bb = ((b0 << 16) | (b1 << 24));
+    int32_t i(bb);
+
+    return float(i) / 2147483647.f;
+/*
     uint32_t b10 = (b0 | (b1 << 8));
 
     if (b1 & 0x80) { // negative
         b10 |= 0xffff0000;
     }
 
-    return float(b10) / 32768.f;
+    int32_t i(b10);
+*/
+    return float(i) / 32768.f;
 }
 
 float
@@ -233,13 +240,10 @@ SimpleWavFileReadStream::convertSample24(const vector<uint8_t> &v)
 {
     uint32_t b0 = v[0], b1 = v[1], b2 = v[2];
 
-    uint32_t b210 = (b0 | (b1 << 8) | (b2 << 16));
+    uint32_t bb = ((b0 << 8) | (b1 << 16) | (b2 << 24));
+    int32_t i(bb);
 
-    if (b2 & 0x80) { // negative
-        b210 |= 0xff000000;
-    }
-
-    return float(b210) / 8388608.f;
+    return float(i) / 2147483647.f;
 }
 
 int
