@@ -32,8 +32,8 @@
     Software without prior written authorization.
 */
 
-#ifndef BQ_CORE_AUDIO_WRITE_STREAM_H_
-#define BQ_CORE_AUDIO_WRITE_STREAM_H_
+#ifndef BQ_CORE_AUDIO_WRITE_STREAM_H
+#define BQ_CORE_AUDIO_WRITE_STREAM_H
 
 #include "AudioWriteStream.h"
 

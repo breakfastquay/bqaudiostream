@@ -4,7 +4,7 @@ HEADERS	:= $(wildcard src/*.h) $(wildcard bqaudiostream/*.h)
 OBJECTS	:= $(patsubst %.cpp,%.o,$(SOURCES))
 LIBRARY	:= libbqaudiostream.a
 
-CXXFLAGS := -std=c++98 $(AUDIOSTREAM_DEFINES) -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic $(THIRD_PARTY_INCLUDES)
+CXXFLAGS := -std=c++98 -Wall $(AUDIOSTREAM_DEFINES) -I../bqvec -I../bqthingfactory -I../bqresample -I./bqaudiostream -fpic $(THIRD_PARTY_INCLUDES)
 
 all:	$(LIBRARY)
 
@@ -44,6 +44,7 @@ src/AudioWriteStreamFactory.o: src/SimpleWavFileWriteStream.cpp
 src/AudioWriteStreamFactory.o: src/SimpleWavFileWriteStream.h
 src/AudioWriteStreamFactory.o: src/CoreAudioWriteStream.cpp
 src/AudioWriteStreamFactory.o: src/CoreAudioWriteStream.h
+src/AudioWriteStreamFactory.o: src/OpusWriteStream.cpp
 src/AudioStreamExceptions.o: ./bqaudiostream/Exceptions.h
 src/CoreAudioReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/CoreAudioWriteStream.o: ./bqaudiostream/AudioWriteStream.h
@@ -55,3 +56,4 @@ src/SimpleWavFileReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/SimpleWavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
 src/WavFileReadStream.o: ./bqaudiostream/AudioReadStream.h
 src/WavFileWriteStream.o: ./bqaudiostream/AudioWriteStream.h
+src/OpusWriteStream.o: ./bqaudiostream/AudioWriteStream.h

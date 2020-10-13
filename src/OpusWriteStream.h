@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2015 Particular Programs Ltd.
+    Copyright 2007-2020 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,70 +32,35 @@
     Software without prior written authorization.
 */
 
-#if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
+#ifndef BQ_OPUS_WRITE_STREAM_H
+#define BQ_OPUS_WRITE_STREAM_H
 
-#include "WavFileWriteStream.h"
-#include "Exceptions.h"
+#include "AudioWriteStream.h"
 
-#include <cstring>
-
-using namespace std;
+#ifdef HAVE_OPUS
 
 namespace breakfastquay
 {
-
-static vector<string> extensions() {
-    vector<string> ee;
-    ee.push_back("wav");
-    ee.push_back("aiff");
-    return ee;
-}
-
-static 
-AudioWriteStreamBuilder<WavFileWriteStream>
-wavbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileWriteStream"),
-    extensions()
-    );
-
-WavFileWriteStream::WavFileWriteStream(Target target) :
-    AudioWriteStream(target),
-    m_file(0)
+    
+class OpusWriteStream : public AudioWriteStream
 {
-    memset(&m_fileInfo, 0, sizeof(SF_INFO));
-    m_fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-    m_fileInfo.channels = getChannelCount();
-    m_fileInfo.samplerate = getSampleRate();
+public:
+    OpusWriteStream(Target target);
+    virtual ~OpusWriteStream();
 
-    m_file = sf_open(getPath().c_str(), SFM_WRITE, &m_fileInfo);
+    virtual std::string getError() const { return m_error; }
 
-    if (!m_file) {
-	cerr << "WavFileWriteStream::initialize: Failed to open output file for writing ("
-		  << sf_strerror(m_file) << ")" << endl;
+    virtual void putInterleavedFrames(size_t count, const float *frames);
+    
+protected:
+    std::string m_error;
 
-        m_error = string("Failed to open audio file '") +
-            getPath() + "' for writing";
-        throw FailedToWriteFile(getPath());
-    }
-}
-
-WavFileWriteStream::~WavFileWriteStream()
-{
-    if (m_file) sf_close(m_file);
-}
-
-void
-WavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
-{
-    if (count == 0) return;
-
-    sf_count_t written = sf_writef_float(m_file, frames, count);
-
-    if (written != sf_count_t(count)) {
-        throw FileOperationFailed(getPath(), "write sf data");
-    }
-}
+    class D;
+    D *m_d;
+};
 
 }
+
+#endif
 
 #endif
