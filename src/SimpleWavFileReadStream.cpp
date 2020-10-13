@@ -61,13 +61,13 @@ SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_bitDepth(0),
     m_startPos(0),
     m_index(0),
-    m_file(nullptr)
+    m_file(0)
 {
     m_file = new ifstream(filename.c_str(), ios::in | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;
-        m_file = nullptr;
+        m_file = 0;
         throw FileNotFound(m_path);
     }
 
@@ -92,14 +92,14 @@ SimpleWavFileReadStream::readHeader()
     uint32_t totalSize = readExpectedChunkSize("RIFF");
     readExpectedTag("WAVE");
     uint32_t fmtSize = readExpectedChunkSize("fmt ");
-    if (fmtSize != 16) {
+    if (fmtSize < 16) {
         cout << "fmtSize = " << fmtSize << endl;
-        throw InvalidFileFormat(m_path, "unexpected format chunk size");
+        throw InvalidFileFormat(m_path, "unexpectedly short format chunk");
     }
 
     uint32_t audioFormat = readMandatoryNumber(2);
-    if (audioFormat != 1) {
-        throw InvalidFileFormat(m_path, "PCM formats only supported by this reader");
+    if (audioFormat != 1 && audioFormat != 3) {
+        throw InvalidFileFormat(m_path, "only PCM and float WAV formats are supported by this reader");
     }
 
     uint32_t channels = readMandatoryNumber(2);
@@ -107,23 +107,42 @@ SimpleWavFileReadStream::readHeader()
     uint32_t byteRate = readMandatoryNumber(4);
     uint32_t bytesPerSample = readMandatoryNumber(2);
     uint32_t bitsPerSample = readMandatoryNumber(2);
-
+    
     if (bitsPerSample != 8 &&
         bitsPerSample != 16 &&
-        bitsPerSample != 24) {
+        bitsPerSample != 24 &&
+        bitsPerSample != 32) {
         throw InvalidFileFormat(m_path, "unsupported bit depth");
+    }
+
+    if (bitsPerSample == 32) {
+        if (audioFormat == 1) {
+            throw InvalidFileFormat(m_path, "32-bit samples are only supported in float format, not PCM");
+        } else {
+            char *buf = (char *)malloc(sizeof(float));
+            *(float *)buf = -0.f;
+            m_floatSwap = (buf[0] != '\0');
+        }
     }
 
     m_channelCount = channels;
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
 
-    cerr << "bit depth = " << m_bitDepth << endl;
+    // we don't use these
+    (void)totalSize;
+    (void)byteRate;
+    (void)bytesPerSample;
+
+    // and we ignore extended format chunk data
+    if (fmtSize > 16) {
+        m_file->ignore(fmtSize - 16);
+    }
     
     while (true) {
         string tag = readTag();
         if (tag == "") {
-            throw InvalidFileFormat(m_path, "tag expected");
+            throw InvalidFileFormat(m_path, "tag expected after fmt chunk");
         }
         uint32_t chunkSize = readChunkSizeAfterTag();
         if (tag == "data") {
@@ -135,11 +154,6 @@ SimpleWavFileReadStream::readHeader()
             }
         }
     }
-
-    // we don't use these
-    (void)totalSize;
-    (void)byteRate;
-    (void)bytesPerSample;
 }
 
 uint32_t
@@ -203,6 +217,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         case 8: frames[got] = convertSample8(buf); break;
         case 16: frames[got] = convertSample16(buf); break;
         case 24: frames[got] = convertSample24(buf); break;
+        case 32: frames[got] = convertSampleFloat(buf); break;
         }
         ++got;
     }
@@ -238,10 +253,26 @@ SimpleWavFileReadStream::convertSample24(const vector<uint8_t> &v)
     return float(i) / 2147483647.f;
 }
 
+float
+SimpleWavFileReadStream::convertSampleFloat(const vector<uint8_t> &v)
+{
+    if (!m_floatSwap) {
+        const uint8_t *buf = v.data();
+        return *(const float *)buf;
+    } else {
+        vector<uint8_t> vv(4);
+        for (int i = 0; i < 4; ++i) {
+            vv[i] = v[3-i];
+        }
+        const uint8_t *buf = vv.data();
+        return *(const float *)buf;
+    }
+}
+
 int
 SimpleWavFileReadStream::getBytes(int n, vector<uint8_t> &v)
 {
-    if (!m_file) return {};
+    if (!m_file) return 0;
 
     for (int i = 0; i < n; ++i) {
         char c;
@@ -270,6 +301,5 @@ SimpleWavFileReadStream::le2int(const vector<uint8_t> &le)
 }
 
 }
-
 
 #endif

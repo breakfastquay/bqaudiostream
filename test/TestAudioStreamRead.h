@@ -60,7 +60,7 @@ private slots:
     {
         QFETCH(QString, audiofile);
 
-        cerr << "\n\n*** audiofile = " << audiofile.toLocal8Bit().data() << "\n\n" << endl;
+//        cerr << "\n\n*** audiofile = " << audiofile.toLocal8Bit().data() << "\n\n" << endl;
 
         try {
 

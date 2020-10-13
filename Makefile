@@ -38,4 +38,3 @@ THIRD_PARTY_LIBS	:=
 # no routinely user-modifiable parts
 
 include build/Makefile.inc
-

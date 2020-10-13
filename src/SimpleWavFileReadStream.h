@@ -70,6 +70,7 @@ private:
     int m_channels;
     int m_rate;
     int m_bitDepth;
+    bool m_floatSwap;
     size_t m_startPos;
     size_t m_index;
 
@@ -85,7 +86,8 @@ private:
     float convertSample8(const vector<uint8_t> &);
     float convertSample16(const vector<uint8_t> &);
     float convertSample24(const vector<uint8_t> &);
-    
+    float convertSampleFloat(const vector<uint8_t> &);
+
     int getBytes(int n, std::vector<uint8_t> &);
     static uint32_t le2int(const std::vector<uint8_t> &le);
 };

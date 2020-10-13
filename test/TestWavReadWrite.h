@@ -18,17 +18,17 @@ namespace breakfastquay {
 
 static const float DB_FLOOR = -1000.0;
 
-static float to_dB(float ratio)
+static float to_dBV(float ratio)
 {
     if (ratio == 0.0) return DB_FLOOR;
-    float dB = 10 * log10f(ratio);
+    float dB = 20 * log10f(ratio);
     return dB;
 }
 
-static float from_dB(float dB)
+static float from_dBV(float dB)
 {
     if (dB == DB_FLOOR) return 0.0;
-    float m = powf(10.0, dB / 10.0);
+    float m = powf(10.0, dB / 20.0);
     return m;
 }
 
@@ -123,8 +123,8 @@ private slots:
 
         QVERIFY(ws);
     
-        float error = from_dB(-10);
-        float warning = from_dB(-25);
+        float error = from_dBV(-10);
+        float warning = from_dBV(-25);
         float maxdiff = 0.f;
         float mda = 0.f, mdb = 0.f;
         int maxdiffindex = -1;
@@ -157,14 +157,14 @@ private slots:
 
         QString message = QString("Max diff is %1 (%2 dB) at index %3 (a = %4, b = %5) [error threshold %6 (%7 dB), warning threshold %8 (%9 dB)]")
             .arg(maxdiff)
-            .arg(to_dB(maxdiff))
+            .arg(to_dBV(maxdiff))
             .arg(maxdiffindex)
             .arg(mda)
             .arg(mdb)
             .arg(error)
-            .arg(to_dB(error))
+            .arg(to_dBV(error))
             .arg(warning)
-            .arg(to_dB(warning));
+            .arg(to_dBV(warning));
 
         QVERIFY2(maxdiff < error, message.toLocal8Bit().data());
 
