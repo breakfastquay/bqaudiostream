@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2015 Particular Programs Ltd.
+    Copyright 2007-2020 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,39 +32,37 @@
     Software without prior written authorization.
 */
 
-#ifndef BQ_SIMPLE_WAV_FILE_WRITE_STREAM_H
-#define BQ_SIMPLE_WAV_FILE_WRITE_STREAM_H
+#ifndef BQ_MINIMP3_READ_STREAM_H
+#define BQ_MINIMP3_READ_STREAM_H
 
-#include "AudioWriteStream.h"
+#include "AudioReadStream.h"
 
-// If we have libsndfile, we shouldn't be using this class
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
-#include <fstream>
-#include <string>
+#ifdef HAVE_MINIMP3
 
 namespace breakfastquay
 {
     
-class SimpleWavFileWriteStream : public AudioWriteStream
+class MiniMP3ReadStream : public AudioReadStream
 {
 public:
-    SimpleWavFileWriteStream(Target target);
-    virtual ~SimpleWavFileWriteStream();
+    MiniMP3ReadStream(std::string path);
+    virtual ~MiniMP3ReadStream();
+
+    virtual std::string getTrackName() const { return m_track; }
+    virtual std::string getArtistName() const { return m_artist; }
 
     virtual std::string getError() const { return m_error; }
 
-    virtual void putInterleavedFrames(size_t count, float *frames);
-    
 protected:
-    int m_bitDepth;
-    std::string m_error;
-    std::ofstream *m_file;
+    virtual size_t getFrames(size_t count, float *frames);
 
-    void writeFormatChunk();
-    std::string int2le(uint32_t value, uint32_t length);
-    void putBytes(std::string);
-    void putBytes(const unsigned char *, size_t);
+    std::string m_path;
+    std::string m_error;
+    std::string m_track;
+    std::string m_artist;
+
+    class D;
+    D *m_d;
 };
 
 }

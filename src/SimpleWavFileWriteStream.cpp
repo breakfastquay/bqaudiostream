@@ -83,7 +83,7 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
     }
 
     m_file->seekp(0, ios::end);
-    unsigned int totalSize = m_file->tellp();
+    uint32_t totalSize = m_file->tellp();
 
     // seek to first length position
     m_file->seekp(4, ios::beg);
@@ -107,26 +107,27 @@ void
 SimpleWavFileWriteStream::putBytes(string s)
 {
     if (!m_file) return;
-    for (unsigned int i = 0; i < s.length(); i++) {
-        *m_file << (unsigned char)s[i];
+    for (uint32_t i = 0; i < s.length(); i++) {
+        *m_file << (uint8_t)s[i];
     }
 }
 
 void
-SimpleWavFileWriteStream::putBytes(const unsigned char *buffer, size_t n)
+SimpleWavFileWriteStream::putBytes(const uint8_t *buffer, size_t n)
 {
     if (!m_file) return;
     m_file->write((const char *)buffer, n);
 }
 
 string
-SimpleWavFileWriteStream::int2le(unsigned int value, unsigned int length)
+SimpleWavFileWriteStream::int2le(uint32_t value, uint32_t length)
 {
-    string r;
+    string r(length, '\0');
 
-    do {
-        r += (unsigned char)((long)((value >> (8 * r.length())) & 0xff));
-    } while (r.length() < length);
+    for (int i = 0; i < length; ++i) {
+        r[i] = (uint8_t)(value & 0xff);
+        value >>= 8;
+    }
 
     return r;
 }
@@ -179,8 +180,8 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
         for (size_t c = 0; c < getChannelCount(); ++c) {
             
             double f = frames[i * getChannelCount() + c];
-            unsigned int u = 0;
-            unsigned char ubuf[4];
+            uint32_t u = 0;
+            uint8_t ubuf[4];
             if (f < -1.0) f = -1.0;
             if (f > 1.0) f = 1.0;
             
@@ -188,7 +189,7 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
 
             case 24:
                 f = f * 2147483647.0;
-                u = (unsigned int)(int(f));
+                u = (uint32_t)(int(f));
                 u >>= 8;
                 ubuf[0] = (u & 0xff);
                 u >>= 8;
