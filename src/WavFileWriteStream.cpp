@@ -85,7 +85,7 @@ WavFileWriteStream::~WavFileWriteStream()
 }
 
 void
-WavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
+WavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
 {
     if (count == 0) return;
 

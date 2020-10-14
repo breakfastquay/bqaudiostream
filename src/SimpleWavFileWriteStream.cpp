@@ -124,7 +124,7 @@ SimpleWavFileWriteStream::int2le(uint32_t value, uint32_t length)
 {
     string r(length, '\0');
 
-    for (int i = 0; i < length; ++i) {
+    for (uint32_t i = 0; i < length; ++i) {
         r[i] = (uint8_t)(value & 0xff);
         value >>= 8;
     }
@@ -172,7 +172,7 @@ SimpleWavFileWriteStream::writeFormatChunk()
 }
 
 void
-SimpleWavFileWriteStream::putInterleavedFrames(size_t count, float *frames)
+SimpleWavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
 {
     if (count == 0) return;
 

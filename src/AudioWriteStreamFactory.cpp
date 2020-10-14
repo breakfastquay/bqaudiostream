@@ -137,4 +137,5 @@ AudioWriteStreamFactory::isExtensionSupportedFor(string fileName)
 #include "WavFileWriteStream.cpp"
 #include "SimpleWavFileWriteStream.cpp"
 #include "CoreAudioWriteStream.cpp"
+#include "OpusWriteStream.cpp"
 

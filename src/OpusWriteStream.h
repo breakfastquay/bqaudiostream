@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2015 Particular Programs Ltd.
+    Copyright 2007-2020 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,21 +32,21 @@
     Software without prior written authorization.
 */
 
-#ifndef BQ_CORE_AUDIO_WRITE_STREAM_H
-#define BQ_CORE_AUDIO_WRITE_STREAM_H
+#ifndef BQ_OPUS_WRITE_STREAM_H
+#define BQ_OPUS_WRITE_STREAM_H
 
 #include "AudioWriteStream.h"
 
-#ifdef HAVE_COREAUDIO
+#ifdef HAVE_OPUS
 
 namespace breakfastquay
 {
     
-class CoreAudioWriteStream : public AudioWriteStream
+class OpusWriteStream : public AudioWriteStream
 {
 public:
-    CoreAudioWriteStream(Target target);
-    virtual ~CoreAudioWriteStream();
+    OpusWriteStream(Target target);
+    virtual ~OpusWriteStream();
 
     virtual std::string getError() const { return m_error; }
 

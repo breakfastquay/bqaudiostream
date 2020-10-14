@@ -197,14 +197,14 @@ CoreAudioWriteStream::~CoreAudioWriteStream()
 }
 
 void
-CoreAudioWriteStream::putInterleavedFrames(size_t count, float *frames)
+CoreAudioWriteStream::putInterleavedFrames(size_t count, const float *frames)
 {
     if (count == 0) return;
 
     m_d->buffer.mBuffers[0].mDataByteSize =
         sizeof(float) * getChannelCount() * count;
     
-    m_d->buffer.mBuffers[0].mData = frames;
+    m_d->buffer.mBuffers[0].mData = (void *)frames;
 
     UInt32 framesToWrite = count;
 
