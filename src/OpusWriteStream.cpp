@@ -66,6 +66,7 @@ class OpusWriteStream::D
 public:
     D() : encoder(0) { }
 
+    OggOpusComments *comments;
     OggOpusEnc *encoder;
 };
 
@@ -77,8 +78,10 @@ OpusWriteStream::OpusWriteStream(Target target) :
 
     //!!! +windows file encoding?
 
+    m_d->comments = ope_comments_create();
+    
     int err = 0;
-    m_d->encoder = ope_encoder_create_file(getPath().c_str(), 0,
+    m_d->encoder = ope_encoder_create_file(getPath().c_str(), comments,
                                            getSampleRate(), getChannelCount(),
                                            getChannelCount() > 2 ? 1 : 0,
                                            &err);
@@ -104,6 +107,7 @@ OpusWriteStream::~OpusWriteStream()
                  << err << ")" << endl;
         }
         ope_encoder_destroy(m_d->encoder);
+        ope_comments_destroy(m_d->comments);
     }
 }
 
