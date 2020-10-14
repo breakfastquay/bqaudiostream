@@ -81,7 +81,7 @@ OpusWriteStream::OpusWriteStream(Target target) :
     m_d->comments = ope_comments_create();
     
     int err = 0;
-    m_d->encoder = ope_encoder_create_file(getPath().c_str(), comments,
+    m_d->encoder = ope_encoder_create_file(getPath().c_str(), m_d->comments,
                                            getSampleRate(), getChannelCount(),
                                            getChannelCount() > 2 ? 1 : 0,
                                            &err);

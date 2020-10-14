@@ -54,7 +54,7 @@ public:
 
     virtual std::string getError() const { return m_error; }
 
-    virtual void putInterleavedFrames(size_t count, float *frames);
+    virtual void putInterleavedFrames(size_t count, const float *frames);
     
 protected:
     int m_bitDepth;
