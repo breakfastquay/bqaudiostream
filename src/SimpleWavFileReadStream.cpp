@@ -59,8 +59,6 @@ simplewavbuilder(
 SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_path(filename),
     m_bitDepth(0),
-    m_startPos(0),
-    m_index(0),
     m_file(0)
 {
     m_file = new ifstream(filename.c_str(), ios::in | std::ios::binary);

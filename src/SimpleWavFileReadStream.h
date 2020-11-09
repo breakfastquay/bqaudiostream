@@ -67,12 +67,8 @@ private:
     std::string m_track;
     std::string m_artist;
     
-    int m_channels;
-    int m_rate;
     int m_bitDepth;
     bool m_floatSwap;
-    size_t m_startPos;
-    size_t m_index;
 
     std::ifstream *m_file;
 
