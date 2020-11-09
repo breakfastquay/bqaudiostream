@@ -56,7 +56,7 @@ getOpusWriteExtensions()
 
 static 
 AudioWriteStreamBuilder<OpusWriteStream>
-coreaudiowritebuilder(
+opuswritebuilder(
     string("http://breakfastquay.com/rdf/turbot/audiostream/OpusWriteStream"),
     getOpusWriteExtensions()
     );
