@@ -123,6 +123,10 @@ WavFileReadStream::WavFileReadStream(string path) :
     m_channelCount = m_fileInfo.channels;
     m_sampleRate = m_fileInfo.samplerate;
 
+    if (m_fileInfo.frames > 0) {
+        m_estimatedFrameCount = m_fileInfo.frames;
+    }
+
     const char *str = sf_get_string(m_file, SF_STR_TITLE);
     if (str) {
         m_track = str;

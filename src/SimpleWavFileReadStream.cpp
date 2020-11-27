@@ -103,7 +103,7 @@ SimpleWavFileReadStream::readHeader()
     uint32_t channels = readMandatoryNumber(2);
     uint32_t sampleRate = readMandatoryNumber(4);
     uint32_t byteRate = readMandatoryNumber(4);
-    uint32_t bytesPerSample = readMandatoryNumber(2);
+    uint32_t bytesPerFrame = readMandatoryNumber(2);
     uint32_t bitsPerSample = readMandatoryNumber(2);
     
     if (bitsPerSample != 8 &&
@@ -127,10 +127,12 @@ SimpleWavFileReadStream::readHeader()
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
 
-    // we don't use these
-    (void)totalSize;
+    if (totalSize > fmtSize) {
+        m_estimatedFrameCount = (totalSize - fmtSize) / bytesPerFrame;
+    }
+
+    // we don't use
     (void)byteRate;
-    (void)bytesPerSample;
 
     // and we ignore extended format chunk data
     if (fmtSize > 16) {

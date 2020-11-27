@@ -300,6 +300,15 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
         goto fail;
     }
 
+    PROPVARIANT dvar;
+    LONGLONG duration = 0;
+    if (SUCCEEDED(m_d->reader->getPresentationAttribute
+                  (MF_SOURCE_READER_MEDIASOURCE, MF_PD_DURATION, &dvar)) &&
+        SUCCEEDED(PropVariantToInt64(dvar, &duration))) {
+        m_estimatedFrameCount = size_t
+            ((double(duration) / 10000000.0) * m_d->sampleRate);
+    }
+    
     return;
 
 fail:

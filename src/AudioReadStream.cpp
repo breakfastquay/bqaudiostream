@@ -46,6 +46,7 @@ namespace breakfastquay
 AudioReadStream::AudioReadStream() :
     m_channelCount(0),
     m_sampleRate(0),
+    m_estimatedFrameCount(0),
     m_retrievalRate(0),
     m_totalFileFrames(0),
     m_totalRetrievedFrames(0),
@@ -58,6 +59,17 @@ AudioReadStream::~AudioReadStream()
 {
     delete m_resampler;
     delete m_resampleBuffer;
+}
+
+size_t
+AudioReadStream::getEstimatedFrameCount() const
+{
+    if (m_retrievalRate == 0 || m_retrievalRate == m_sampleRate) {
+        return m_estimatedFrameCount;
+    } else {
+        return size_t(round(double(m_estimatedFrameCount) * double(m_sampleRate) /
+                            double(m_retrievalRate)));
+    }
 }
 
 void
