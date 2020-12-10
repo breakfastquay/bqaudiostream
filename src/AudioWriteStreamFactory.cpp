@@ -99,6 +99,7 @@ AudioWriteStreamFactory::getDefaultLossyFileExtension()
     vector<string> candidates;
     candidates.push_back("mp3");
     candidates.push_back("m4a");
+    candidates.push_back("opus");
     candidates.push_back("ogg");
     candidates.push_back("oga");
     vector<string> supported = getSupportedFileExtensions();
