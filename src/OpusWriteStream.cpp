@@ -74,7 +74,7 @@ OpusWriteStream::OpusWriteStream(Target target) :
     AudioWriteStream(target),
     m_d(new D)
 {
-    cerr << "OpusWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
+//    cerr << "OpusWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
 
     //!!! +windows file encoding?
 
@@ -100,7 +100,7 @@ OpusWriteStream::OpusWriteStream(Target target) :
 OpusWriteStream::~OpusWriteStream()
 {
     if (m_d->encoder) {
-        cerr << "OpusWriteStream::~OpusWriteStream: closing" << endl;
+//        cerr << "OpusWriteStream::~OpusWriteStream: closing" << endl;
         int err = ope_encoder_drain(m_d->encoder);
         if (err) {
             cerr << "WARNING: ope_encoder_drain failed (error code "
