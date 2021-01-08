@@ -129,10 +129,6 @@ SimpleWavFileReadStream::readHeader()
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
 
-    if (totalSize > fmtSize) {
-        m_estimatedFrameCount = (totalSize - fmtSize) / bytesPerFrame;
-    }
-
     // we don't use
     (void)byteRate;
 
@@ -142,6 +138,7 @@ SimpleWavFileReadStream::readHeader()
     }
 
     m_dataChunkSize = readExpectedChunkSize("data");
+    m_estimatedFrameCount = m_dataChunkSize / bytesPerFrame;
     m_dataReadOffset = 0;
 }
 
