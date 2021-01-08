@@ -123,11 +123,33 @@ AudioReadStreamFactory::getFileFilter()
 // #ifdef'd out if the implementation is not selected, so there is no
 // overhead.
 
+// Note that our ThingFactory always uses the first builder registered
+// for a given tag. Within a single source file (as this is), the
+// builders are guaranteed to be registered in lexical order. So we
+// should put the desirable readers first and the iffy ones after.
+
+// WavFileReadStream uses libsndfile, which is mostly trustworthy
 #include "WavFileReadStream.cpp"
+
+// OggVorbisReadStream uses the official libraries, which ought to be good
 #include "OggVorbisReadStream.cpp"
-#include "MiniMP3ReadStream.cpp"
-#include "MediaFoundationReadStream.cpp"
-#include "SimpleWavFileReadStream.cpp"
-#include "CoreAudioReadStream.cpp"
+
+// OpusReadStream uses the official libraries, which ought to be good
 #include "OpusReadStream.cpp"
+
+// CoreAudioReadStream should be pretty good
+#include "CoreAudioReadStream.cpp"
+
+// MediaFoundationReadStream should be ok and at least should be what
+// people using Windows expect
+#include "MediaFoundationReadStream.cpp"
+
+// MiniMP3ReadStream seems decent but lacks ID3 support, so in
+// practice is not as good as the platform frameworks
+#include "MiniMP3ReadStream.cpp"
+
+// SimpleWavFileReadStream reads most WAV files, but any of the other
+// WAV readers (WavFileReadStream, MediaFoundationReadStream,
+// CoreAudioReadStream) will be more general and more trustworthy
+#include "SimpleWavFileReadStream.cpp"
 
