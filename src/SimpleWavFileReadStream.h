@@ -67,10 +67,11 @@ private:
     std::string m_track;
     std::string m_artist;
     
+    std::ifstream *m_file;
     int m_bitDepth;
     bool m_floatSwap;
-
-    std::ifstream *m_file;
+    uint32_t m_dataChunkSize;
+    uint32_t m_dataReadOffset;
 
     void readHeader();
     uint32_t readExpectedChunkSize(std::string tag);

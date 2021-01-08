@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2015 Particular Programs Ltd.
+    Copyright 2007-2021 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -99,6 +99,7 @@ AudioWriteStreamFactory::getDefaultLossyFileExtension()
     vector<string> candidates;
     candidates.push_back("mp3");
     candidates.push_back("m4a");
+    candidates.push_back("opus");
     candidates.push_back("ogg");
     candidates.push_back("oga");
     vector<string> supported = getSupportedFileExtensions();

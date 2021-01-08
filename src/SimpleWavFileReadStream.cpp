@@ -58,8 +58,10 @@ simplewavbuilder(
 
 SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_path(filename),
+    m_file(0),
     m_bitDepth(0),
-    m_file(0)
+    m_dataChunkSize(0),
+    m_dataReadOffset(0)
 {
     m_file = new ifstream(filename.c_str(), ios::in | std::ios::binary);
 
@@ -138,27 +140,18 @@ SimpleWavFileReadStream::readHeader()
     if (fmtSize > 16) {
         m_file->ignore(fmtSize - 16);
     }
-    
-    while (true) {
-        string tag = readTag();
-        if (tag == "") {
-            throw InvalidFileFormat(m_path, "tag expected after fmt chunk");
-        }
-        uint32_t chunkSize = readChunkSizeAfterTag();
-        if (tag == "data") {
-            break;
-        } else {
-            m_file->ignore(chunkSize);
-            if (!m_file->good()) {
-                throw InvalidFileFormat(m_path, "incomplete chunk");
-            }
-        }
-    }
+
+    m_dataChunkSize = readExpectedChunkSize("data");
+    m_dataReadOffset = 0;
 }
 
 uint32_t
 SimpleWavFileReadStream::readExpectedChunkSize(string tag)
 {
+    // Read up to and including the given tag and its chunk size,
+    // skipping any mismatching chunks that precede it. Return the
+    // chunk size for the given tag
+    
     readExpectedTag(tag);
     return readChunkSizeAfterTag();
 }
@@ -166,9 +159,25 @@ SimpleWavFileReadStream::readExpectedChunkSize(string tag)
 void
 SimpleWavFileReadStream::readExpectedTag(string tag)
 {
-    string actual = readTag();
-    if (actual != tag) {
-        throw InvalidFileFormat(m_path, "failed to read tag \"" + tag + "\" (found \"" + actual + "\"");
+    // Read up to and including the given tag, without reading its
+    // following chunk size, skipping any mismatching chunks that
+    // precede it
+    
+    while (true) {
+        string found = readTag();
+        if (found == "") {
+            throw InvalidFileFormat
+                (m_path, "end-of-file before expected tag \"" + tag + "\"");
+        }
+        if (found == tag) return;
+
+        // wrong tag: must skip it (or fail)
+        uint32_t chunkSize = readChunkSizeAfterTag();
+        m_file->ignore(chunkSize);
+        if (!m_file->good()) {
+            throw InvalidFileFormat
+                (m_path, "incomplete chunk following tag \"" + found + "\"");
+        }
     }
 }
 
@@ -176,7 +185,9 @@ string
 SimpleWavFileReadStream::readTag()
 {
     vector<uint8_t> v(4);
-    if (getBytes(4, v) != 4) {
+    int obtained = getBytes(4, v);
+    if (obtained == 0) return "";
+    if (obtained != 4) {
         throw InvalidFileFormat(m_path, "incomplete tag");
     }
     string tag((const char *)v.data(), 4);
@@ -209,7 +220,11 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
     size_t got = 0;
     
     while (got < requested) {
+        if (m_dataReadOffset >= m_dataChunkSize) {
+            break;
+        }
         int gotHere = getBytes(sampleSize, buf);
+        m_dataReadOffset += gotHere;
         if (gotHere < sampleSize) {
             return got / m_channelCount;
         }
