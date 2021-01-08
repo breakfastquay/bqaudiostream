@@ -18,12 +18,12 @@
 # will also be provided, as none of the other libraries have write
 # support included here.
 
-AUDIOSTREAM_DEFINES := -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -DHAVE_OPUS -DHAVE_MINIMP3
+AUDIOSTREAM_DEFINES := -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -DHAVE_OPUS
 
 
 # Add any related includes and libraries here
 #
-THIRD_PARTY_INCLUDES	:= -I/usr/include/opus -I../thirdparty/minimp3
+THIRD_PARTY_INCLUDES	:= -I/usr/include/opus
 THIRD_PARTY_LIBS	:=
 
 
