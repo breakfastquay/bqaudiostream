@@ -89,8 +89,14 @@ SimpleWavFileReadStream::readHeader()
         throw std::logic_error("internal error: no file in readHeader");
     }
     
-    uint32_t totalSize = readExpectedChunkSize("RIFF");
-    readExpectedTag("WAVE");
+    (void) readExpectedChunkSize("RIFF");
+
+    string found = readTag();
+    if (found != "WAVE") {
+        throw InvalidFileFormat
+            (m_path, "RIFF file is not WAVE format");
+    }
+
     uint32_t fmtSize = readExpectedChunkSize("fmt ");
     if (fmtSize < 16) {
         cout << "fmtSize = " << fmtSize << endl;
