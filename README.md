@@ -5,7 +5,10 @@ bqaudiostream
 A small library wrapping various audio file read/write implementations
 in C++.
 
-Status: A bit messy.
+Covers CoreAudio (on Mac), MediaFoundation (on Windows), libsndfile,
+Ogg/Vorbis, Opus, and MiniMP3. Also includes a small WAV file
+reader/writer so that there is always some implementation
+available. Suitable for Windows, Mac, and Linux.
 
 C++ standard required: C++98 (does not use C++11)
 
