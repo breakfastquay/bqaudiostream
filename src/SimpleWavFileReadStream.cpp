@@ -89,8 +89,14 @@ SimpleWavFileReadStream::readHeader()
         throw std::logic_error("internal error: no file in readHeader");
     }
     
-    uint32_t totalSize = readExpectedChunkSize("RIFF");
-    readExpectedTag("WAVE");
+    (void) readExpectedChunkSize("RIFF");
+
+    string found = readTag();
+    if (found != "WAVE") {
+        throw InvalidFileFormat
+            (m_path, "RIFF file is not WAVE format");
+    }
+
     uint32_t fmtSize = readExpectedChunkSize("fmt ");
     if (fmtSize < 16) {
         cout << "fmtSize = " << fmtSize << endl;
@@ -105,7 +111,7 @@ SimpleWavFileReadStream::readHeader()
     uint32_t channels = readMandatoryNumber(2);
     uint32_t sampleRate = readMandatoryNumber(4);
     uint32_t byteRate = readMandatoryNumber(4);
-    uint32_t bytesPerSample = readMandatoryNumber(2);
+    uint32_t bytesPerFrame = readMandatoryNumber(2);
     uint32_t bitsPerSample = readMandatoryNumber(2);
     
     if (bitsPerSample != 8 &&
@@ -129,10 +135,8 @@ SimpleWavFileReadStream::readHeader()
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
 
-    // we don't use these
-    (void)totalSize;
+    // we don't use
     (void)byteRate;
-    (void)bytesPerSample;
 
     // and we ignore extended format chunk data
     if (fmtSize > 16) {
@@ -140,6 +144,7 @@ SimpleWavFileReadStream::readHeader()
     }
 
     m_dataChunkSize = readExpectedChunkSize("data");
+    m_estimatedFrameCount = m_dataChunkSize / bytesPerFrame;
     m_dataReadOffset = 0;
 }
 

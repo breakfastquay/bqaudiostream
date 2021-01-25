@@ -76,7 +76,7 @@ MiniMP3ReadStream::MiniMP3ReadStream(string path) :
     m_channelCount = 0;
     m_sampleRate = 0;
 
-    int err = mp3dec_ex_open(&m_d->dec, path.c_str(), MP3D_DO_NOT_SCAN);
+    int err = mp3dec_ex_open(&m_d->dec, path.c_str(), 0);
     if (err) {
         ostringstream os;
         os << "MiniMP3ReadStream: Unable to open file (error code " << err << ")";
@@ -90,6 +90,7 @@ MiniMP3ReadStream::MiniMP3ReadStream(string path) :
 
     m_channelCount = m_d->dec.info.channels;
     m_sampleRate = m_d->dec.info.hz;
+    m_estimatedFrameCount = m_d->dec.samples / m_channelCount;
 }
 
 size_t

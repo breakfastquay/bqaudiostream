@@ -57,6 +57,7 @@ public:
 
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; } // source stream rate
+    size_t getEstimatedFrameCount() const;
     
     void setRetrievalSampleRate(size_t);
     size_t getRetrievalSampleRate() const;
@@ -86,6 +87,7 @@ protected:
     virtual size_t getFrames(size_t count, float *frames) = 0;
     size_t m_channelCount;
     size_t m_sampleRate;
+    size_t m_estimatedFrameCount;
 
 private:
     int getResampledChunk(int count, float *frames);

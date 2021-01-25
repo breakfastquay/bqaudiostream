@@ -110,6 +110,11 @@ OpusReadStream::OpusReadStream(string path) :
 
     m_channelCount = op_channel_count(m_d->file, -1);
     m_sampleRate = 48000; // libopusfile always decodes to 48kHz! I like that
+
+    ogg_int64_t total = op_pcm_total(m_d->file, -1);
+    if (total > 0) {
+        m_estimatedFrameCount = total / m_channelCount;
+    }
 }
 
 size_t
