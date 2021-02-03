@@ -59,6 +59,9 @@ public:
      * exception instead. (If there is simply no read stream
      * registered for the file extension, it will throw
      * UnknownFileType.)
+     *
+     * The returned AudioReadStream should be deleted by the caller
+     * when finished with.
      */
     static AudioReadStream *createReadStream(std::string fileName);
 
