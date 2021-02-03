@@ -59,6 +59,9 @@ public:
      * exception instead. (If there is simply no write stream
      * registered for the file extension, it will throw
      * UnknownFileType.)
+     *
+     * The returned AudioReadStream should be deleted by the caller
+     * when finished with and to close the file.
      */
     static AudioWriteStream *createWriteStream(std::string fileName,
                                                size_t channelCount,
