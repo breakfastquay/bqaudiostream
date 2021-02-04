@@ -228,6 +228,14 @@ CoreAudioReadStream::CoreAudioReadStream(string path) :
     m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
     m_d->buffer.mBuffers[0].mDataByteSize = 0;
     m_d->buffer.mBuffers[0].mData = 0;
+
+    int64_t totalFrames = 0;
+    propsize = sizeof(totalFrames);
+    noncritical = ExtAudioFileGetProperty
+	(m_d->file, kExtAudioFileProperty_FileLengthFrames, &propsize, &totalFrames);
+    if (noncritical == noErr && totalFrames > 0) {
+        m_estimatedFrameCount = totalFrames;
+    }
 }
 
 size_t
