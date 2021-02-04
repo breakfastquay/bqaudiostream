@@ -57,7 +57,7 @@ public:
 
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; } // source stream rate
-    size_t getEstimatedFrameCount() const;
+    size_t getEstimatedFrameCount() const; // at source stream rate
     
     void setRetrievalSampleRate(size_t);
     size_t getRetrievalSampleRate() const;
