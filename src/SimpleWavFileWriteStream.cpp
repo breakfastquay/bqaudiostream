@@ -67,7 +67,6 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     if (!*m_file) {
         delete m_file;
         m_file = 0;
-        cerr << "SimpleWavFileWriteStream: Failed to open output file for writing" << endl;
         m_error = string("Failed to open audio file '") +
             getPath() + "' for writing";
         throw FailedToWriteFile(getPath());

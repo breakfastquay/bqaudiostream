@@ -70,9 +70,6 @@ WavFileWriteStream::WavFileWriteStream(Target target) :
     m_file = sf_open(getPath().c_str(), SFM_WRITE, &m_fileInfo);
 
     if (!m_file) {
-	cerr << "WavFileWriteStream::initialize: Failed to open output file for writing ("
-		  << sf_strerror(m_file) << ")" << endl;
-
         m_error = string("Failed to open audio file '") +
             getPath() + "' for writing";
         throw FailedToWriteFile(getPath());

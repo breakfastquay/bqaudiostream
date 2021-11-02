@@ -102,7 +102,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     AudioWriteStream(target),
     m_d(new D)
 {
-    cerr << "CoreAudioWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
+//    cerr << "CoreAudioWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
 
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
 
@@ -135,7 +135,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Failed to create file: code " + codestr(m_d->err);
-        cerr << m_error << endl;
+//        cerr << m_error << endl;
         throw FailedToWriteFile(getPath());
     }
 
@@ -167,7 +167,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in setting client format: code " + codestr(m_d->err);
-        cerr << m_error << endl;
+//        cerr << m_error << endl;
 	ExtAudioFileDispose(m_d->file);
         throw FileOperationFailed(getPath(), "set client format");
     }
@@ -177,7 +177,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
     
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in initialising file writes: code " + codestr(m_d->err);
-        cerr << m_error << endl;
+//        cerr << m_error << endl;
 	ExtAudioFileDispose(m_d->file);
         throw FileOperationFailed(getPath(), "initialise file writes");
     }
@@ -191,7 +191,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
 CoreAudioWriteStream::~CoreAudioWriteStream()
 {
     if (m_d->file) {
-        cerr << "CoreAudioWriteStream::~CoreAudioWriteStream: disposing" << endl;
+//        cerr << "CoreAudioWriteStream::~CoreAudioWriteStream: disposing" << endl;
 	ExtAudioFileDispose(m_d->file);
     }
 }
@@ -211,7 +211,7 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, const float *frames)
     m_d->err = ExtAudioFileWrite(m_d->file, framesToWrite, &m_d->buffer);
     if (m_d->err) {
         m_error = "CoreAudioWriteStream: Error in encoder: code " + codestr(m_d->err);
-        cerr << m_error << endl;
+//        cerr << m_error << endl;
         throw FileOperationFailed(getPath(), "encode");
     }
 }
