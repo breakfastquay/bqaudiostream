@@ -43,10 +43,10 @@
 namespace breakfastquay
 {
 
-static vector<string>
+static std::vector<std::string>
 getOpusExtensions()
 {
-    vector<string> extensions;
+    std::vector<std::string> extensions;
     extensions.push_back("opus");
     return extensions;
 }
@@ -54,7 +54,7 @@ getOpusExtensions()
 static
 AudioReadStreamBuilder<OpusReadStream>
 opusbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/OpusReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/OpusReadStream"),
     getOpusExtensions()
     );
 
@@ -66,11 +66,11 @@ public:
     OggOpusFile *file;
 };
 
-OpusReadStream::OpusReadStream(string path) :
+OpusReadStream::OpusReadStream(std::string path) :
     m_path(path),
     m_d(new D)
 {
-    ostringstream os;
+    std::ostringstream os;
     
     m_channelCount = 0;
     m_sampleRate = 0;
@@ -92,11 +92,11 @@ OpusReadStream::OpusReadStream(string path) :
     const OpusTags *tags = op_tags(m_d->file, -1); //!!! who owns this?
     if (tags) {
         for (int i = 0; i < tags->comments; ++i) {
-            string comment = tags->user_comments[i];
+            std::string comment = tags->user_comments[i];
             for (size_t c = 0; c < comment.size(); ++c) {
                 if (comment[c] == '=') {
-                    string key = comment.substr(0, c);
-                    string value = comment.substr(c + 1, std::string::npos);
+                    std::string key = comment.substr(0, c);
+                    std::string value = comment.substr(c + 1, std::string::npos);
                     if (key == "title") {
                         m_track = value;
                     } else if (key == "artist") {
@@ -166,7 +166,7 @@ OpusReadStream::getFrames(size_t count, float *frames)
         }
 
         if (obtained < 0) {
-            ostringstream os;
+            std::ostringstream os;
             os << "OpusReadStream: Failed to read from file (error code "
                << obtained << ")";
             m_error = os.str();

@@ -52,15 +52,13 @@
 #include <iostream>
 #include <algorithm>
 
-using namespace std;
-
 namespace breakfastquay
 {
 
-static vector<string>
+static std::vector<std::string>
 getMediaFoundationExtensions()
 {
-    vector<string> extensions;
+    std::vector<std::string> extensions;
 
     extensions.push_back("mp3");
     extensions.push_back("wav");
@@ -78,7 +76,7 @@ getMediaFoundationExtensions()
 static
 AudioReadStreamBuilder<MediaFoundationReadStream>
 mediafoundationbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/MediaFoundationReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/MediaFoundationReadStream"),
     getMediaFoundationExtensions()
     );
 
@@ -143,8 +141,8 @@ public:
 
     bool complete;
 
-    string trackName;
-    string artistName;
+    std::string trackName;
+    std::string artistName;
 
     int getFrames(int count, float *frames);
     void convertSamples(const unsigned char *in, int inbufsize, float *out);
@@ -152,7 +150,7 @@ public:
     void fillBuffer();
 };
 
-static string
+static std::string
 wideStringToString(LPWSTR wstr)
 {
     if (!wstr) return "";
@@ -162,12 +160,12 @@ wideStringToString(LPWSTR wstr)
     char *conv = new char[len + 1];
     (void)WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, conv, len, 0, 0);
     conv[len] = '\0';
-    string s = string(conv, len);
+    std::string s = std::string(conv, len);
     delete[] conv;
     return s;
 }
 
-MediaFoundationReadStream::MediaFoundationReadStream(string path) :
+MediaFoundationReadStream::MediaFoundationReadStream(std::string path) :
     m_path(path),
     m_d(new D(this))
 {
@@ -183,7 +181,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     IMFMediaType *partialType = 0;
     int wlen = 0;
     wchar_t *wpath = NULL, *wfullpath = NULL;
-    string errorLocation;
+    std::string errorLocation;
     
     m_d->err = MFStartup(MF_VERSION);
     if (FAILED(m_d->err)) {
@@ -206,7 +204,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
     
     if (SUCCEEDED(SHGetPropertyStoreFromParsingName
                   (wfullpath, NULL, GPS_BESTEFFORT, IID_PPV_ARGS(&store)))) {
-        vector<wchar_t> buf(10000, L'\0'); 
+        std::vector<wchar_t> buf(10000, L'\0'); 
         PROPVARIANT v;
         if (SUCCEEDED(store->GetValue(PKEY_Title, &v)) &&
             SUCCEEDED(PropVariantToString(v, buf.data(), buf.size()-1))) {
@@ -316,7 +314,7 @@ MediaFoundationReadStream::MediaFoundationReadStream(string path) :
 fail:
     delete m_d;
     MFShutdown();
-    throw FileOperationFailed(m_path, string("MediaFoundation ") + errorLocation);
+    throw FileOperationFailed(m_path, std::string("MediaFoundation ") + errorLocation);
 }
 
 MediaFoundationReadStream::~MediaFoundationReadStream()
@@ -332,13 +330,13 @@ MediaFoundationReadStream::getFrames(size_t count, float *frames)
     return m_d->getFrames(int(count), frames);
 }
 
-string
+std::string
 MediaFoundationReadStream::getTrackName() const
 {
     return m_d->trackName;
 }
 
-string
+std::string
 MediaFoundationReadStream::getArtistName() const
 {
     return m_d->artistName;

@@ -38,13 +38,11 @@
 
 #include <iostream>
 
-using namespace std;
-
 namespace breakfastquay
 {
 
-static vector<string> extensions() {
-    vector<string> ee;
+static std::vector<std::string> extensions() {
+    std::vector<std::string> ee;
     ee.push_back("wav");
     return ee;
 }
@@ -52,7 +50,7 @@ static vector<string> extensions() {
 static 
 AudioReadStreamBuilder<SimpleWavFileReadStream>
 simplewavbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileReadStream"),
     extensions()
     );
 
@@ -63,7 +61,8 @@ SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_dataChunkSize(0),
     m_dataReadOffset(0)
 {
-    m_file = new ifstream(filename.c_str(), ios::in | std::ios::binary);
+    m_file = new std::ifstream(filename.c_str(),
+                               std::ios::in | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;
@@ -91,7 +90,7 @@ SimpleWavFileReadStream::readHeader()
     
     (void) readExpectedChunkSize("RIFF");
 
-    string found = readTag();
+    std::string found = readTag();
     if (found != "WAVE") {
         throw InvalidFileFormat
             (m_path, "RIFF file is not WAVE format");
@@ -99,7 +98,7 @@ SimpleWavFileReadStream::readHeader()
 
     uint32_t fmtSize = readExpectedChunkSize("fmt ");
     if (fmtSize < 16) {
-        cout << "fmtSize = " << fmtSize << endl;
+        std::cout << "fmtSize = " << fmtSize << std::endl;
         throw InvalidFileFormat(m_path, "unexpectedly short format chunk");
     }
 
@@ -149,7 +148,7 @@ SimpleWavFileReadStream::readHeader()
 }
 
 uint32_t
-SimpleWavFileReadStream::readExpectedChunkSize(string tag)
+SimpleWavFileReadStream::readExpectedChunkSize(std::string tag)
 {
     // Read up to and including the given tag and its chunk size,
     // skipping any mismatching chunks that precede it. Return the
@@ -160,14 +159,14 @@ SimpleWavFileReadStream::readExpectedChunkSize(string tag)
 }
 
 void
-SimpleWavFileReadStream::readExpectedTag(string tag)
+SimpleWavFileReadStream::readExpectedTag(std::string tag)
 {
     // Read up to and including the given tag, without reading its
     // following chunk size, skipping any mismatching chunks that
     // precede it
     
     while (true) {
-        string found = readTag();
+        std::string found = readTag();
         if (found == "") {
             throw InvalidFileFormat
                 (m_path, "end-of-file before expected tag \"" + tag + "\"");
@@ -184,23 +183,23 @@ SimpleWavFileReadStream::readExpectedTag(string tag)
     }
 }
 
-string
+std::string
 SimpleWavFileReadStream::readTag()
 {
-    vector<uint8_t> v(4);
+    std::vector<uint8_t> v(4);
     int obtained = getBytes(4, v);
     if (obtained == 0) return "";
     if (obtained != 4) {
         throw InvalidFileFormat(m_path, "incomplete tag");
     }
-    string tag((const char *)v.data(), 4);
+    std::string tag((const char *)v.data(), 4);
     return tag;
 }
 
 uint32_t
 SimpleWavFileReadStream::readMandatoryNumber(int length)
 {
-    vector<uint8_t> v(length);
+    std::vector<uint8_t> v(length);
     if (getBytes(length, v) != length) {
         throw InvalidFileFormat(m_path, "incomplete number");
     }
@@ -217,7 +216,7 @@ size_t
 SimpleWavFileReadStream::getFrames(size_t count, float *frames)
 {
     int sampleSize = m_bitDepth / 8;
-    vector<uint8_t> buf(sampleSize);
+    std::vector<uint8_t> buf(sampleSize);
     
     size_t requested = count * m_channelCount;
     size_t got = 0;
@@ -244,13 +243,13 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
 }
 
 float
-SimpleWavFileReadStream::convertSample8(const vector<uint8_t> &v)
+SimpleWavFileReadStream::convertSample8(const std::vector<uint8_t> &v)
 {
     return float(int32_t(v[0]) - 128) / 128.0;
 }
 
 float
-SimpleWavFileReadStream::convertSample16(const vector<uint8_t> &v)
+SimpleWavFileReadStream::convertSample16(const std::vector<uint8_t> &v)
 {
     uint32_t b0 = v[0], b1 = v[1];
 
@@ -261,7 +260,7 @@ SimpleWavFileReadStream::convertSample16(const vector<uint8_t> &v)
 }
 
 float
-SimpleWavFileReadStream::convertSample24(const vector<uint8_t> &v)
+SimpleWavFileReadStream::convertSample24(const std::vector<uint8_t> &v)
 {
     uint32_t b0 = v[0], b1 = v[1], b2 = v[2];
 
@@ -272,13 +271,13 @@ SimpleWavFileReadStream::convertSample24(const vector<uint8_t> &v)
 }
 
 float
-SimpleWavFileReadStream::convertSampleFloat(const vector<uint8_t> &v)
+SimpleWavFileReadStream::convertSampleFloat(const std::vector<uint8_t> &v)
 {
     if (!m_floatSwap) {
         const uint8_t *buf = v.data();
         return *(const float *)buf;
     } else {
-        vector<uint8_t> vv(4);
+        std::vector<uint8_t> vv(4);
         for (int i = 0; i < 4; ++i) {
             vv[i] = v[3-i];
         }
@@ -288,7 +287,7 @@ SimpleWavFileReadStream::convertSampleFloat(const vector<uint8_t> &v)
 }
 
 int
-SimpleWavFileReadStream::getBytes(int n, vector<uint8_t> &v)
+SimpleWavFileReadStream::getBytes(int n, std::vector<uint8_t> &v)
 {
     if (!m_file) return 0;
 
@@ -306,7 +305,7 @@ SimpleWavFileReadStream::getBytes(int n, vector<uint8_t> &v)
 }
 
 uint32_t
-SimpleWavFileReadStream::le2int(const vector<uint8_t> &le)
+SimpleWavFileReadStream::le2int(const std::vector<uint8_t> &le)
 {
     uint32_t n = 0;
     int len = int(le.size());

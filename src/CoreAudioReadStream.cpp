@@ -54,10 +54,10 @@
 namespace breakfastquay
 {
 
-static vector<string>
+static std::vector<std::string>
 getCoreAudioExtensions()
 {
-    vector<string> extensions;
+    std::vector<std::string> extensions;
     extensions.push_back("aiff");
     extensions.push_back("aif");
     extensions.push_back("au");
@@ -76,7 +76,7 @@ getCoreAudioExtensions()
 static
 AudioReadStreamBuilder<CoreAudioReadStream>
 coreaudiobuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioReadStream"),
     getCoreAudioExtensions()
     );
 
@@ -91,7 +91,7 @@ public:
     AudioStreamBasicDescription  asbd;
 };
 
-static string
+static std::string
 codestr(OSStatus err)
 {
     char text[5];
@@ -106,7 +106,7 @@ codestr(OSStatus err)
     return os.str();
 }
 
-CoreAudioReadStream::CoreAudioReadStream(string path) :
+CoreAudioReadStream::CoreAudioReadStream(std::string path) :
     m_path(path),
     m_d(new D)
 {
@@ -170,7 +170,7 @@ CoreAudioReadStream::CoreAudioReadStream(string path) :
                     CFStringRef value = reinterpret_cast<CFStringRef>(vv[i]);
                     if (CFStringGetCString(key, buffer, bufsize,
                                            kCFStringEncodingUTF8)) {
-                        string kstr = buffer;
+                        std::string kstr = buffer;
                         if (CFStringGetCString(value, buffer, bufsize,
                                                kCFStringEncodingUTF8)) {
                             if (kstr == kAFInfoDictionary_Title) {

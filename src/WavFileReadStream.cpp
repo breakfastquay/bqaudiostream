@@ -39,15 +39,13 @@
 
 #include <iostream>
 
-using namespace std;
-
 namespace breakfastquay
 {
 
-static vector<string>
+static std::vector<std::string>
 getWavReaderExtensions()
 {
-    vector<string> extensions;
+    std::vector<std::string> extensions;
     int count;
     
     if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
@@ -62,7 +60,7 @@ getWavReaderExtensions()
     for (int i = 0; i < count; ++i) {
         info.format = i;
         if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.push_back(string(info.extension));
+            extensions.push_back(std::string(info.extension));
         }
     }
 
@@ -72,11 +70,11 @@ getWavReaderExtensions()
 static
 AudioReadStreamBuilder<WavFileReadStream>
 wavbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileReadStream"),
     getWavReaderExtensions()
     );
 
-WavFileReadStream::WavFileReadStream(string path) :
+WavFileReadStream::WavFileReadStream(std::string path) :
     m_file(0),
     m_path(path),
     m_offset(0)
@@ -106,15 +104,15 @@ WavFileReadStream::WavFileReadStream(string path) :
 //	cerr << "WavFileReadStream::initialize: Failed to open file \""
 //                  << path << "\" (" << sf_strerror(m_file) << ")" << endl;
         if (sf_error(m_file) == SF_ERR_SYSTEM) {
-	    m_error = string("Couldn't load audio file '") +
+	    m_error = std::string("Couldn't load audio file '") +
                 m_path + "':\n" + sf_strerror(m_file);
             throw FileNotFound(m_path);
         }
 	if (m_file) {
-	    m_error = string("Couldn't load audio file '") +
+	    m_error = std::string("Couldn't load audio file '") +
                 m_path + "':\n" + sf_strerror(m_file);
 	} else {
-	    m_error = string("Failed to open audio file '") +
+	    m_error = std::string("Failed to open audio file '") +
 		m_path + "'";
 	}
         throw InvalidFileFormat(m_path, m_error);

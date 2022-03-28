@@ -41,15 +41,13 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
-
 namespace breakfastquay
 {
 
-static vector<string>
+static std::vector<std::string>
 getOpusWriteExtensions()
 {
-    vector<string> extensions;
+    std::vector<std::string> extensions;
     extensions.push_back("opus");
     return extensions;
 }
@@ -57,7 +55,7 @@ getOpusWriteExtensions()
 static 
 AudioWriteStreamBuilder<OpusWriteStream>
 opuswritebuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/OpusWriteStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/OpusWriteStream"),
     getOpusWriteExtensions()
     );
 

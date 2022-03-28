@@ -44,8 +44,8 @@ using namespace std;
 namespace breakfastquay
 {
 
-static vector<string> extensions() {
-    vector<string> ee;
+static std::vector<std::string> extensions() {
+    std::vector<std::string> ee;
     ee.push_back("wav");
     return ee;
 }
@@ -53,7 +53,7 @@ static vector<string> extensions() {
 static 
 AudioWriteStreamBuilder<SimpleWavFileWriteStream>
 simplewavbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
     extensions()
     );
 
@@ -62,12 +62,12 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     m_bitDepth(24),
     m_file(0)
 {
-    m_file = new ofstream(getPath().c_str(), ios::out | std::ios::binary);
+    m_file = new std::ofstream(getPath().c_str(), ios::out | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;
         m_file = 0;
-        m_error = string("Failed to open audio file '") +
+        m_error = std::string("Failed to open audio file '") +
             getPath() + "' for writing";
         throw FailedToWriteFile(getPath());
     }
@@ -103,7 +103,7 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
 }
 
 void
-SimpleWavFileWriteStream::putBytes(string s)
+SimpleWavFileWriteStream::putBytes(std::string s)
 {
     if (!m_file) return;
     for (uint32_t i = 0; i < s.length(); i++) {
@@ -118,10 +118,10 @@ SimpleWavFileWriteStream::putBytes(const uint8_t *buffer, size_t n)
     m_file->write((const char *)buffer, n);
 }
 
-string
+std::string
 SimpleWavFileWriteStream::int2le(uint32_t value, uint32_t length)
 {
-    string r(length, '\0');
+    std::string r(length, '\0');
 
     for (uint32_t i = 0; i < length; ++i) {
         r[i] = (uint8_t)(value & 0xff);
@@ -136,7 +136,7 @@ SimpleWavFileWriteStream::writeFormatChunk()
 {
     if (!m_file) return;
 
-    string outString;
+    std::string outString;
 
     outString += "RIFF";
     outString += "0000";

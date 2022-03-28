@@ -40,8 +40,6 @@
 
 #include "AudioReadStreamFactory.h"
 
-using namespace std;
-
 namespace breakfastquay {
 
 typedef ThingFactory<AudioWriteStream, AudioWriteStream::Target>
@@ -52,11 +50,11 @@ AudioWriteStreamFactoryImpl;
 //AudioWriteStreamFactoryImpl::m_instance = 0;
 
 AudioWriteStream *
-AudioWriteStreamFactory::createWriteStream(string audioFileName,
+AudioWriteStreamFactory::createWriteStream(std::string audioFileName,
                                            size_t channelCount,
                                            size_t sampleRate)
 {
-    string extension = AudioReadStreamFactory::extensionOf(audioFileName);
+    std::string extension = AudioReadStreamFactory::extensionOf(audioFileName);
     
     AudioWriteStream::Target target(audioFileName, channelCount, sampleRate);
 
@@ -71,20 +69,20 @@ AudioWriteStreamFactory::createWriteStream(string audioFileName,
     }
 }
 
-vector<string>
+std::vector<std::string>
 AudioWriteStreamFactory::getSupportedFileExtensions()
 {
     return AudioWriteStreamFactoryImpl::getInstance()->getTags();
 }
 
-string
+std::string
 AudioWriteStreamFactory::getDefaultUncompressedFileExtension()
 {
-    vector<string> candidates;
+    std::vector<std::string> candidates;
     candidates.push_back("wav");
     candidates.push_back("aiff");
-    vector<string> supported = getSupportedFileExtensions();
-    set<string> sset(supported.begin(), supported.end());
+    std::vector<std::string> supported = getSupportedFileExtensions();
+    std::set<std::string> sset(supported.begin(), supported.end());
     for (size_t i = 0; i < candidates.size(); ++i) {
         if (sset.find(candidates[i]) != sset.end()) {
             return candidates[i];
@@ -93,17 +91,17 @@ AudioWriteStreamFactory::getDefaultUncompressedFileExtension()
     return "";
 }
 
-string
+std::string
 AudioWriteStreamFactory::getDefaultLossyFileExtension()
 {
-    vector<string> candidates;
+    std::vector<std::string> candidates;
     candidates.push_back("mp3");
     candidates.push_back("m4a");
     candidates.push_back("opus");
     candidates.push_back("ogg");
     candidates.push_back("oga");
-    vector<string> supported = getSupportedFileExtensions();
-    set<string> sset(supported.begin(), supported.end());
+    std::vector<std::string> supported = getSupportedFileExtensions();
+    std::set<std::string> sset(supported.begin(), supported.end());
     for (size_t i = 0; i < candidates.size(); ++i) {
         if (sset.find(candidates[i]) != sset.end()) {
             return candidates[i];
@@ -113,11 +111,11 @@ AudioWriteStreamFactory::getDefaultLossyFileExtension()
 }
 
 bool
-AudioWriteStreamFactory::isExtensionSupportedFor(string fileName)
+AudioWriteStreamFactory::isExtensionSupportedFor(std::string fileName)
 {
-    vector<string> supported = getSupportedFileExtensions();
-    set<string> sset(supported.begin(), supported.end());
-    string ext = AudioReadStreamFactory::extensionOf(fileName);
+    std::vector<std::string> supported = getSupportedFileExtensions();
+    std::set<std::string> sset(supported.begin(), supported.end());
+    std::string ext = AudioReadStreamFactory::extensionOf(fileName);
     return sset.find(ext) != sset.end();
 }
 

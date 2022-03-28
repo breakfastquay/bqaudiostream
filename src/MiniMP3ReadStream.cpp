@@ -45,10 +45,10 @@
 namespace breakfastquay
 {
 
-static vector<string>
+static vector<std::string>
 getMiniMP3Extensions()
 {
-    vector<string> extensions;
+    vector<std::string> extensions;
     extensions.push_back("mp3");
     return extensions;
 }
@@ -56,7 +56,7 @@ getMiniMP3Extensions()
 static
 AudioReadStreamBuilder<MiniMP3ReadStream>
 minimp3builder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/MiniMP3ReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/MiniMP3ReadStream"),
     getMiniMP3Extensions()
     );
 
@@ -67,7 +67,7 @@ public:
     mp3dec_ex_t dec;
 };
 
-MiniMP3ReadStream::MiniMP3ReadStream(string path) :
+MiniMP3ReadStream::MiniMP3ReadStream(std::string path) :
     m_path(path),
     m_d(new D)
 {

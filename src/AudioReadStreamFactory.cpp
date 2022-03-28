@@ -40,29 +40,27 @@
 
 #define DEBUG_AUDIO_READ_STREAM_FACTORY 1
 
-using namespace std;
-
 namespace breakfastquay {
 
-typedef ThingFactory<AudioReadStream, string>
+typedef ThingFactory<AudioReadStream, std::string>
 AudioReadStreamFactoryImpl;
 
-string
-AudioReadStreamFactory::extensionOf(string audioFileName)
+std::string
+AudioReadStreamFactory::extensionOf(std::string audioFileName)
 {
-    string::size_type pos = audioFileName.rfind('.');
-    if (pos == string::npos) return "";
-    string ext;
-    for (string::size_type i = pos + 1; i < audioFileName.size(); ++i) {
+    std::string::size_type pos = audioFileName.rfind('.');
+    if (pos == std::string::npos) return "";
+    std::string ext;
+    for (std::string::size_type i = pos + 1; i < audioFileName.size(); ++i) {
         ext += (char)tolower((unsigned char)audioFileName[i]);
     }
     return ext;
 }
 
 AudioReadStream *
-AudioReadStreamFactory::createReadStream(string audioFileName)
+AudioReadStreamFactory::createReadStream(std::string audioFileName)
 {
-    string extension = extensionOf(audioFileName);
+    std::string extension = extensionOf(audioFileName);
 
     AudioReadStreamFactoryImpl *f = AudioReadStreamFactoryImpl::getInstance();
 
@@ -82,27 +80,27 @@ AudioReadStreamFactory::createReadStream(string audioFileName)
     }
 }
 
-vector<string>
+std::vector<std::string>
 AudioReadStreamFactory::getSupportedFileExtensions()
 {
     return AudioReadStreamFactoryImpl::getInstance()->getTags();
 }
 
 bool
-AudioReadStreamFactory::isExtensionSupportedFor(string fileName)
+AudioReadStreamFactory::isExtensionSupportedFor(std::string fileName)
 {
-    vector<string> supported = getSupportedFileExtensions();
-    set<string> sset(supported.begin(), supported.end());
+    std::vector<std::string> supported = getSupportedFileExtensions();
+    std::set<std::string> sset(supported.begin(), supported.end());
     return sset.find(extensionOf(fileName)) != sset.end();
 }
 
-string
+std::string
 AudioReadStreamFactory::getFileFilter()
 {
-    vector<string> extensions = getSupportedFileExtensions();
-    string filter;
+    std::vector<std::string> extensions = getSupportedFileExtensions();
+    std::string filter;
     for (size_t i = 0; i < extensions.size(); ++i) {
-        string ext = extensions[i];
+        std::string ext = extensions[i];
         if (filter != "") filter += " ";
         filter += "*." + ext;
     }

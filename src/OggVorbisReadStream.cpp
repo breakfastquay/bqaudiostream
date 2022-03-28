@@ -49,10 +49,10 @@
 namespace breakfastquay
 {
 
-static vector<string>
+static vector<std::string>
 getOggExtensions()
 {
-    vector<string> extensions;
+    vector<std::string> extensions;
     extensions.push_back("ogg");
     extensions.push_back("oga");
     return extensions;
@@ -61,7 +61,7 @@ getOggExtensions()
 static
 AudioReadStreamBuilder<OggVorbisReadStream>
 oggbuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/OggVorbisReadStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/OggVorbisReadStream"),
     getOggExtensions()
     );
 
@@ -88,18 +88,18 @@ public:
     bool m_namesRead;
     bool m_finished;
 
-    string m_trackName;
-    string m_artistName;
+    std::string m_trackName;
+    std::string m_artistName;
 
     bool isFinished() const {
         return m_finished;
     }
 
-    string getTrackName() const {
+    std::string getTrackName() const {
         return m_trackName;
     }
 
-    string getArtistName() const {
+    std::string getArtistName() const {
         return m_artistName;
     }
 
@@ -137,11 +137,11 @@ public:
             const FishSoundComment *c;
             c = fish_sound_comment_first_byname(m_fishSound, (char *)"TITLE");
             if (c && c->value) {
-                m_trackName = string(c->value);
+                m_trackName = std::string(c->value);
             }
             c = fish_sound_comment_first_byname(m_fishSound, (char *)"ARTIST");
             if (c && c->value) {
-                m_artistName = string(c->value);
+                m_artistName = std::string(c->value);
             }
             m_namesRead = true;
         }
@@ -174,7 +174,7 @@ public:
     }
 };
 
-OggVorbisReadStream::OggVorbisReadStream(string path) :
+OggVorbisReadStream::OggVorbisReadStream(std::string path) :
     m_path(path),
     m_d(new D(this))
 {
@@ -184,7 +184,7 @@ OggVorbisReadStream::OggVorbisReadStream(string path) :
     //!!! todo: accommodate Windows UTF16
     
     if (!(m_d->m_oggz = oggz_open(m_path.c_str(), OGGZ_READ))) {
-	m_error = string("File \"") + m_path + "\" is not an Ogg file.";
+	m_error = std::string("File \"") + m_path + "\" is not an Ogg file.";
         throw InvalidFileFormat(m_path, m_error);
     }
 
@@ -201,7 +201,7 @@ OggVorbisReadStream::OggVorbisReadStream(string path) :
     }
 
     if (m_channelCount == 0) {
-	m_error = string("File \"") + m_path + "\" is not a valid Ogg Vorbis file.";
+	m_error = std::string("File \"") + m_path + "\" is not a valid Ogg Vorbis file.";
         throw InvalidFileFormat(m_path, m_error);
     }
 }
@@ -211,13 +211,13 @@ OggVorbisReadStream::~OggVorbisReadStream()
     delete m_d;
 }
 
-string
+std::string
 OggVorbisReadStream::getTrackName() const
 {
     return m_d->getTrackName();
 }
 
-string
+std::string
 OggVorbisReadStream::getArtistName() const
 {
     return m_d->getArtistName();

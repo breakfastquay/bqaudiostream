@@ -52,15 +52,13 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
-
 namespace breakfastquay
 {
 
-static vector<string>
+static std::vector<std::string>
 getCoreAudioWriteExtensions()
 {
-    vector<string> extensions;
+    std::vector<std::string> extensions;
     extensions.push_back("m4a");
     return extensions;
 }
@@ -68,7 +66,7 @@ getCoreAudioWriteExtensions()
 static 
 AudioWriteStreamBuilder<CoreAudioWriteStream>
 coreaudiowritebuilder(
-    string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioWriteStream"),
+    std::string("http://breakfastquay.com/rdf/turbot/audiostream/CoreAudioWriteStream"),
     getCoreAudioWriteExtensions()
     );
 
@@ -83,7 +81,7 @@ public:
     OSStatus                     err; 
 };
 
-static string
+static std::string
 codestr(OSStatus err)
 {
     char text[5];
@@ -114,7 +112,7 @@ CoreAudioWriteStream::CoreAudioWriteStream(Target target) :
                                       &propsize, &m_d->asbd);
 
 
-    string path = getPath();
+    std::string path = getPath();
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
          (const UInt8 *)path.c_str(),

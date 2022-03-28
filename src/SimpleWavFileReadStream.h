@@ -80,10 +80,10 @@ private:
     uint32_t readChunkSizeAfterTag();
     uint32_t readMandatoryNumber(int length);
 
-    float convertSample8(const vector<uint8_t> &);
-    float convertSample16(const vector<uint8_t> &);
-    float convertSample24(const vector<uint8_t> &);
-    float convertSampleFloat(const vector<uint8_t> &);
+    float convertSample8(const std::vector<uint8_t> &);
+    float convertSample16(const std::vector<uint8_t> &);
+    float convertSample24(const std::vector<uint8_t> &);
+    float convertSampleFloat(const std::vector<uint8_t> &);
 
     int getBytes(int n, std::vector<uint8_t> &);
     static uint32_t le2int(const std::vector<uint8_t> &le);
