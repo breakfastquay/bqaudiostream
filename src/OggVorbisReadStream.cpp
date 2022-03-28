@@ -49,10 +49,10 @@
 namespace breakfastquay
 {
 
-static vector<std::string>
+static std::vector<std::string>
 getOggExtensions()
 {
-    vector<std::string> extensions;
+    std::vector<std::string> extensions;
     extensions.push_back("ogg");
     extensions.push_back("oga");
     return extensions;

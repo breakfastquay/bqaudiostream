@@ -45,10 +45,10 @@
 namespace breakfastquay
 {
 
-static vector<std::string>
+static std::vector<std::string>
 getMiniMP3Extensions()
 {
-    vector<std::string> extensions;
+    std::vector<std::string> extensions;
     extensions.push_back("mp3");
     return extensions;
 }
@@ -78,7 +78,7 @@ MiniMP3ReadStream::MiniMP3ReadStream(std::string path) :
 
     int err = mp3dec_ex_open(&m_d->dec, path.c_str(), 0);
     if (err) {
-        ostringstream os;
+        std::ostringstream os;
         os << "MiniMP3ReadStream: Unable to open file (error code " << err << ")";
         m_error = os.str();
         if (err == MP3D_E_IOERROR) {
@@ -108,7 +108,7 @@ MiniMP3ReadStream::getFrames(size_t count, float *frames)
     
     if (obtained < desired) {
         if (m_d->dec.last_error) {
-            ostringstream os;
+            std::ostringstream os;
             os << "MiniMP3ReadStream: Failed to read from file (error code "
                << m_d->dec.last_error << ")";
             m_error = os.str();
