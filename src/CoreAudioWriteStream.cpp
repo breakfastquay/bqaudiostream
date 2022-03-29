@@ -91,7 +91,7 @@ codestr(OSStatus err)
     text[2] = (uerr >> 8) & 0xff;
     text[3] = (uerr) & 0xff;
     text[4] = '\0';
-    ostringstream os;
+    std::ostringstream os;
     os << err << " (" << text << ")";
     return os.str();
 }
