@@ -34,6 +34,8 @@
 
 #ifdef HAVE_OPUS
 
+//#define DEBUG_OPUS_WRITE 1
+
 #include "OpusWriteStream.h"
 
 #include <opus/opusenc.h>
@@ -62,17 +64,20 @@ opuswritebuilder(
 class OpusWriteStream::D
 {
 public:
-    D() : encoder(0) { }
+    D() : encoder(0), begun(false) { }
 
     OggOpusComments *comments;
     OggOpusEnc *encoder;
+    bool begun;
 };
 
 OpusWriteStream::OpusWriteStream(Target target) :
     AudioWriteStream(target),
     m_d(new D)
 {
-//    cerr << "OpusWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
+#ifdef DEBUG_OPUS_WRITE
+    cerr << "OpusWriteStream::OpusWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
+#endif
 
     //!!! +windows file encoding?
 
@@ -98,12 +103,24 @@ OpusWriteStream::OpusWriteStream(Target target) :
 OpusWriteStream::~OpusWriteStream()
 {
     if (m_d->encoder) {
-//        cerr << "OpusWriteStream::~OpusWriteStream: closing" << endl;
-        int err = ope_encoder_drain(m_d->encoder);
-        if (err) {
-            cerr << "WARNING: ope_encoder_drain failed (error code "
-                 << err << ")" << endl;
+#ifdef DEBUG_OPUS_WRITE
+        cerr << "OpusWriteStream::~OpusWriteStream: closing" << endl;
+#endif
+        if (m_d->begun) {
+            int err = ope_encoder_drain(m_d->encoder);
+            if (err) {
+                cerr << "WARNING: ope_encoder_drain failed (error code "
+                     << err << ")" << endl;
+            }
+        } else {
+            // ope_encoder_drain can crash (!) if called without any
+            // data having been previously written - see
+            // https://github.com/xiph/libopusenc/issues/24
+#ifdef DEBUG_OPUS_WRITE
+            cerr << "OpusWriteStream::~OpusWriteStream: not draining (nothing has been written)" << endl;
+#endif
         }
+            
         ope_encoder_destroy(m_d->encoder);
         ope_comments_destroy(m_d->comments);
     }
@@ -112,7 +129,12 @@ OpusWriteStream::~OpusWriteStream()
 void
 OpusWriteStream::putInterleavedFrames(size_t count, const float *frames)
 {
-    if (count == 0 || !m_d->encoder) return;
+    if (count == 0 || !m_d->encoder) {
+#ifdef DEBUG_OPUS_WRITE
+        cerr << "OpusWriteStream::putInterleavedFrames: No encoder!" << endl;
+#endif
+        return;
+    }
 
     int err = ope_encoder_write_float(m_d->encoder, frames, count);
 
@@ -124,6 +146,12 @@ OpusWriteStream::putInterleavedFrames(size_t count, const float *frames)
         cerr << m_error << endl;
         throw FileOperationFailed(getPath(), "encode");
     }
+
+    m_d->begun = true;
+    
+#ifdef DEBUG_OPUS_WRITE
+    cerr << "OpusWriteStream::putInterleavedFrames: wrote " << count << " frames" << endl;
+#endif
 }
 
 }
