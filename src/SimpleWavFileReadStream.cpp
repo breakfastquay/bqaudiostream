@@ -143,7 +143,11 @@ SimpleWavFileReadStream::readHeader()
     }
 
     m_dataChunkSize = readExpectedChunkSize("data");
-    m_estimatedFrameCount = m_dataChunkSize / bytesPerFrame;
+    if (bytesPerFrame > 0) {
+        m_estimatedFrameCount = m_dataChunkSize / bytesPerFrame;
+    } else {
+        m_estimatedFrameCount = 0;
+    }
     m_dataReadOffset = 0;
 }
 

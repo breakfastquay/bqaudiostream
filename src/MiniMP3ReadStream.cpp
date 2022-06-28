@@ -90,7 +90,12 @@ MiniMP3ReadStream::MiniMP3ReadStream(std::string path) :
 
     m_channelCount = m_d->dec.info.channels;
     m_sampleRate = m_d->dec.info.hz;
-    m_estimatedFrameCount = m_d->dec.samples / m_channelCount;
+
+    if (m_channelCount > 0) {
+        m_estimatedFrameCount = m_d->dec.samples / m_channelCount;
+    } else {
+        m_estimatedFrameCount = 0;
+    }
 }
 
 size_t
