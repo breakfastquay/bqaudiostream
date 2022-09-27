@@ -234,6 +234,7 @@ CoreAudioReadStream::CoreAudioReadStream(std::string path) :
     noncritical = ExtAudioFileGetProperty
 	(m_d->file, kExtAudioFileProperty_FileLengthFrames, &propsize, &totalFrames);
     if (noncritical == noErr && totalFrames > 0) {
+//        std::cerr << "CoreAudioReadStream: estimated frame count " << totalFrames << std::endl;
         m_estimatedFrameCount = totalFrames;
     }
 }
@@ -244,27 +245,38 @@ CoreAudioReadStream::getFrames(size_t count, float *frames)
     if (!m_channelCount) return 0;
     if (count == 0) return 0;
 
-    m_d->buffer.mBuffers[0].mDataByteSize =
-        sizeof(float) * m_channelCount * count;
+    UInt32 obtained = 0;
+
+    while (obtained < count) {
+
+        m_d->buffer.mBuffers[0].mDataByteSize =
+            sizeof(float) * m_channelCount * (count - obtained);
     
-    m_d->buffer.mBuffers[0].mData = frames;
+        m_d->buffer.mBuffers[0].mData = frames + m_channelCount * obtained;
+    
+        UInt32 framesRead = count - obtained;
 
-    UInt32 framesRead = count;
+        m_d->err = ExtAudioFileRead(m_d->file, &framesRead, &m_d->buffer);
+        if (m_d->err) {
+            m_error = "CoreAudioReadStream: Error in decoder: code " + codestr(m_d->err);
+            throw InvalidFileFormat(m_path, "error in decoder");
+        }
 
-    m_d->err = ExtAudioFileRead(m_d->file, &framesRead, &m_d->buffer);
-    if (m_d->err) {
-        m_error = "CoreAudioReadStream: Error in decoder: code " + codestr(m_d->err);
-        throw InvalidFileFormat(m_path, "error in decoder");
+//        std::cerr << "CoreAudioReadStream::getFrames: " << count << " frames requested across " << m_channelCount << " channel(s), " << framesRead << " frames actually read" << std::endl;
+
+        if (framesRead == 0) {
+            break;
+        }
+
+        obtained += framesRead;
     }
 
- //   cerr << "CoreAudioReadStream::getFrames: " << count << " frames requested across " << m_channelCount << " channel(s), " << framesRead << " frames actually read" << std::endl;
-
-    return framesRead;
+    return obtained;
 }
 
 CoreAudioReadStream::~CoreAudioReadStream()
 {
-//    cerr << "CoreAudioReadStream::~CoreAudioReadStream" << std::endl;
+//    std::cerr << "CoreAudioReadStream::~CoreAudioReadStream" << std::endl;
 
     if (m_channelCount) {
 	ExtAudioFileDispose(m_d->file);
