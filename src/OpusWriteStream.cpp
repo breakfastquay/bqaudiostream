@@ -76,7 +76,7 @@ OpusWriteStream::OpusWriteStream(Target target) :
     m_d(new D)
 {
 #ifdef DEBUG_OPUS_WRITE
-    cerr << "OpusWriteStream::OpusWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << endl;
+    std::cerr << "OpusWriteStream::OpusWriteStream: file is " << getPath() << ", channel count is " << getChannelCount() << ", sample rate " << getSampleRate() << std::endl;
 #endif
 
     //!!! +windows file encoding?
@@ -90,11 +90,11 @@ OpusWriteStream::OpusWriteStream(Target target) :
                                            &err);
 
     if (err || !m_d->encoder) {
-        ostringstream os;    
+        std::ostringstream os;    
         os << "OpusWriteStream: Unable to open file for writing (error code "
            << err << ")";
         m_error = os.str();
-        cerr << m_error << endl;
+        std::cerr << m_error << std::endl;
         m_d->encoder = 0;
         throw FailedToWriteFile(getPath());
     }    
@@ -104,20 +104,20 @@ OpusWriteStream::~OpusWriteStream()
 {
     if (m_d->encoder) {
 #ifdef DEBUG_OPUS_WRITE
-        cerr << "OpusWriteStream::~OpusWriteStream: closing" << endl;
+        std::cerr << "OpusWriteStream::~OpusWriteStream: closing" << std::endl;
 #endif
         if (m_d->begun) {
             int err = ope_encoder_drain(m_d->encoder);
             if (err) {
-                cerr << "WARNING: ope_encoder_drain failed (error code "
-                     << err << ")" << endl;
+                std::cerr << "WARNING: ope_encoder_drain failed (error code "
+                          << err << ")" << std::endl;
             }
         } else {
             // ope_encoder_drain can crash (!) if called without any
             // data having been previously written - see
             // https://github.com/xiph/libopusenc/issues/24
 #ifdef DEBUG_OPUS_WRITE
-            cerr << "OpusWriteStream::~OpusWriteStream: not draining (nothing has been written)" << endl;
+            std::cerr << "OpusWriteStream::~OpusWriteStream: not draining (nothing has been written)" << std::endl;
 #endif
         }
             
@@ -131,7 +131,8 @@ OpusWriteStream::putInterleavedFrames(size_t count, const float *frames)
 {
     if (count == 0 || !m_d->encoder) {
 #ifdef DEBUG_OPUS_WRITE
-        cerr << "OpusWriteStream::putInterleavedFrames: No encoder!" << endl;
+        std::cerr << "OpusWriteStream::putInterleavedFrames: No encoder!"
+                  << std::endl;
 #endif
         return;
     }
@@ -139,18 +140,18 @@ OpusWriteStream::putInterleavedFrames(size_t count, const float *frames)
     int err = ope_encoder_write_float(m_d->encoder, frames, count);
 
     if (err) {
-        ostringstream os;    
+        std::ostringstream os;    
         os << "OpusWriteStream: Failed to write frames to encoder (error code "
            << err << ")";
         m_error = os.str();
-        cerr << m_error << endl;
+        std::cerr << m_error << std::endl;
         throw FileOperationFailed(getPath(), "encode");
     }
 
     m_d->begun = true;
     
 #ifdef DEBUG_OPUS_WRITE
-    cerr << "OpusWriteStream::putInterleavedFrames: wrote " << count << " frames" << endl;
+    std::cerr << "OpusWriteStream::putInterleavedFrames: wrote " << count << " frames" << std::endl;
 #endif
 }
 

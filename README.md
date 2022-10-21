@@ -16,6 +16,6 @@ C++ standard required: C++98 (does not use C++11)
 
  * See also: [bqfft](https://hg.sr.ht/~breakfastquay/bqfft) [bqaudioio](https://hg.sr.ht/~breakfastquay/bqaudioio)
 
-Copyright 2007-2021 Particular Programs Ltd.  Under a permissive
+Copyright 2007-2022 Particular Programs Ltd.  Under a permissive
 BSD/MIT-style licence: see the file COPYING for details.
 

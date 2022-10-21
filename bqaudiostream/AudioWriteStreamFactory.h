@@ -67,8 +67,17 @@ public:
                                                size_t channelCount,
                                                size_t sampleRate);
 
+    /**
+     * Return a list of the file extensions supported by registered
+     * writers (e.g. "wav", "aiff", "opus").
+     */
     static std::vector<std::string> getSupportedFileExtensions();
 
+    /**
+     * Return true if the extension of the given filename (e.g. "wav"
+     * extension for filename "A.WAV") is supported by a registered
+     * writer.
+     */
     static bool isExtensionSupportedFor(std::string fileName);
 
     /**
