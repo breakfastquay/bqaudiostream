@@ -60,6 +60,7 @@ public:
 
 protected:
     virtual size_t getFrames(size_t count, float *frames);
+    virtual bool performSeek(size_t frame);
     
 private:
     std::string m_path;
@@ -72,6 +73,7 @@ private:
     bool m_floatSwap;
     uint32_t m_dataChunkSize;
     uint32_t m_dataReadOffset;
+    uint32_t m_dataReadStart;
 
     void readHeader();
     uint32_t readExpectedChunkSize(std::string tag);

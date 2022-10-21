@@ -15,7 +15,7 @@ LIBS += -L.. -lbqaudiostream -L../../bqresample -lbqresample -L../../bqvec -lbqv
 INCLUDEPATH += . .. ../../bqvec ../../bqresample ../../bqthingfactory
 DEPENDPATH += . .. ../../bqvec ../../bqresample ../../bqthingfactory
 
-HEADERS += AudioStreamTestData.h TestAudioStreamRead.h TestSimpleWavRead.h TestWavReadWrite.h
+HEADERS += AudioStreamTestData.h TestAudioStreamRead.h TestSimpleWavRead.h TestWavReadWrite.h TestWavSeek.h
 SOURCES += main.cpp
 
 !win32 {

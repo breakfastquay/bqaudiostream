@@ -6,7 +6,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -53,17 +53,60 @@ class AudioReadStream
 public:
     virtual ~AudioReadStream();
 
+    /**
+     * Return any stream error message. Errors are reported by
+     * throwing exceptions; after catching an exception, you may call
+     * getError() to retrieve a more detailed, possibly human-readable
+     * message.
+     */
     virtual std::string getError() const { return ""; }
 
+    /**
+     * Return the number of channels in the stream.
+     */
     size_t getChannelCount() const { return m_channelCount; }
-    size_t getSampleRate() const { return m_sampleRate; } // source stream rate
-    size_t getEstimatedFrameCount() const; // at source stream rate
-    
-    void setRetrievalSampleRate(size_t);
-    size_t getRetrievalSampleRate() const;
 
-    virtual std::string getTrackName() const = 0;
-    virtual std::string getArtistName() const = 0;
+    /**
+     * Return the native sample rate of the stream.
+     */
+    size_t getSampleRate() const { return m_sampleRate; }
+
+    /**
+     * Return true if the audio stream is seekable to a specific frame
+     * position within the source.
+     *
+     * This depends on the format and also on the retrieval sample
+     * rate (see setRetrievalSampleRate() and
+     * getRetrievalSampleRate()), as resampling streams are not
+     * seekable.
+     */
+    bool isSeekable() const;
+
+    /**
+     * Return an estimate of the number of frames in the stream (at
+     * its native sample rate) or zero if the stream can't provide
+     * that information.
+     *
+     * For seekable streams (see isSeekable()) this is guaranteed to
+     * return a true frame count. For other streams it may be
+     * approximate, hence the name.
+     */
+    size_t getEstimatedFrameCount() const;
+
+    /**
+     * Set a sample rate at which audio data should be read from the
+     * stream. The stream will resample if this differs from the
+     * native rate of the stream (reported by getSampleRate()). The
+     * default is to use the native rate of the stream.
+     */
+    void setRetrievalSampleRate(size_t);
+
+    /**
+     * Return the sample rate at which audio data will be read from
+     * the stream. The stream will resample if this differs from the
+     * native rate of the stream (reported by getSampleRate()).
+     */
+    size_t getRetrievalSampleRate() const;
     
     /**
      * Retrieve \count frames of audio data (that is, \count *
@@ -81,13 +124,41 @@ public:
      * May throw InvalidFileFormat if decoding fails.
      */
     size_t getInterleavedFrames(size_t count, float *frames);
+
+    /**
+     * Re-seek the stream to the requested audio frame position.
+     * Return true on success, or false if the stream is not seekable
+     * or the requested frame is out of range (beyond the end of the
+     * stream).
+     *
+     * The stream is left in a valid state regardless of whether
+     * seeking succeeds, but its position following a call that
+     * returns false is not defined. If the stream is seekable, it
+     * will be possible to seek it back into range and continue
+     * reading even after a failed seek.
+     */
+    bool seek(size_t frame);
+
+    /**
+     * Return the track name or title, if any was found in the stream,
+     * or an empty string otherwise.
+     */
+    virtual std::string getTrackName() const = 0;
+
+    /**
+     * Return the artist name, if any was found in the stream, or an
+     * empty string otherwise.
+     */
+    virtual std::string getArtistName() const = 0;
     
 protected:
     AudioReadStream();
     virtual size_t getFrames(size_t count, float *frames) = 0;
+    virtual bool performSeek(size_t) { return false; }
     size_t m_channelCount;
     size_t m_sampleRate;
     size_t m_estimatedFrameCount;
+    bool m_seekable;
 
 private:
     int getResampledChunk(int count, float *frames);

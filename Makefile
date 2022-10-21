@@ -15,8 +15,7 @@
 #  -DHAVE_COREAUDIO    * Read various formats using CoreAudio on macOS/iOS
 #
 # If HAVE_LIBSNDFILE is not defined, a simple built-in Wav file writer
-# will also be provided, as none of the other libraries have write
-# support included here.
+# will also be provided.
 
 AUDIOSTREAM_DEFINES := -DHAVE_LIBSNDFILE -DHAVE_OGGZ -DHAVE_FISHSOUND -DHAVE_OPUS
 

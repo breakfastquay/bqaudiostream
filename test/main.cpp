@@ -2,6 +2,7 @@
 /* Copyright Chris Cannam - All Rights Reserved */
 
 #include "TestSimpleWavRead.h"
+#include "TestWavSeek.h"
 #include "TestAudioStreamRead.h"
 #include "TestWavReadWrite.h"
 #include <QtTest>
@@ -18,6 +19,12 @@ int main(int argc, char *argv[])
 
     {
 	breakfastquay::TestSimpleWavRead t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+
+    {
+	breakfastquay::TestWavSeek t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }

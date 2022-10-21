@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -62,6 +62,7 @@ public:
 
 protected:
     virtual size_t getFrames(size_t count, float *frames);
+    virtual bool performSeek(size_t frame);
     
     SF_INFO m_fileInfo;
     SNDFILE *m_file;

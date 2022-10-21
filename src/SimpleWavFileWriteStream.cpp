@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -38,6 +38,7 @@
 
 #include "Exceptions.h"
 #include <iostream>
+#include <stdint.h>
 
 using namespace std;
 
@@ -62,7 +63,7 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     m_bitDepth(24),
     m_file(0)
 {
-    m_file = new std::ofstream(getPath().c_str(), ios::out | std::ios::binary);
+    m_file = new std::ofstream(getPath().c_str(), std::ios::out | std::ios::binary);
 
     if (!*m_file) {
         delete m_file;
@@ -75,23 +76,37 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     writeFormatChunk();
 }
 
+static
+std::string
+int2le(uint32_t value, uint32_t length)
+{
+    std::string r(length, '\0');
+
+    for (uint32_t i = 0; i < length; ++i) {
+        r[i] = (uint8_t)(value & 0xff);
+        value >>= 8;
+    }
+
+    return r;
+}
+
 SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
 {
     if (!m_file) {
         return;
     }
 
-    m_file->seekp(0, ios::end);
+    m_file->seekp(0, std::ios::end);
     uint32_t totalSize = m_file->tellp();
 
     // seek to first length position
-    m_file->seekp(4, ios::beg);
+    m_file->seekp(4, std::ios::beg);
 
     // write complete file size minus 8 bytes to here
     putBytes(int2le(totalSize - 8, 4));
 
     // reseek from start forward 40
-    m_file->seekp(40, ios::beg);
+    m_file->seekp(40, std::ios::beg);
 
     // write the data chunk size to end
     putBytes(int2le(totalSize - 44, 4));
@@ -116,19 +131,6 @@ SimpleWavFileWriteStream::putBytes(const uint8_t *buffer, size_t n)
 {
     if (!m_file) return;
     m_file->write((const char *)buffer, n);
-}
-
-std::string
-SimpleWavFileWriteStream::int2le(uint32_t value, uint32_t length)
-{
-    std::string r(length, '\0');
-
-    for (uint32_t i = 0; i < length; ++i) {
-        r[i] = (uint8_t)(value & 0xff);
-        value >>= 8;
-    }
-
-    return r;
 }
 
 void

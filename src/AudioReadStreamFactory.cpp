@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -129,6 +129,12 @@ AudioReadStreamFactory::getFileFilter()
 // WavFileReadStream uses libsndfile, which is mostly trustworthy
 #include "WavFileReadStream.cpp"
 
+// SimpleWavFileReadStream reads most WAV files. The dedicated
+// WavFileReadStream using libsndfile is better and goes first, but
+// this must come before the other general platform libraries because
+// we don't currently have seek support in those
+#include "SimpleWavFileReadStream.cpp"
+
 // OggVorbisReadStream uses the official libraries, which ought to be good
 #include "OggVorbisReadStream.cpp"
 
@@ -145,9 +151,4 @@ AudioReadStreamFactory::getFileFilter()
 // MiniMP3ReadStream seems decent but lacks ID3 support, so in
 // practice is not as good as the platform frameworks
 #include "MiniMP3ReadStream.cpp"
-
-// SimpleWavFileReadStream reads most WAV files, but any of the other
-// WAV readers (WavFileReadStream, MediaFoundationReadStream,
-// CoreAudioReadStream) will be more general and more trustworthy
-#include "SimpleWavFileReadStream.cpp"
 

@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -47,6 +47,7 @@ AudioReadStream::AudioReadStream() :
     m_channelCount(0),
     m_sampleRate(0),
     m_estimatedFrameCount(0),
+    m_seekable(false),
     m_retrievalRate(0),
     m_totalFileFrames(0),
     m_totalRetrievedFrames(0),
@@ -59,6 +60,19 @@ AudioReadStream::~AudioReadStream()
 {
     delete m_resampler;
     delete m_resampleBuffer;
+}
+
+bool
+AudioReadStream::isSeekable() const
+{
+    if (m_retrievalRate != 0 &&
+        m_retrievalRate != m_sampleRate) {
+        return false;
+    }
+    if (m_channelCount == 0) {
+        return false;
+    }
+    return m_seekable;
 }
 
 size_t
@@ -89,6 +103,15 @@ AudioReadStream::getRetrievalSampleRate() const
 {
     if (m_retrievalRate == 0) return m_sampleRate;
     else return m_retrievalRate;
+}
+
+bool
+AudioReadStream::seek(size_t frame)
+{
+    if (!isSeekable()) {
+        return false;
+    }
+    return performSeek(frame);
 }
 
 size_t

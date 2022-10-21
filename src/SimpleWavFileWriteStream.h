@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -62,7 +62,6 @@ protected:
     std::ofstream *m_file;
 
     void writeFormatChunk();
-    std::string int2le(uint32_t value, uint32_t length);
     void putBytes(std::string);
     void putBytes(const unsigned char *, size_t);
 };

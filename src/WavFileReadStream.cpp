@@ -5,7 +5,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2021 Particular Programs Ltd.
+    Copyright 2007-2022 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -120,6 +120,7 @@ WavFileReadStream::WavFileReadStream(std::string path) :
 
     m_channelCount = m_fileInfo.channels;
     m_sampleRate = m_fileInfo.samplerate;
+    m_seekable = m_fileInfo.seekable;
 
     if (m_fileInfo.frames > 0) {
         m_estimatedFrameCount = m_fileInfo.frames;
@@ -134,12 +135,22 @@ WavFileReadStream::WavFileReadStream(std::string path) :
         m_artist = str;
     }
     
-    sf_seek(m_file, 0, SEEK_SET);
+    sf_seek(m_file, 0, SF_SEEK_SET);
 }
 
 WavFileReadStream::~WavFileReadStream()
 {
     if (m_file) sf_close(m_file);
+}
+
+bool
+WavFileReadStream::performSeek(size_t frame)
+{
+    sf_count_t pos = sf_seek(m_file, frame, SF_SEEK_SET);
+    if (pos < 0) return false;
+    if (size_t(pos) != frame) return false;
+    m_offset = frame;
+    return true;
 }
 
 size_t
@@ -148,7 +159,7 @@ WavFileReadStream::getFrames(size_t count, float *frames)
     if (!m_file || !m_channelCount) return 0;
     if (count == 0) return 0;
 
-    if ((long)m_offset >= m_fileInfo.frames) {
+    if (sf_count_t(m_offset) >= m_fileInfo.frames) {
 	return 0;
     }
 

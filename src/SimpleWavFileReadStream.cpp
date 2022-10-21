@@ -59,7 +59,8 @@ SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_file(0),
     m_bitDepth(0),
     m_dataChunkSize(0),
-    m_dataReadOffset(0)
+    m_dataReadOffset(0),
+    m_dataReadStart(0)
 {
     m_file = new std::ifstream(filename.c_str(),
                                std::ios::in | std::ios::binary);
@@ -133,6 +134,7 @@ SimpleWavFileReadStream::readHeader()
     m_channelCount = channels;
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
+    m_seekable = true;
 
     // we don't use
     (void)byteRate;
@@ -149,6 +151,7 @@ SimpleWavFileReadStream::readHeader()
         m_estimatedFrameCount = 0;
     }
     m_dataReadOffset = 0;
+    m_dataReadStart = m_file->tellg();
 }
 
 uint32_t
@@ -214,6 +217,27 @@ uint32_t
 SimpleWavFileReadStream::readChunkSizeAfterTag()
 {
     return readMandatoryNumber(4);
+}
+
+bool
+SimpleWavFileReadStream::performSeek(size_t frame)
+{
+    int sampleSize = m_bitDepth / 8;
+    int frameSize = sampleSize * m_channelCount;
+
+    size_t target = size_t(m_dataReadStart) + frameSize * frame;
+    if (target > m_dataChunkSize + m_dataReadStart) {
+        return false;
+    }
+
+    m_file->seekg(target, std::ios::beg);
+    
+    size_t actual = m_file->tellg();
+    // (In fact I think tellg() always reports whatever you passed to seekg())
+    if (actual != target) return false;
+
+    m_dataReadOffset = uint32_t(actual - m_dataReadStart);
+    return true;
 }
 
 size_t
