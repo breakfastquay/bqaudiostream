@@ -113,7 +113,10 @@ OpusReadStream::OpusReadStream(std::string path) :
 
     ogg_int64_t total = op_pcm_total(m_d->file, -1);
     if (total > 0 && m_channelCount > 0) {
-        m_estimatedFrameCount = total / m_channelCount;
+        // op_pcm_total appears to return the total number of samples
+        // per channel, or audio frames. So do not divide by the
+        // channel count
+        m_estimatedFrameCount = total;
     } else {
         m_estimatedFrameCount = 0;
     }
