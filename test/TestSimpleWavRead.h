@@ -23,6 +23,12 @@ class TestSimpleWavRead : public QObject
 	return f;
     }
 
+    // Without file extension
+    static const char *testsound_noextension() { 
+	static const char *f = "testfiles/20samples";
+	return f;
+    }
+
 private slots:
 
     void supported() {
@@ -75,6 +81,37 @@ private slots:
 
     void resampledLength() {
 	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound());
+	QVERIFY(s);
+	s->setRetrievalSampleRate(22050);
+	float frames[22];
+	size_t n = s->getInterleavedFrames(22, frames);
+	QCOMPARE(n, size_t(10));
+	delete s;
+    }
+    
+    void open_noextension() {
+	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound_noextension());
+	QVERIFY(s);
+	QCOMPARE(s->getError(), std::string());
+	QCOMPARE(s->getChannelCount(), size_t(1));
+	QCOMPARE(s->getSampleRate(), size_t(44100));
+	delete s;
+    }
+    
+    void readEnd_noextension() {
+	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound_noextension());
+	QVERIFY(s);
+	float frames[20];
+	size_t n = s->getInterleavedFrames(20, frames);
+	QCOMPARE(n, size_t(20));
+	QCOMPARE(frames[17], 0.f);
+	QCOMPARE(frames[18], 0.f);
+	QCOMPARE(frames[19], -1.f);
+	delete s;
+    }
+
+    void resampledLength_noextension() {
+	AudioReadStream *s = AudioReadStreamFactory::createReadStream(testsound_noextension());
 	QVERIFY(s);
 	s->setRetrievalSampleRate(22050);
 	float frames[22];

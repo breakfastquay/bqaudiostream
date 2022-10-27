@@ -71,6 +71,14 @@ AudioReadStreamFactory::createReadStream(std::string audioFileName)
     // more predictable always to use only the reader that has
     // registered the extension (if there is one).
 
+    if (extension == "") {
+        // We explicitly support extension-less files so long as they
+        // are RIFF/WAVE format. (This is in order to support
+        // programmatically generated temporary files created with
+        // e.g. mkstemp.)
+        extension = "wav";
+    }
+    
     try {
         AudioReadStream *stream = f->createFor(extension, audioFileName);
         if (!stream) throw UnknownFileType(audioFileName);

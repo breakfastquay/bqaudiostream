@@ -49,7 +49,9 @@ public:
     /**
      * Create and return a read stream object for the given audio file
      * name, if possible. The file name should be UTF-8 encoded. The
-     * audio format will be deduced from the file extension.
+     * audio format will be deduced from the file extension. If the
+     * file has no extension, it will still be opened if it is a
+     * RIFF/WAVE file; for other formats the behaviour is undefined.
      *
      * May throw FileNotFound, FileOpenFailed,
      * AudioReadStream::FileDRMProtected, InvalidFileFormat,

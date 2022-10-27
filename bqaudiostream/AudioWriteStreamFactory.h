@@ -49,8 +49,9 @@ public:
     /**
      * Create and return a write stream object for the given audio
      * file name, if possible. The audio file format will be deduced
-     * from the file extension. If the file already exists, it will be
-     * silently overwritten.
+     * from the file extension. If the file has no extension, it will
+     * be opened in RIFF/WAVE format. If the file already exists, it
+     * will be silently overwritten.
      *
      * May throw FailedToWriteFile, FileOperationFailed, or
      * UnknownFileType.

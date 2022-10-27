@@ -60,6 +60,14 @@ AudioWriteStreamFactory::createWriteStream(std::string audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
+    if (extension == "") {
+        // We explicitly support extension-less filenames and write
+        // them in RIFF/WAVE format. (This is in order to support
+        // programmatically generated temporary files created with
+        // e.g. mkstemp.)
+        extension = "wav";
+    }
+    
     try {
         AudioWriteStream *stream = f->createFor(extension, target);
         if (!stream) throw UnknownFileType(audioFileName);

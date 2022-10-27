@@ -79,7 +79,10 @@ private slots:
             // RATE-CHANNELS.ext (for lossy data)
             QStringList fileAndExt = audiofile.split(".");
             QStringList bits = fileAndExt[0].split("-");
-            QString extension = fileAndExt[1];
+            QString extension;
+            if (fileAndExt.size() > 1) {
+                extension = fileAndExt[1];
+            }
             int nominalRate = bits[0].toInt();
             int nominalChannels = bits[1].toInt();
             int nominalDepth = 16;
