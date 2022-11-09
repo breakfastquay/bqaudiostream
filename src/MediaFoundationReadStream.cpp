@@ -452,7 +452,7 @@ MediaFoundationReadStream::D::convertSample(const unsigned char *c)
 
     case 8: {
             // WAV stores 8-bit samples unsigned, other sizes signed.
-            return (float)(c[0] - 128.0) / 128.0;
+            return (float)(c[0] - 128.0) / 128.f;
         }
 
     case 16: {
@@ -461,7 +461,7 @@ MediaFoundationReadStream::D::convertSample(const unsigned char *c)
             unsigned char b2 = c[0];
             unsigned char b1 = c[1];
             unsigned int bits = (b1 << 8) + b2;
-            return float(double(short(bits)) / 32768.0);
+            return float(double(short(bits)) / 32768.f);
         }
 
     case 24: {
@@ -474,7 +474,7 @@ MediaFoundationReadStream::D::convertSample(const unsigned char *c)
             // in the right place; this gives us a 32-bit value,
             // hence the larger float divisor
             unsigned int bits = (b1 << 24) + (b2 << 16) + (b3 << 8);
-            return float(double(int(bits)) / 2147483648.0);
+            return float(double(int(bits)) / 2147483648.f);
         }
 
     default:
