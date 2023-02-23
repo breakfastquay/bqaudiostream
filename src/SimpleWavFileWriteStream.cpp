@@ -207,6 +207,8 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, const float *frames
             putBytes(ubuf, m_bitDepth / 8);
         }
     }
+
+    m_file->flush();
 }
 
 }
