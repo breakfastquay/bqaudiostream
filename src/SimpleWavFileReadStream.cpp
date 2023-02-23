@@ -38,6 +38,8 @@
 
 #include <iostream>
 
+//#define DEBUG_SIMPLE_WAV_FILE_READ_STREAM 1
+
 namespace breakfastquay
 {
 
@@ -222,21 +224,80 @@ SimpleWavFileReadStream::readChunkSizeAfterTag()
 bool
 SimpleWavFileReadStream::performSeek(size_t frame)
 {
+    if (m_file->fail()) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::performSeek: "
+                  << "file is in failure state! failing the seek"
+                  << std::endl;
+#endif
+        return false;
+    }
+    
     int sampleSize = m_bitDepth / 8;
     int frameSize = sampleSize * m_channelCount;
 
-    size_t target = size_t(m_dataReadStart) + frameSize * frame;
-    if (target > m_dataChunkSize + m_dataReadStart) {
+    std::ifstream::off_type target =
+        std::ifstream::off_type(frame * frameSize + m_dataReadStart);
+
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream[" << this << "]::performSeek: frame "
+              << frame << " with frameSize " << frameSize
+              << " and m_dataReadStart " << m_dataReadStart
+              << " gives target " << target << std::endl;
+#endif
+    
+    if (m_dataChunkSize > 0) {
+        // Known size - m_dataChunkSize *should* be >0 but it isn't
+        // always, e.g. when the file is being written as we read
+        if (target > m_dataChunkSize + m_dataReadStart) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+            std::cerr << "SimpleWavFileReadStream::performSeek: seek to "
+                      << target << " is beyond data end "
+                      << m_dataChunkSize + m_dataReadStart
+                      << ", failing the seek" << std::endl;
+#endif
+            return false;
+        }
+    }
+    
+    m_file->seekg(target, std::ios::beg);
+    if (m_file->fail()) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::performSeek: seek to "
+                  << target << " failed (failbit set), failing the seek"
+                  << std::endl;
+#endif
+        return false;
+    }
+    
+    std::ifstream::pos_type actual = m_file->tellg();
+    // (In fact I think tellg() always reports whatever you passed to seekg())
+    if (actual != std::ifstream::pos_type(target)) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::performSeek: seek to "
+                  << target << " brought us to " << actual
+                  << ", failing the seek" << std::endl;
+#endif
         return false;
     }
 
-    m_file->seekg(target, std::ios::beg);
-    
-    size_t actual = m_file->tellg();
-    // (In fact I think tellg() always reports whatever you passed to seekg())
-    if (actual != target) return false;
+    if (actual < std::ifstream::pos_type(m_dataReadStart)) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::performSeek: seek to "
+                  << actual << " lands before data start, failing the seek"
+                  << std::endl;
+#endif
+        return false;
+    }
+        
+    m_dataReadOffset = uint32_t(actual -
+                                std::ifstream::pos_type(m_dataReadStart));
 
-    m_dataReadOffset = uint32_t(actual - m_dataReadStart);
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::performSeek: successful, new offset "
+              << m_dataReadOffset << std::endl;;
+#endif
+    
     return true;
 }
 
@@ -248,7 +309,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
     
     size_t requested = count * m_channelCount;
     size_t got = 0;
-    
+
     while (got < requested) {
         if (m_dataReadOffset >= m_dataChunkSize) {
             break;
@@ -256,7 +317,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         int gotHere = getBytes(sampleSize, buf);
         m_dataReadOffset += gotHere;
         if (gotHere < sampleSize) {
-            return got / m_channelCount;
+            break;
         }
         switch (m_bitDepth) {
         case 8: frames[got] = convertSample8(buf); break;
@@ -267,6 +328,17 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         ++got;
     }
 
+    if (got < requested) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::getFrames: EOF reached after "
+                  << got << " of " << requested << " samples" << std::endl;
+#endif
+    }
+
+    if (m_file->eof() && !m_file->bad()) {
+        m_file->clear();
+    }
+    
     return got / m_channelCount;
 }
 
