@@ -32,13 +32,13 @@
     Software without prior written authorization.
 */
 
-#include "AudioWriteStreamFactory.h"
-#include "AudioWriteStream.h"
+#include "../bqaudiostream/AudioWriteStreamFactory.h"
+#include "../bqaudiostream/AudioWriteStream.h"
 
 #include "bqthingfactory/ThingFactory.h"
-#include "Exceptions.h"
+#include "../bqaudiostream/Exceptions.h"
 
-#include "AudioReadStreamFactory.h"
+#include "../bqaudiostream/AudioReadStreamFactory.h"
 
 namespace breakfastquay {
 

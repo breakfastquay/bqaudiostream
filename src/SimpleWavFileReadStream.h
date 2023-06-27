@@ -35,7 +35,7 @@
 #ifndef BQ_SIMPLE_WAV_FILE_READ_STREAM_H
 #define BQ_SIMPLE_WAV_FILE_READ_STREAM_H
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 // If we have libsndfile, we shouldn't be using this class
 #if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))

@@ -35,7 +35,7 @@
 #ifndef BQ_OPUS_WRITE_STREAM_H
 #define BQ_OPUS_WRITE_STREAM_H
 
-#include "AudioWriteStream.h"
+#include "../bqaudiostream/AudioWriteStream.h"
 
 #ifdef HAVE_OPUS
 

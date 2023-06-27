@@ -35,7 +35,7 @@
 #ifndef BQ_CORE_AUDIO_READ_STREAM_H_
 #define BQ_CORE_AUDIO_READ_STREAM_H_
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 #ifdef HAVE_COREAUDIO
 

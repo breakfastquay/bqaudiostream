@@ -35,7 +35,7 @@
 #ifndef BQ_OGG_VORBIS_READ_STREAM_H_
 #define BQ_OGG_VORBIS_READ_STREAM_H_
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND

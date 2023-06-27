@@ -35,7 +35,7 @@
 #if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 
 #include "WavFileReadStream.h"
-#include "Exceptions.h"
+#include "../bqaudiostream/Exceptions.h"
 
 #include <iostream>
 

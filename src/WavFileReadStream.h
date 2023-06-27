@@ -35,7 +35,7 @@
 #ifndef BQ_WAV_FILE_READ_STREAM_H_
 #define BQ_WAV_FILE_READ_STREAM_H_
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 #if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 

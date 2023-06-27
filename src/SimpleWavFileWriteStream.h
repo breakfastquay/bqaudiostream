@@ -35,7 +35,7 @@
 #ifndef BQ_SIMPLE_WAV_FILE_WRITE_STREAM_H
 #define BQ_SIMPLE_WAV_FILE_WRITE_STREAM_H
 
-#include "AudioWriteStream.h"
+#include "../bqaudiostream/AudioWriteStream.h"
 
 // If we have libsndfile, we shouldn't be using this class
 #if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))

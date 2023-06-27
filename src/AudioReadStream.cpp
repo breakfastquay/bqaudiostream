@@ -32,7 +32,7 @@
     Software without prior written authorization.
 */
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 #include "bqresample/Resampler.h"
 

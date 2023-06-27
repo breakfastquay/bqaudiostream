@@ -33,7 +33,7 @@
     Software without prior written authorization.
 */
 
-#include "Exceptions.h"
+#include "../bqaudiostream/Exceptions.h"
 
 using std::string;
 

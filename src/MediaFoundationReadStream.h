@@ -35,7 +35,7 @@
 #ifndef MEDIAFOUNDATION_READ_STREAM_H
 #define MEDIAFOUNDATION_READ_STREAM_H
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 #ifdef HAVE_MEDIAFOUNDATION
  

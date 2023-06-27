@@ -35,7 +35,7 @@
 #ifndef BQ_WAV_FILE_WRITE_STREAM_H_
 #define BQ_WAV_FILE_WRITE_STREAM_H_
 
-#include "AudioWriteStream.h"
+#include "../bqaudiostream/AudioWriteStream.h"
 
 #if defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE)
 

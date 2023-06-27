@@ -32,9 +32,9 @@
     Software without prior written authorization.
 */
 
-#include "AudioReadStreamFactory.h"
-#include "AudioReadStream.h"
-#include "Exceptions.h"
+#include "../bqaudiostream/AudioReadStreamFactory.h"
+#include "../bqaudiostream/AudioReadStream.h"
+#include "../bqaudiostream/Exceptions.h"
 
 #include <bqthingfactory/ThingFactory.h>
 

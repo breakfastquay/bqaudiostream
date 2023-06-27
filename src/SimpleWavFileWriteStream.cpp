@@ -36,7 +36,7 @@
 
 #if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
 
-#include "Exceptions.h"
+#include "../bqaudiostream/Exceptions.h"
 #include <iostream>
 #include <stdint.h>
 

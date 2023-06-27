@@ -35,7 +35,7 @@
 #ifndef BQ_OPUS_READ_STREAM_H
 #define BQ_OPUS_READ_STREAM_H
 
-#include "AudioReadStream.h"
+#include "../bqaudiostream/AudioReadStream.h"
 
 #ifdef HAVE_OPUS
 
