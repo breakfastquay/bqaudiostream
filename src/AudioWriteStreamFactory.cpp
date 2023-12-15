@@ -70,7 +70,7 @@ AudioWriteStreamFactory::createWriteStream(std::string audioFileName,
     
     try {
         AudioWriteStream *stream = f->createFor(extension, target);
-        if (!stream) throw UnknownFileType(audioFileName);
+        if (!stream) throw FailedToWriteFile(audioFileName);
         return stream;
     } catch (const UnknownTagException &) {
         throw UnknownFileType(audioFileName);
