@@ -37,9 +37,6 @@
 
 #include "../bqaudiostream/AudioReadStream.h"
 
-// If we have libsndfile, we shouldn't be using this class
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
 #include <fstream>
 #include <string>
 #include <vector>
@@ -72,6 +69,7 @@ private:
     std::ifstream *m_file;
     int m_bitDepth;
     bool m_floatSwap;
+    uint32_t m_dataChunkOffset;
     uint32_t m_dataChunkSize;
     uint32_t m_dataReadOffset;
     uint32_t m_dataReadStart;
@@ -83,6 +81,8 @@ private:
     uint32_t readChunkSizeAfterTag();
     uint32_t readMandatoryNumber(int length);
 
+    bool shouldTryAgain(int justRead);
+    
     float convertSample8(const std::vector<uint8_t> &);
     float convertSample16(const std::vector<uint8_t> &);
     float convertSample24(const std::vector<uint8_t> &);
@@ -96,5 +96,4 @@ private:
 
 #endif
 
-#endif
 

@@ -34,16 +34,18 @@
 
 #include "SimpleWavFileReadStream.h"
 
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
 #include <iostream>
 
-//#define DEBUG_SIMPLE_WAV_FILE_READ_STREAM 1
+#include <chrono>
+#include <thread>
+
+#define DEBUG_SIMPLE_WAV_FILE_READ_STREAM 1
 
 namespace breakfastquay
 {
 
-static std::vector<std::string> extensions() {
+static std::vector<std::string>
+getSimpleWavReaderExtensions() {
     std::vector<std::string> ee;
     ee.push_back("wav");
     return ee;
@@ -53,13 +55,14 @@ static
 AudioReadStreamBuilder<SimpleWavFileReadStream>
 simplewavbuilder(
     std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileReadStream"),
-    extensions()
+    getSimpleWavReaderExtensions()
     );
 
 SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_path(filename),
     m_file(0),
     m_bitDepth(0),
+    m_dataChunkOffset(0),
     m_dataChunkSize(0),
     m_dataReadOffset(0),
     m_dataReadStart(0)
@@ -146,7 +149,9 @@ SimpleWavFileReadStream::readHeader()
         m_file->ignore(fmtSize - 16);
     }
 
+    m_dataChunkOffset = m_file->tellg();
     m_dataChunkSize = readExpectedChunkSize("data");
+
     if (bytesPerFrame > 0) {
         m_estimatedFrameCount = m_dataChunkSize / bytesPerFrame;
     } else {
@@ -301,6 +306,57 @@ SimpleWavFileReadStream::performSeek(size_t frame)
     return true;
 }
 
+bool
+SimpleWavFileReadStream::shouldTryAgain(int justReadBytes)
+{
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::shouldTryAgain: m_dataReadOffset = "
+              << m_dataReadOffset << ", m_dataChunkSize = " << m_dataChunkSize
+              << ", justReadBytes = " << justReadBytes << std::endl;
+#endif
+
+    if (m_dataChunkSize > 0) {
+        return false;
+    }
+    if (m_file->bad()) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::shouldTryAgain: file is bad"
+                  << std::endl;
+#endif
+        return false;
+    }
+
+    uint32_t location = m_file->tellg();
+
+    if (m_file->eof()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        m_file->clear();
+        m_file->seekg(m_dataChunkOffset, std::ios::beg);
+        m_dataChunkSize = readExpectedChunkSize("data");
+        m_file->seekg(location - justReadBytes, std::ios::beg);
+        if (m_file->fail()) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+            std::cerr << "SimpleWavFileReadStream::shouldTryAgain: seek to "
+                      << location - justReadBytes << " failed" << std::endl;
+#endif
+            return false;
+        }
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::shouldTryAgain: returning true" << std::endl;
+#endif        
+        return true;
+    } else {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::shouldTryAgain: after sync, file is at eof" << std::endl;
+#endif        
+    }
+    
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::shouldTryAgain: returning false" << std::endl;
+#endif        
+    return false;
+}
+
 size_t
 SimpleWavFileReadStream::getFrames(size_t count, float *frames)
 {
@@ -311,12 +367,15 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
     size_t got = 0;
 
     while (got < requested) {
-        if (m_dataReadOffset >= m_dataChunkSize) {
+        if (m_dataChunkSize > 0 && m_dataReadOffset >= m_dataChunkSize) {
             break;
         }
         int gotHere = getBytes(sampleSize, buf);
         m_dataReadOffset += gotHere;
         if (gotHere < sampleSize) {
+            if (m_dataChunkSize == 0 && shouldTryAgain(gotHere)) {
+                continue;
+            }
             break;
         }
         switch (m_bitDepth) {
@@ -419,4 +478,3 @@ SimpleWavFileReadStream::le2int(const std::vector<uint8_t> &le)
 
 }
 
-#endif

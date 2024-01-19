@@ -34,8 +34,6 @@
 
 #include "SimpleWavFileWriteStream.h"
 
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
 #include "../bqaudiostream/Exceptions.h"
 #include <iostream>
 #include <stdint.h>
@@ -45,7 +43,8 @@ using namespace std;
 namespace breakfastquay
 {
 
-static std::vector<std::string> extensions() {
+static std::vector<std::string>
+getSimpleWavWriterExtensions() {
     std::vector<std::string> ee;
     ee.push_back("wav");
     return ee;
@@ -55,7 +54,7 @@ static
 AudioWriteStreamBuilder<SimpleWavFileWriteStream>
 simplewavbuilder(
     std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
-    extensions()
+    getSimpleWavWriterExtensions()
     );
 
 SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
@@ -141,7 +140,7 @@ SimpleWavFileWriteStream::writeFormatChunk()
     std::string outString;
 
     outString += "RIFF";
-    outString += "0000";
+    outString += int2le(0x0, 4);
     outString += "WAVE";
     outString += "fmt ";
 
@@ -167,9 +166,11 @@ SimpleWavFileWriteStream::writeFormatChunk()
     outString += int2le(m_bitDepth, 2);
 
     outString += "data";
-    outString += "0000";
+    outString += int2le(0x0, 4);
 
     putBytes(outString);
+
+    m_file->flush();
 }
 
 void
@@ -213,4 +214,3 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, const float *frames
 
 }
 
-#endif
