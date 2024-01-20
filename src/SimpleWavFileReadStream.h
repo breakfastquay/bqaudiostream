@@ -81,7 +81,8 @@ private:
     uint32_t readChunkSizeAfterTag();
     uint32_t readMandatoryNumber(int length);
 
-    bool shouldTryAgain(int justRead);
+    int m_retryCount;
+    bool shouldRetry(int justRead);
     
     float convertSample8(const std::vector<uint8_t> &);
     float convertSample16(const std::vector<uint8_t> &);
