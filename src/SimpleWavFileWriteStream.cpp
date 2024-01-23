@@ -97,19 +97,23 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
     }
 
     m_file->seekp(0, std::ios::end);
-    uint32_t totalSize = m_file->tellp();
+    std::streamoff totalSize = m_file->tellp();
+    uint32_t effSize = uint32_t(-1);
+    if (totalSize < std::streamoff(effSize)) {
+        effSize = uint32_t(totalSize);
+    }
 
     // seek to first length position
     m_file->seekp(4, std::ios::beg);
 
     // write complete file size minus 8 bytes to here
-    putBytes(int2le(totalSize - 8, 4));
+    putBytes(int2le(effSize - 8, 4));
 
     // reseek from start forward 40
     m_file->seekp(40, std::ios::beg);
 
     // write the data chunk size to end
-    putBytes(int2le(totalSize - 44, 4));
+    putBytes(int2le(effSize - 44, 4));
 
     m_file->close();
 
@@ -141,7 +145,7 @@ SimpleWavFileWriteStream::writeFormatChunk()
     std::string outString;
 
     outString += "RIFF";
-    outString += "0000";
+    outString += int2le(0x0, 4);
     outString += "WAVE";
     outString += "fmt ";
 
@@ -167,9 +171,11 @@ SimpleWavFileWriteStream::writeFormatChunk()
     outString += int2le(m_bitDepth, 2);
 
     outString += "data";
-    outString += "0000";
+    outString += int2le(0x0, 4);
 
     putBytes(outString);
+
+    m_file->flush();
 }
 
 void
