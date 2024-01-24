@@ -64,9 +64,24 @@ SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_dataReadOffset(0),
     m_dataReadStart(0)
 {
-    m_file = new std::ifstream(filename.c_str(),
-                               std::ios::in | std::ios::binary);
-
+#ifdef _MSC_VER
+    // This is behind _MSC_VER not _WIN32 because the fstream
+    // constructors from wchar bufs are an MSVC extension not
+    // available in e.g. MinGW
+    int wlen = MultiByteToWideChar
+        (CP_UTF8, 0, m_path.c_str(), m_path.length(), 0, 0);
+    if (wlen > 0) {
+        wchar_t *buf = new wchar_t[wlen+1];
+        (void)MultiByteToWideChar
+            (CP_UTF8, 0, m_path.c_str(), m_path.length(), buf, wlen);
+        buf[wlen] = L'\0';
+        m_file = new std::ifstream(buf, std::ios::in | std::ios::binary);
+        delete[] buf;
+    }
+#else
+    m_file = new std::ifstream(m_path.c_str(), std::ios::in | std::ios::binary);
+#endif
+    
     if (!*m_file) {
         delete m_file;
         m_file = 0;

@@ -63,14 +63,32 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     m_bitDepth(24),
     m_file(0)
 {
-    m_file = new std::ofstream(getPath().c_str(), std::ios::out | std::ios::binary);
+    std::string path = getPath();
+    
+#ifdef _MSC_VER
+    // This is behind _MSC_VER not _WIN32 because the fstream
+    // constructors from wchar bufs are an MSVC extension not
+    // available in e.g. MinGW
+    int wlen = MultiByteToWideChar
+        (CP_UTF8, 0, path.c_str(), path.length(), 0, 0);
+    if (wlen > 0) {
+        wchar_t *buf = new wchar_t[wlen+1];
+        (void)MultiByteToWideChar
+            (CP_UTF8, 0, path.c_str(), path.length(), buf, wlen);
+        buf[wlen] = L'\0';
+        m_file = new std::ofstream(buf, std::ios::out | std::ios::binary);
+        delete[] buf;
+    }
+#else
+    m_file = new std::ofstream(path.c_str(), std::ios::out | std::ios::binary);
+#endif
 
     if (!*m_file) {
         delete m_file;
         m_file = 0;
         m_error = std::string("Failed to open audio file '") +
-            getPath() + "' for writing";
-        throw FailedToWriteFile(getPath());
+            path + "' for writing";
+        throw FailedToWriteFile(path);
     }
 
     writeFormatChunk();
