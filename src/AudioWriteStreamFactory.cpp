@@ -60,7 +60,7 @@ AudioWriteStreamFactory::createWriteStream(std::string audioFileName,
 
     AudioWriteStreamFactoryImpl *f = AudioWriteStreamFactoryImpl::getInstance();
 
-    if (extension == "") {
+    if (extension == "" || extension.size() > 4) {
         // We explicitly support extension-less filenames and write
         // them in RIFF/WAVE format. (This is in order to support
         // programmatically generated temporary files created with
@@ -141,8 +141,15 @@ AudioWriteStreamFactory::isExtensionSupportedFor(std::string fileName)
 // #ifdef'd out if the implementation is not selected, so there is no
 // overhead.
 
+// WavFileWriteStream uses libsndfile, which is mostly trustworthy
 #include "WavFileWriteStream.cpp"
+
+// SimpleWavFileWriteStream writes only 24-bit WAV files. The
+// dedicated WavFileReadStream using libsndfile is generally much
+// better and goes first
 #include "SimpleWavFileWriteStream.cpp"
+
 #include "CoreAudioWriteStream.cpp"
+
 #include "OpusWriteStream.cpp"
 

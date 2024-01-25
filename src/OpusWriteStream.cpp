@@ -33,6 +33,7 @@
 */
 
 #ifdef HAVE_OPUS
+#ifndef HAVE_OPUS_READ_ONLY
 
 //#define DEBUG_OPUS_WRITE 1
 
@@ -157,4 +158,5 @@ OpusWriteStream::putInterleavedFrames(size_t count, const float *frames)
 
 }
 
-#endif
+#endif // !HAVE_OPUS_READ_ONLY
+#endif // HAVE_OPUS

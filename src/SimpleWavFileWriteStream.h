@@ -37,6 +37,10 @@
 
 #include "../bqaudiostream/AudioWriteStream.h"
 
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
 #include <fstream>
 #include <string>
 
@@ -59,7 +63,7 @@ protected:
     std::ofstream *m_file;
 
     void writeFormatChunk();
-    void putBytes(std::string);
+    void putBytes(const std::string &);
     void putBytes(const unsigned char *, size_t);
 };
 
