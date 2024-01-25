@@ -65,12 +65,26 @@ WavFileWriteStream::WavFileWriteStream(Target target) :
     m_fileInfo.channels = getChannelCount();
     m_fileInfo.samplerate = getSampleRate();
 
-    m_file = sf_open(getPath().c_str(), SFM_WRITE, &m_fileInfo);
+    auto path = getPath();
+#ifdef _WIN32
+    int wlen = MultiByteToWideChar
+        (CP_UTF8, 0, path.c_str(), path.length(), 0, 0);
+    if (wlen > 0) {
+        wchar_t *buf = new wchar_t[wlen+1];
+        (void)MultiByteToWideChar
+            (CP_UTF8, 0, path.c_str(), path.length(), buf, wlen);
+        buf[wlen] = L'\0';
+        m_file = sf_wchar_open(buf, SFM_WRITE, &m_fileInfo);
+        delete[] buf;
+    }
+#else
+    m_file = sf_open(path.c_str(), SFM_WRITE, &m_fileInfo);
+#endif
 
     if (!m_file) {
         m_error = std::string("Failed to open audio file '") +
-            getPath() + "' for writing";
-        throw FailedToWriteFile(getPath());
+            path + "' for writing";
+        throw FailedToWriteFile(path);
     }
 }
 
