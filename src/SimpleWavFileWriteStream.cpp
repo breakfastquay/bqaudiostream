@@ -97,6 +97,7 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
     }
 
     m_file->seekp(0, std::ios::end);
+
     std::streamoff totalSize = m_file->tellp();
     uint32_t effSize = uint32_t(-1);
     if (totalSize < std::streamoff(effSize)) {
@@ -122,12 +123,10 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
 }
 
 void
-SimpleWavFileWriteStream::putBytes(std::string s)
+SimpleWavFileWriteStream::putBytes(const std::string &s)
 {
     if (!m_file) return;
-    for (uint32_t i = 0; i < s.length(); i++) {
-        *m_file << (uint8_t)s[i];
-    }
+    m_file->write(s.data(), s.length());
 }
 
 void

@@ -62,7 +62,7 @@ protected:
     std::ofstream *m_file;
 
     void writeFormatChunk();
-    void putBytes(std::string);
+    void putBytes(const std::string &);
     void putBytes(const unsigned char *, size_t);
 };
 
