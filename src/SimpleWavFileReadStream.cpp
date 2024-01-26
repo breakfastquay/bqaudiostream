@@ -326,7 +326,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
     size_t got = 0;
 
     while (got < requested) {
-        if (m_dataReadOffset >= m_dataChunkSize) {
+        if (m_dataChunkSize > 0 && m_dataReadOffset >= m_dataChunkSize) {
             break;
         }
         int gotHere = getBytes(sampleSize, buf);
