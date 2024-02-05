@@ -62,14 +62,32 @@ SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     m_bitDepth(24),
     m_file(0)
 {
-    m_file = new std::ofstream(getPath().c_str(), std::ios::out | std::ios::binary);
+    std::string path = getPath();
+    
+#ifdef _MSC_VER
+    // This is behind _MSC_VER not _WIN32 because the fstream
+    // constructors from wchar bufs are an MSVC extension not
+    // available in e.g. MinGW
+    int wlen = MultiByteToWideChar
+        (CP_UTF8, 0, path.c_str(), path.length(), 0, 0);
+    if (wlen > 0) {
+        wchar_t *buf = new wchar_t[wlen+1];
+        (void)MultiByteToWideChar
+            (CP_UTF8, 0, path.c_str(), path.length(), buf, wlen);
+        buf[wlen] = L'\0';
+        m_file = new std::ofstream(buf, std::ios::out | std::ios::binary);
+        delete[] buf;
+    }
+#else
+    m_file = new std::ofstream(path.c_str(), std::ios::out | std::ios::binary);
+#endif
 
     if (!*m_file) {
         delete m_file;
         m_file = 0;
         m_error = std::string("Failed to open audio file '") +
-            getPath() + "' for writing";
-        throw FailedToWriteFile(getPath());
+            path + "' for writing";
+        throw FailedToWriteFile(path);
     }
 
     writeFormatChunk();
@@ -96,19 +114,24 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
     }
 
     m_file->seekp(0, std::ios::end);
-    uint32_t totalSize = m_file->tellp();
+
+    std::streamoff totalSize = m_file->tellp();
+    uint32_t effSize = uint32_t(-1);
+    if (totalSize < std::streamoff(effSize)) {
+        effSize = uint32_t(totalSize);
+    }
 
     // seek to first length position
     m_file->seekp(4, std::ios::beg);
 
     // write complete file size minus 8 bytes to here
-    putBytes(int2le(totalSize - 8, 4));
+    putBytes(int2le(effSize - 8, 4));
 
     // reseek from start forward 40
     m_file->seekp(40, std::ios::beg);
 
     // write the data chunk size to end
-    putBytes(int2le(totalSize - 44, 4));
+    putBytes(int2le(effSize - 44, 4));
 
     m_file->close();
 
@@ -117,12 +140,10 @@ SimpleWavFileWriteStream::~SimpleWavFileWriteStream()
 }
 
 void
-SimpleWavFileWriteStream::putBytes(std::string s)
+SimpleWavFileWriteStream::putBytes(const std::string &s)
 {
     if (!m_file) return;
-    for (uint32_t i = 0; i < s.length(); i++) {
-        *m_file << (uint8_t)s[i];
-    }
+    m_file->write(s.data(), s.length());
 }
 
 void

@@ -38,6 +38,7 @@
 #include "../bqaudiostream/AudioWriteStream.h"
 
 #ifdef HAVE_OPUS
+#ifndef HAVE_OPUS_READ_ONLY
 
 namespace breakfastquay
 {
@@ -61,6 +62,7 @@ protected:
 
 }
 
-#endif
+#endif // !HAVE_OPUS_READ_ONLY
+#endif // HAVE_OPUS
 
 #endif

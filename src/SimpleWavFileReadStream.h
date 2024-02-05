@@ -37,6 +37,10 @@
 
 #include "../bqaudiostream/AudioReadStream.h"
 
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
 #include <fstream>
 #include <string>
 #include <vector>
