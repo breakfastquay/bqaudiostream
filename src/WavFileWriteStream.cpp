@@ -104,6 +104,8 @@ WavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
     if (written != sf_count_t(count)) {
         throw FileOperationFailed(getPath(), "write sf data");
     }
+
+    sf_write_sync(m_file);
 }
 
 }

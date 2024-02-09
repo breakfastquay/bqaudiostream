@@ -134,14 +134,17 @@ AudioReadStreamFactory::getFileFilter()
 // builders are guaranteed to be registered in lexical order. So we
 // should put the desirable readers first and the iffy ones after.
 
+// SimpleWavFileReadStream reads most WAV files. It's much more
+// limited than the libsndfile-based WavFileReadStream, but it doesn't
+// lack any features we actually use, and it includes optional
+// incremental reading (read-during-write) which the other doesn't, so
+// we have it first. One of these two must also come before the other
+// general platform frameworks because we don't currently have seek
+// support in those
+#include "SimpleWavFileReadStream.cpp"
+
 // WavFileReadStream uses libsndfile, which is mostly trustworthy
 #include "WavFileReadStream.cpp"
-
-// SimpleWavFileReadStream reads most WAV files. The dedicated
-// WavFileReadStream using libsndfile is better and goes first, but
-// this must come before the other general platform libraries because
-// we don't currently have seek support in those
-#include "SimpleWavFileReadStream.cpp"
 
 // OggVorbisReadStream uses the official libraries, which ought to be good
 #include "OggVorbisReadStream.cpp"

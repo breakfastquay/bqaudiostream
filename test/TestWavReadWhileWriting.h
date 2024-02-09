@@ -7,8 +7,13 @@
 #include <QObject>
 #include <QtTest>
 
-#include "bqaudiostream/../src/SimpleWavFileReadStream.h"
-#include "bqaudiostream/../src/SimpleWavFileWriteStream.h"
+#include "bqaudiostream/AudioReadStreamFactory.h"
+#include "bqaudiostream/AudioReadStream.h"
+#include "bqaudiostream/AudioWriteStreamFactory.h"
+#include "bqaudiostream/AudioWriteStream.h"
+
+#include <thread>
+#include <chrono>
 
 namespace breakfastquay {
 
@@ -47,42 +52,24 @@ class TestWavReadWhileWriting : public QObject
     }
     
 private slots:
-    void readWhileWriting() {
+    void readWhileWritingNoWait() {
 
         int bs = 1024;
         int channels = 2;
+        int rate = 44100;
         std::vector<float> buffer(bs * channels, 0.f);
+        std::string file = "test-audiostream-readwhilewriting.wav";
         
-        AudioWriteStream::Target target("test-audiostream-readwhilewriting.wav",
-                                        channels, 44100);
-
-        SimpleWavFileWriteStream *ws = nullptr;
-        SimpleWavFileReadStream *rs = nullptr;
-
-        try {
-            ws = new SimpleWavFileWriteStream(target);
-        } catch (const std::exception &e) {
-            std::cerr << "readWhileWriting: exception caught when creating write stream: " << e.what() << std::endl;
-            throw;
-        }
+        auto ws = AudioWriteStreamFactory::createWriteStream(file, channels, rate);
         QVERIFY(ws->getError() == std::string());
 
-        try {
-            rs = new SimpleWavFileReadStream(target.getPath());
-        } catch (const std::exception &e) {
-            std::cerr << "readWhileWriting: exception caught when creating read stream: " << e.what() << std::endl;
-            delete ws;
-            throw;
-        }
+        auto rs = AudioReadStreamFactory::createReadStream(file);
         QVERIFY(rs->getError() == std::string());
 
         QCOMPARE(rs->getChannelCount(), size_t(channels));
         QCOMPARE(rs->getSampleRate(), size_t(44100));
-        QVERIFY(rs->isSeekable());
-
-        //!!! Contradicts the documentation, which says "For seekable
-        //!!! streams this is guaranteed to return a true frame count"
-        //!!! - probably this stream should not be seekable?
+        QVERIFY(rs->hasIncrementalSupport());
+        QVERIFY(!rs->isSeekable());
         QCOMPARE(rs->getEstimatedFrameCount(), size_t(0));
 
         QCOMPARE(rs->getInterleavedFrames(bs, buffer.data()), size_t(0));
@@ -95,7 +82,53 @@ private slots:
 
         QCOMPARE(rs->getInterleavedFrames(bs, buffer.data()), size_t(bs));
 
-        checkBuf(buffer, 0, bs * channels);
+        QVERIFY(checkBuf(buffer, 0, bs * channels));
+        
+        delete rs;
+        delete ws;
+    }
+
+    void readWhileWritingWithWait() {
+
+        int bs = 1024;
+        int channels = 2;
+        int rate = 44100;
+        std::vector<float> readbuf(bs * channels, 0.f);
+        std::vector<float> writebuf(bs * channels, 0.f);
+        std::string file = "test-audiostream-readwhilewriting.wav";
+        
+        auto ws = AudioWriteStreamFactory::createWriteStream(file, channels, rate);
+        QVERIFY(ws->getError() == std::string());
+
+        auto rs = AudioReadStreamFactory::createReadStream(file);
+        QVERIFY(rs->getError() == std::string());
+
+        QCOMPARE(rs->getChannelCount(), size_t(channels));
+        QCOMPARE(rs->getSampleRate(), size_t(44100));
+        QVERIFY(rs->hasIncrementalSupport());
+
+        rs->setIncrementalTimeouts(20, 200);
+
+        initBuf(writebuf, 0, bs * channels);
+        
+        auto writer = [&]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            ws->putInterleavedFrames(bs/2, writebuf.data());
+            std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            ws->putInterleavedFrames(bs/2, writebuf.data() + (bs/2) * channels);
+        };
+        
+        QCOMPARE(rs->getInterleavedFrames(bs, readbuf.data()), size_t(0));
+
+        rs->setIncrementalTimeouts(20, 1000);
+        
+        std::thread writeThread(writer);
+        
+        QCOMPARE(rs->getInterleavedFrames(bs, readbuf.data()), size_t(bs));
+
+        QVERIFY(checkBuf(readbuf, 0, bs * channels));
+
+        writeThread.join();
         
         delete rs;
         delete ws;

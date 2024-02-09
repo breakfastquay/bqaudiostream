@@ -60,6 +60,8 @@ public:
 
     virtual std::string getError() const { return m_error; }
 
+    virtual bool hasIncrementalSupport() const { return true; }
+    
 protected:
     virtual size_t getFrames(size_t count, float *frames);
     virtual bool performSeek(size_t frame);

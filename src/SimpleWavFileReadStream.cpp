@@ -39,7 +39,7 @@
 #include <chrono>
 #include <thread>
 
-#define DEBUG_SIMPLE_WAV_FILE_READ_STREAM 1
+//#define DEBUG_SIMPLE_WAV_FILE_READ_STREAM 1
 
 namespace breakfastquay
 {
@@ -155,7 +155,6 @@ SimpleWavFileReadStream::readHeader()
     m_channelCount = channels;
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
-    m_seekable = true;
 
     // we don't use
     (void)byteRate;
@@ -173,6 +172,16 @@ SimpleWavFileReadStream::readHeader()
     } else {
         m_estimatedFrameCount = 0;
     }
+
+    // Mark as seekable only if we have a known duration. This is
+    // largely to honour the guarantee in getEstimatedFrameCount that
+    // the returned value will be a true value if the stream is
+    // seekable. But it's also a bit iffy with files that are still
+    // being written, to have seek success depend on whether the
+    // target frame has been written yet. (Nonetheless we do support
+    // that case in the actual seek implementation)
+    m_seekable = (m_estimatedFrameCount > 0);
+
     m_dataReadOffset = 0;
     m_dataReadStart = m_file->tellg();
 }
@@ -291,7 +300,7 @@ SimpleWavFileReadStream::performSeek(size_t frame)
         return false;
     }
     
-    std::ifstream::pos_type actual = m_file->tellg();
+    std::streampos actual = m_file->tellg();
     // (In fact I think tellg() always reports whatever you passed to seekg())
     if (actual != std::ifstream::pos_type(target)) {
 #ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
@@ -328,10 +337,16 @@ SimpleWavFileReadStream::shouldRetry(int justReadBytes)
 #ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
     std::cerr << "SimpleWavFileReadStream::shouldRetry: m_dataReadOffset = "
               << m_dataReadOffset << ", m_dataChunkSize = " << m_dataChunkSize
-              << ", justReadBytes = " << justReadBytes << std::endl;
+              << ", justReadBytes = " << justReadBytes
+              << ", m_retryTimeoutMs = " << m_retryTimeoutMs
+              << ", m_totalTimeoutMs = " << m_totalTimeoutMs
+              << std::endl;
 #endif
 
     if (m_dataChunkSize > 0) {
+        return false;
+    }
+    if (m_retryTimeoutMs == 0 || m_totalTimeoutMs == 0) {
         return false;
     }
     if (m_file->bad()) {
@@ -342,11 +357,7 @@ SimpleWavFileReadStream::shouldRetry(int justReadBytes)
         return false;
     }
 
-    int retryTimeMs = 50;
-    int totalTimeoutMs = 1000;
-    int permittedRetryCount = totalTimeoutMs / retryTimeMs;
-    
-    uint32_t location = m_file->tellg();
+    int permittedRetryCount = m_totalTimeoutMs / m_retryTimeoutMs;
 
     if (m_file->eof()) {
         if (m_retryCount > permittedRetryCount) {
@@ -355,20 +366,23 @@ SimpleWavFileReadStream::shouldRetry(int justReadBytes)
 #endif
             return false;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_retryTimeoutMs));
         m_file->clear();
+        std::streampos location = m_file->tellg();
         m_file->seekg(m_dataChunkOffset, std::ios::beg);
         m_dataChunkSize = readExpectedChunkSize("data");
-        m_file->seekg(location - justReadBytes, std::ios::beg);
+        std::streamoff target = location - std::streamoff(justReadBytes);
+        m_file->seekg(target, std::ios::beg);
         if (m_file->fail()) {
 #ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
             std::cerr << "SimpleWavFileReadStream::shouldRetry: seek to "
-                      << location - justReadBytes << " failed" << std::endl;
+                      << target << " failed" << std::endl;
 #endif
             return false;
         }
 #ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
-        std::cerr << "SimpleWavFileReadStream::shouldRetry: returning true" << std::endl;
+        std::cerr << "SimpleWavFileReadStream::shouldRetry: re-seek to "
+                  << target << " succeeded, returning true" << std::endl;
 #endif
         ++m_retryCount;
         return true;
