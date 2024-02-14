@@ -83,13 +83,20 @@ public:
     bool isSeekable() const;
 
     /**
-     * Return an estimate of the number of frames in the stream (at
-     * its native sample rate) or zero if the stream can't provide
+     * Return an estimate of the number of frames in the stream, at
+     * its native sample rate, or zero if the stream can't provide
      * that information.
      *
-     * For seekable streams (see isSeekable()) this is guaranteed to
-     * return a true frame count. For other streams it may be
-     * approximate, hence the name.
+     * There is no way to distinguish between a stream that can't
+     * provide this estimate and a stream of truly zero
+     * duration. Although unsatisfactory, this is at least consistent
+     * with the treatment of WAV files of zero data size, which are
+     * usually understood as files that are still being written and
+     * may have a true duration that is so far unknown.
+     *
+     * For seekable streams (see isSeekable()), any non-zero return
+     * value is guaranteed to be a true frame count. For other streams
+     * it may be approximate, hence the name.
      */
     size_t getEstimatedFrameCount() const;
 

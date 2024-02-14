@@ -92,6 +92,8 @@ SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
         throw FileNotFound(m_path);
     }
 
+    m_seekable = true;
+
     readHeader();
 }
 
@@ -172,15 +174,6 @@ SimpleWavFileReadStream::readHeader()
     } else {
         m_estimatedFrameCount = 0;
     }
-
-    // Mark as seekable only if we have a known duration. This is
-    // largely to honour the guarantee in getEstimatedFrameCount that
-    // the returned value will be a true value if the stream is
-    // seekable. But it's also a bit iffy with files that are still
-    // being written, to have seek success depend on whether the
-    // target frame has been written yet. (Nonetheless we do support
-    // that case in the actual seek implementation)
-    m_seekable = (m_estimatedFrameCount > 0);
 
     m_dataReadOffset = 0;
     m_dataReadStart = m_file->tellg();
