@@ -400,6 +400,11 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
     size_t requested = count * m_channelCount;
     size_t got = 0;
 
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::getFrames: count = " << count
+              << ", requested = " << requested << std::endl;
+#endif
+
     while (got < requested) {
         if (m_dataChunkSize > 0 && m_dataReadOffset >= m_dataChunkSize) {
             break;
@@ -419,6 +424,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         case 32: frames[got] = convertSampleFloat(buf); break;
         }
         ++got;
+        m_retryCount = 0;
     }
 
     if (got < requested) {
@@ -430,10 +436,6 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
 
     if (m_file->eof() && !m_file->bad()) {
         m_file->clear();
-    }
-
-    if (got > 0) {
-        m_retryCount = 0;
     }
     
     return got / m_channelCount;
