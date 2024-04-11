@@ -141,8 +141,15 @@ AudioWriteStreamFactory::isExtensionSupportedFor(std::string fileName)
 // #ifdef'd out if the implementation is not selected, so there is no
 // overhead.
 
+// WavFileWriteStream uses libsndfile, which is mostly trustworthy
 #include "WavFileWriteStream.cpp"
+
+// SimpleWavFileWriteStream writes only 24-bit WAV files. The
+// dedicated WavFileReadStream using libsndfile is generally much
+// better and goes first
 #include "SimpleWavFileWriteStream.cpp"
+
 #include "CoreAudioWriteStream.cpp"
+
 #include "OpusWriteStream.cpp"
 

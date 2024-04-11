@@ -37,9 +37,6 @@
 
 #include "../bqaudiostream/AudioReadStream.h"
 
-// If we have libsndfile, we shouldn't be using this class
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
@@ -63,6 +60,8 @@ public:
 
     virtual std::string getError() const { return m_error; }
 
+    virtual bool hasIncrementalSupport() const { return true; }
+    
 protected:
     virtual size_t getFrames(size_t count, float *frames);
     virtual bool performSeek(size_t frame);
@@ -76,6 +75,7 @@ private:
     std::ifstream *m_file;
     int m_bitDepth;
     bool m_floatSwap;
+    uint32_t m_dataChunkOffset;
     uint32_t m_dataChunkSize;
     uint32_t m_dataReadOffset;
     uint32_t m_dataReadStart;
@@ -87,6 +87,9 @@ private:
     uint32_t readChunkSizeAfterTag();
     uint32_t readMandatoryNumber(int length);
 
+    int m_retryCount;
+    bool shouldRetry(int justRead);
+    
     float convertSample8(const std::vector<uint8_t> &);
     float convertSample16(const std::vector<uint8_t> &);
     float convertSample24(const std::vector<uint8_t> &);
@@ -100,5 +103,4 @@ private:
 
 #endif
 
-#endif
 

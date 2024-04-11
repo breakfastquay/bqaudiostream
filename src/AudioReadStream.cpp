@@ -48,6 +48,8 @@ AudioReadStream::AudioReadStream() :
     m_sampleRate(0),
     m_estimatedFrameCount(0),
     m_seekable(false),
+    m_retryTimeoutMs(0),
+    m_totalTimeoutMs(0),
     m_retrievalRate(0),
     m_totalFileFrames(0),
     m_totalRetrievedFrames(0),
@@ -112,6 +114,19 @@ AudioReadStream::seek(size_t frame)
         return false;
     }
     return performSeek(frame);
+}
+
+bool
+AudioReadStream::hasIncrementalSupport() const
+{
+    return false;
+}
+
+void
+AudioReadStream::setIncrementalTimeouts(int retryTimeoutMs, int totalTimeoutMs)
+{
+    m_retryTimeoutMs = retryTimeoutMs;
+    m_totalTimeoutMs = totalTimeoutMs;
 }
 
 size_t

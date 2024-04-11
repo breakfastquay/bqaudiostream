@@ -83,13 +83,20 @@ public:
     bool isSeekable() const;
 
     /**
-     * Return an estimate of the number of frames in the stream (at
-     * its native sample rate) or zero if the stream can't provide
+     * Return an estimate of the number of frames in the stream, at
+     * its native sample rate, or zero if the stream can't provide
      * that information.
      *
-     * For seekable streams (see isSeekable()) this is guaranteed to
-     * return a true frame count. For other streams it may be
-     * approximate, hence the name.
+     * There is no way to distinguish between a stream that can't
+     * provide this estimate and a stream of truly zero
+     * duration. Although unsatisfactory, this is at least consistent
+     * with the treatment of WAV files of zero data size, which are
+     * usually understood as files that are still being written and
+     * may have a true duration that is so far unknown.
+     *
+     * For seekable streams (see isSeekable()), any non-zero return
+     * value is guaranteed to be a true frame count. For other streams
+     * it may be approximate, hence the name.
      */
     size_t getEstimatedFrameCount() const;
 
@@ -150,6 +157,31 @@ public:
      * empty string otherwise.
      */
     virtual std::string getArtistName() const = 0;
+
+    /**
+     * Return true if this reader has explicit support for synchronous
+     * incremental reading of its file (i.e. reading while the audio
+     * file is still being written without returning early on
+     * EOF). Few readers do, and it may depend on the file as well as
+     * the reader.
+     *
+     * If so, then setIncrementalTimeouts can be used to tell it that
+     * when the end of file is reached, if the file has apparently not
+     * been finalised, it should wait a certain amount of time for
+     * more data rather than giving up directly.
+     */
+    virtual bool hasIncrementalSupport() const;
+
+    /**
+     * Set timeouts for incremental reading. If hasIncrementalSupport
+     * returns true and retryTimeoutMs is greater than zero, then if
+     * EOF is reached during a read and the file has not yet
+     * detectably been finalised by its writer, the reader will wait
+     * retryTimeoutMs milliseconds and try again. The totalTimeoutMs
+     * value, which will usually be larger, places a limit on the
+     * total duration of retries. Both are zero by default.
+     */
+    void setIncrementalTimeouts(int retryTimeoutMs, int totalTimeoutMs);
     
 protected:
     AudioReadStream();
@@ -159,6 +191,8 @@ protected:
     size_t m_sampleRate;
     size_t m_estimatedFrameCount;
     bool m_seekable;
+    int m_retryTimeoutMs;
+    int m_totalTimeoutMs;
 
 private:
     int getResampledChunk(int count, float *frames);

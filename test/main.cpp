@@ -5,6 +5,7 @@
 #include "TestWavSeek.h"
 #include "TestAudioStreamRead.h"
 #include "TestWavReadWrite.h"
+#include "TestWavReadWhileWriting.h"
 #include <QtTest>
 
 #include <iostream>
@@ -37,6 +38,12 @@ int main(int argc, char *argv[])
 
     {
 	breakfastquay::TestWavReadWrite t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+
+    {
+	breakfastquay::TestWavReadWhileWriting t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }

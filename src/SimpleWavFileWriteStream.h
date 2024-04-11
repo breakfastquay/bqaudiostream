@@ -37,9 +37,6 @@
 
 #include "../bqaudiostream/AudioWriteStream.h"
 
-// If we have libsndfile, we shouldn't be using this class
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
@@ -74,4 +71,3 @@ protected:
 
 #endif
 
-#endif

@@ -42,7 +42,8 @@
 namespace breakfastquay
 {
 
-static std::vector<std::string> extensions() {
+static std::vector<std::string>
+getWavWriterExtensions() {
     std::vector<std::string> ee;
     ee.push_back("wav");
     ee.push_back("aiff");
@@ -53,7 +54,7 @@ static
 AudioWriteStreamBuilder<WavFileWriteStream>
 wavbuilder(
     std::string("http://breakfastquay.com/rdf/turbot/audiostream/WavFileWriteStream"),
-    extensions()
+    getWavWriterExtensions()
     );
 
 WavFileWriteStream::WavFileWriteStream(Target target) :
@@ -103,6 +104,8 @@ WavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
     if (written != sf_count_t(count)) {
         throw FileOperationFailed(getPath(), "write sf data");
     }
+
+    sf_write_sync(m_file);
 }
 
 }

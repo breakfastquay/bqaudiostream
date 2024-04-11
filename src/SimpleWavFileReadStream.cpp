@@ -34,16 +34,18 @@
 
 #include "SimpleWavFileReadStream.h"
 
-#if ! (defined(HAVE_LIBSNDFILE) || defined(HAVE_SNDFILE))
-
 #include <iostream>
+
+#include <chrono>
+#include <thread>
 
 //#define DEBUG_SIMPLE_WAV_FILE_READ_STREAM 1
 
 namespace breakfastquay
 {
 
-static std::vector<std::string> extensions() {
+static std::vector<std::string>
+getSimpleWavReaderExtensions() {
     std::vector<std::string> ee;
     ee.push_back("wav");
     return ee;
@@ -53,16 +55,18 @@ static
 AudioReadStreamBuilder<SimpleWavFileReadStream>
 simplewavbuilder(
     std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileReadStream"),
-    extensions()
+    getSimpleWavReaderExtensions()
     );
 
 SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
     m_path(filename),
     m_file(0),
     m_bitDepth(0),
+    m_dataChunkOffset(0),
     m_dataChunkSize(0),
     m_dataReadOffset(0),
-    m_dataReadStart(0)
+    m_dataReadStart(0),
+    m_retryCount(0)
 {
 #ifdef _MSC_VER
     // This is behind _MSC_VER not _WIN32 because the fstream
@@ -87,6 +91,8 @@ SimpleWavFileReadStream::SimpleWavFileReadStream(std::string filename) :
         m_file = 0;
         throw FileNotFound(m_path);
     }
+
+    m_seekable = true;
 
     readHeader();
 }
@@ -151,7 +157,6 @@ SimpleWavFileReadStream::readHeader()
     m_channelCount = channels;
     m_sampleRate = sampleRate;
     m_bitDepth = bitsPerSample;
-    m_seekable = true;
 
     // we don't use
     (void)byteRate;
@@ -161,12 +166,15 @@ SimpleWavFileReadStream::readHeader()
         m_file->ignore(fmtSize - 16);
     }
 
+    m_dataChunkOffset = m_file->tellg();
     m_dataChunkSize = readExpectedChunkSize("data");
+
     if (bytesPerFrame > 0) {
         m_estimatedFrameCount = m_dataChunkSize / bytesPerFrame;
     } else {
         m_estimatedFrameCount = 0;
     }
+
     m_dataReadOffset = 0;
     m_dataReadStart = m_file->tellg();
 }
@@ -285,7 +293,7 @@ SimpleWavFileReadStream::performSeek(size_t frame)
         return false;
     }
     
-    std::ifstream::pos_type actual = m_file->tellg();
+    std::streampos actual = m_file->tellg();
     // (In fact I think tellg() always reports whatever you passed to seekg())
     if (actual != std::ifstream::pos_type(target)) {
 #ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
@@ -316,6 +324,73 @@ SimpleWavFileReadStream::performSeek(size_t frame)
     return true;
 }
 
+bool
+SimpleWavFileReadStream::shouldRetry(int justReadBytes)
+{
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::shouldRetry: m_dataReadOffset = "
+              << m_dataReadOffset << ", m_dataChunkSize = " << m_dataChunkSize
+              << ", justReadBytes = " << justReadBytes
+              << ", m_retryTimeoutMs = " << m_retryTimeoutMs
+              << ", m_totalTimeoutMs = " << m_totalTimeoutMs
+              << std::endl;
+#endif
+
+    if (m_dataChunkSize > 0) {
+        return false;
+    }
+    if (m_retryTimeoutMs == 0 || m_totalTimeoutMs == 0) {
+        return false;
+    }
+    if (m_file->bad()) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::shouldRetry: file is bad"
+                  << std::endl;
+#endif
+        return false;
+    }
+
+    int permittedRetryCount = m_totalTimeoutMs / m_retryTimeoutMs;
+
+    if (m_file->eof()) {
+        if (m_retryCount > permittedRetryCount) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+            std::cerr << "SimpleWavFileReadStream::shouldRetry: permitted retry limit of " << permittedRetryCount << " exceeded" << std::endl;
+#endif
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_retryTimeoutMs));
+        m_file->clear();
+        std::streampos location = m_file->tellg();
+        m_file->seekg(m_dataChunkOffset, std::ios::beg);
+        m_dataChunkSize = readExpectedChunkSize("data");
+        std::streamoff target = location - std::streamoff(justReadBytes);
+        m_file->seekg(target, std::ios::beg);
+        if (m_file->fail()) {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+            std::cerr << "SimpleWavFileReadStream::shouldRetry: seek to "
+                      << target << " failed" << std::endl;
+#endif
+            return false;
+        }
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::shouldRetry: re-seek to "
+                  << target << " succeeded, returning true" << std::endl;
+#endif
+        ++m_retryCount;
+        return true;
+    } else {
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+        std::cerr << "SimpleWavFileReadStream::shouldRetry: file is not bad or at eof, something else must be wrong" << std::endl;
+#endif
+    }
+    
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::shouldRetry: returning false" << std::endl;
+#endif        
+    return false;
+}
+
 size_t
 SimpleWavFileReadStream::getFrames(size_t count, float *frames)
 {
@@ -325,6 +400,11 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
     size_t requested = count * m_channelCount;
     size_t got = 0;
 
+#ifdef DEBUG_SIMPLE_WAV_FILE_READ_STREAM
+    std::cerr << "SimpleWavFileReadStream::getFrames: count = " << count
+              << ", requested = " << requested << std::endl;
+#endif
+
     while (got < requested) {
         if (m_dataChunkSize > 0 && m_dataReadOffset >= m_dataChunkSize) {
             break;
@@ -332,6 +412,9 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         int gotHere = getBytes(sampleSize, buf);
         m_dataReadOffset += gotHere;
         if (gotHere < sampleSize) {
+            if (m_dataChunkSize == 0 && shouldRetry(gotHere)) {
+                continue;
+            }
             break;
         }
         switch (m_bitDepth) {
@@ -341,6 +424,7 @@ SimpleWavFileReadStream::getFrames(size_t count, float *frames)
         case 32: frames[got] = convertSampleFloat(buf); break;
         }
         ++got;
+        m_retryCount = 0;
     }
 
     if (got < requested) {
@@ -434,4 +518,3 @@ SimpleWavFileReadStream::le2int(const std::vector<uint8_t> &le)
 
 }
 
-#endif
