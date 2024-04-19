@@ -63,6 +63,8 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
+    size_t m_sinceSync;
+    static size_t m_syncBlockSize;
     std::string m_error;
 };
 

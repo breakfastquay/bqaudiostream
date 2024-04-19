@@ -61,6 +61,8 @@ protected:
     int m_bitDepth;
     std::string m_error;
     std::ofstream *m_file;
+    size_t m_sinceSync;
+    static size_t m_syncBlockSize;
 
     void writeFormatChunk();
     void putBytes(const std::string &);

@@ -57,10 +57,14 @@ simplewavbuilder(
     getSimpleWavWriterExtensions()
     );
 
+size_t
+SimpleWavFileWriteStream::m_syncBlockSize = 4096;
+
 SimpleWavFileWriteStream::SimpleWavFileWriteStream(Target target) :
     AudioWriteStream(target),
     m_bitDepth(24),
-    m_file(0)
+    m_file(0),
+    m_sinceSync(0)
 {
     std::string path = getPath();
     
@@ -230,7 +234,11 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, const float *frames
         }
     }
 
-    m_file->flush();
+    m_sinceSync += count;
+    if (m_sinceSync > m_syncBlockSize) {
+        m_file->flush();
+        m_sinceSync = 0;
+    }
 }
 
 }

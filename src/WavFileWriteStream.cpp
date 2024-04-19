@@ -57,9 +57,13 @@ wavbuilder(
     getWavWriterExtensions()
     );
 
+size_t
+WavFileWriteStream::m_syncBlockSize = 4096;
+
 WavFileWriteStream::WavFileWriteStream(Target target) :
     AudioWriteStream(target),
-    m_file(0)
+    m_file(0),
+    m_sinceSync(0)
 {
     memset(&m_fileInfo, 0, sizeof(SF_INFO));
     m_fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
@@ -105,7 +109,11 @@ WavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
         throw FileOperationFailed(getPath(), "write sf data");
     }
 
-    sf_write_sync(m_file);
+    m_sinceSync += count;
+    if (m_sinceSync > m_syncBlockSize) {
+        sf_write_sync(m_file);
+        m_sinceSync = 0;
+    }
 }
 
 }
