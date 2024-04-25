@@ -69,7 +69,7 @@ private slots:
         QCOMPARE(rs->getChannelCount(), size_t(channels));
         QCOMPARE(rs->getSampleRate(), size_t(44100));
         QVERIFY(rs->hasIncrementalSupport());
-        QVERIFY(!rs->isSeekable());
+        QVERIFY(rs->isSeekable());
         QCOMPARE(rs->getEstimatedFrameCount(), size_t(0));
 
         QCOMPARE(rs->getInterleavedFrames(bs, buffer.data()), size_t(0));
