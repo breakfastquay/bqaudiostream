@@ -214,6 +214,11 @@ CoreAudioWriteStream::putInterleavedFrames(size_t count, const float *frames)
     }
 }
 
+void
+CoreAudioWriteStream::flush()
+{
+}
+
 }
 
 #endif

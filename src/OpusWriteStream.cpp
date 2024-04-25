@@ -156,6 +156,11 @@ OpusWriteStream::putInterleavedFrames(size_t count, const float *frames)
 #endif
 }
 
+void
+OpusWriteStream::flush()
+{
+}
+
 }
 
 #endif // !HAVE_OPUS_READ_ONLY

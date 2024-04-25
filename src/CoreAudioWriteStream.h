@@ -51,6 +51,7 @@ public:
     virtual std::string getError() const { return m_error; }
 
     virtual void putInterleavedFrames(size_t count, const float *frames);
+    virtual void flush();
     
 protected:
     std::string m_error;

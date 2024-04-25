@@ -195,7 +195,7 @@ SimpleWavFileWriteStream::writeFormatChunk()
 
     putBytes(outString);
 
-    m_file->flush();
+    flush();
 }
 
 void
@@ -236,6 +236,14 @@ SimpleWavFileWriteStream::putInterleavedFrames(size_t count, const float *frames
 
     m_sinceSync += count;
     if (m_sinceSync > m_syncBlockSize) {
+        flush();
+    }
+}
+
+void
+SimpleWavFileWriteStream::flush()
+{
+    if (m_file) {
         m_file->flush();
         m_sinceSync = 0;
     }

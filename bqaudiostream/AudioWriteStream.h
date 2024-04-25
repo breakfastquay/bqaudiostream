@@ -6,7 +6,7 @@
     A small library wrapping various audio file read/write
     implementations in C++.
 
-    Copyright 2007-2022 Particular Programs Ltd.
+    Copyright 2007-2024 Particular Programs Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -72,9 +72,20 @@ public:
     size_t getSampleRate() const { return m_target.getSampleRate(); }
     
     /**
+     * Write some frames to the file. The frames pointer must point to
+     * (at least) frameCount * getChannelCount() samples.
+     *
      * May throw FileOperationFailed if encoding fails.
      */
     virtual void putInterleavedFrames(size_t frameCount, const float *frames) = 0;
+
+    /**
+     * Flush the file, normally writing any buffered samples to
+     * disc. Actual behaviour may depend on the writer. The writer may
+     * flush the file itself during writes at its own discretion, and
+     * the file will also be flushed when the writer is deleted.
+     */
+    virtual void flush() = 0;
     
 protected:
     AudioWriteStream(Target t) : m_target(t) { }

@@ -111,6 +111,14 @@ WavFileWriteStream::putInterleavedFrames(size_t count, const float *frames)
 
     m_sinceSync += count;
     if (m_sinceSync > m_syncBlockSize) {
+        flush();
+    }
+}
+
+void
+WavFileWriteStream::flush()
+{
+    if (m_file) {
         sf_write_sync(m_file);
         m_sinceSync = 0;
     }
