@@ -70,6 +70,7 @@ getCoreAudioExtensions()
     extensions.push_back("mp3");
     extensions.push_back("mp4");
     extensions.push_back("wav");
+    extensions.push_back("caf");
     return extensions;
 }
 

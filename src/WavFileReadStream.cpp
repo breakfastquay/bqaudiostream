@@ -60,7 +60,15 @@ getWavReaderExtensions()
     for (int i = 0; i < count; ++i) {
         info.format = i;
         if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.push_back(std::string(info.extension));
+            std::string ext(info.extension);
+#ifdef HAVE_COREAUDIO
+            // CAF is the CoreAudio file format, leave it for the
+            // native reader
+            if (ext == "caf") {
+                continue;
+            }
+#endif
+            extensions.push_back(ext);
         }
     }
 
