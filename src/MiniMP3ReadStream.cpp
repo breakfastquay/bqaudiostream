@@ -91,6 +91,11 @@ MiniMP3ReadStream::MiniMP3ReadStream(std::string path) :
     m_channelCount = m_d->dec.info.channels;
     m_sampleRate = m_d->dec.info.hz;
 
+    if (m_channelCount == 0) {
+        m_error = "MiniMP3ReadStream: Unable to open file: bad header or no channels reported";
+        throw InvalidFileFormat(m_path, "bad header or no channels reported");
+    }
+    
     if (m_channelCount > 0) {
         m_estimatedFrameCount = m_d->dec.samples / m_channelCount;
     } else {
@@ -101,7 +106,7 @@ MiniMP3ReadStream::MiniMP3ReadStream(std::string path) :
 size_t
 MiniMP3ReadStream::getFrames(size_t count, float *frames)
 {
-    if (m_error != "") return 0;
+    if (m_error != "" || m_channelCount == 0) return 0;
     if (count == 0) return 0;
 
 //    cerr << "getFrames: working" << endl;
