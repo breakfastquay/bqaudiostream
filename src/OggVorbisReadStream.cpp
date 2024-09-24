@@ -42,10 +42,6 @@
 #include <oggz/oggz.h>
 #include <fishsound/fishsound.h>
 
-#ifndef __GNUC__
-#include <alloca.h>
-#endif
-
 namespace breakfastquay
 {
 
@@ -110,7 +106,10 @@ public:
 
     void readNextBlock() {
         if (m_finished) return;
-        if (oggz_read(m_oggz, 1024) <= 0) {
+        static const int blocksize = 8192;
+        long rv = oggz_read(m_oggz, blocksize);
+//        fprintf(stderr, "ogg: read=%ld\n", rv);
+        if (rv <= 0) {
             m_finished = true;
         }
     }
@@ -120,7 +119,9 @@ public:
         if (!m_buffer) {
             m_buffer = new RingBuffer<float>(samples);
         } else if (m_buffer->getSize() < samples) {
-            m_buffer = m_buffer->resized(samples);
+            RingBuffer<float> *oldBuffer = m_buffer;
+            m_buffer = oldBuffer->resized(samples);
+            delete oldBuffer;
         }
     }
 
@@ -133,6 +134,10 @@ public:
 
     int acceptFrames(float **frames, long n) {
 
+        if (n <= 0) {
+            return 0;
+        }
+        
         if (!m_namesRead) {
             const FishSoundComment *c;
             c = fish_sound_comment_first_byname(m_fishSound, (char *)"TITLE");
@@ -235,6 +240,9 @@ OggVorbisReadStream::getFrames(size_t count, float *frames)
     }
 
     int available = m_d->getAvailableFrameCount();
+
+//    fprintf(stderr, "ogg: requested=%d, available=%d\n", int(count), available);
+    
     if (size_t(available) < count) {
         count = available;
     }
