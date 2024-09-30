@@ -109,15 +109,22 @@ MiniMP3ReadStream::getFrames(size_t count, float *frames)
     if (m_error != "" || m_channelCount == 0) return 0;
     if (count == 0) return 0;
 
-//    cerr << "getFrames: working" << endl;
-
     size_t desired = count * m_channelCount;
     size_t obtained = mp3dec_ex_read(&m_d->dec, frames, desired);
 
     //!!! have to provide our own tags support?
     
     if (obtained < desired) {
-        if (m_d->dec.last_error) {
+        if (m_d->dec.last_error == MP3D_E_DECODE) {
+            // Marks a change in sample rate, layer, or channels. We
+            // can't throw an exception here because we may actually
+            // have valid data and we don't want to lose it. (This
+            // applies even if obtained == 0, as otherwise whether we
+            // treated the situation as an error or not would depend
+            // on how many frames were requested.)
+            std::cerr << "MiniMP3ReadStream: Decoding interrupted (sample rate, layer, or channels changed)" << std::endl;
+        } else if (m_d->dec.last_error != 0) {
+            // Some other error (not just EOF)
             std::ostringstream os;
             os << "MiniMP3ReadStream: Failed to read from file (error code "
                << m_d->dec.last_error << ")";
