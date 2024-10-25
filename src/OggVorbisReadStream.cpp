@@ -234,12 +234,23 @@ OggVorbisReadStream::getFrames(size_t count, float *frames)
     if (!m_channelCount) return 0;
     if (count == 0) return 0;
 
-    while (size_t(m_d->getAvailableFrameCount()) < count) {
+    //!!! handle sizes > INT_MAX throughout...
+    
+//    fprintf(stderr, "ogg: getFrames(%d)\n", int(count));
+
+    int available = 0;
+    int total = 0;
+    
+    while (size_t(available = m_d->getAvailableFrameCount()) < count) {
         if (m_d->isFinished()) break;
+        int obtained = m_d->m_buffer->read(frames, available * m_channelCount);
+        frames += obtained;
+        total += obtained;
+        count -= available;
         m_d->readNextBlock();
     }
 
-    int available = m_d->getAvailableFrameCount();
+    available = m_d->getAvailableFrameCount();
 
 //    fprintf(stderr, "ogg: requested=%d, available=%d\n", int(count), available);
     
@@ -247,9 +258,8 @@ OggVorbisReadStream::getFrames(size_t count, float *frames)
         count = available;
     }
 
-    //!!! handle (count * m_channelCount) > INT_MAX
-    int n = m_d->m_buffer->read(frames, int(count * m_channelCount));
-    return n / m_channelCount;
+    total += m_d->m_buffer->read(frames, int(count * m_channelCount));
+    return total / m_channelCount;
 }
 
 }
