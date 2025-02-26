@@ -53,7 +53,7 @@ getSimpleWavReaderExtensions() {
 
 static 
 AudioReadStreamBuilder<SimpleWavFileReadStream>
-simplewavbuilder(
+simplewavfilereadbuilder(
     std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileReadStream"),
     getSimpleWavReaderExtensions()
     );

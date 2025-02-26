@@ -52,7 +52,7 @@ getSimpleWavWriterExtensions() {
 
 static 
 AudioWriteStreamBuilder<SimpleWavFileWriteStream>
-simplewavbuilder(
+simplewavfilewritebuilder(
     std::string("http://breakfastquay.com/rdf/turbot/audiostream/SimpleWavFileWriteStream"),
     getSimpleWavWriterExtensions()
     );
