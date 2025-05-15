@@ -210,7 +210,7 @@ SimpleWavFileReadStream::readExpectedTag(std::string tag)
         m_file->ignore(chunkSize);
         if (!m_file->good()) {
             throw InvalidFileFormat
-                (m_path, "incomplete chunk following tag \"" + found + "\"");
+                (m_path, "nonsense tag or incomplete chunk found");
         }
     }
 }
